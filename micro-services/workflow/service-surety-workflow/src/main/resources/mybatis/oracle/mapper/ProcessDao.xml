@@ -1,0 +1,472 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="yhao.micro.service.workflow.dao.ProcessDao">
+
+    <resultMap id="processDefinitionResult" type="yhao.micro.service.workflow.apilist.model.flow.FlowProcessDefinitionModel">
+        <id property="id" column="fid"/>
+        <result property="name" column="fname"/>
+        <result property="processGroupe" column="fprocess_groupe" />
+        <result property="bizCode" column="fbiz_code"/>
+        <result property="status" column="fstatus"/>
+        <result property="createTime" column="fcreate_time"/>
+        <result property="updateTime" column="fupdate_time"/>
+        <result property="createOperatorId" column="fcreate_operator_id"/>
+        <result property="updateOperatorId" column="fupdate_operator_id"/>
+    </resultMap>
+
+    <insert id="insertProcessDefinition"
+            parameterType="yhao.micro.service.workflow.apilist.form.flow.BaseFlowProcessDefinitionForm">
+        insert into surety.t_wk_pvm_process(fid,fname,fstatus,fbiz_code,forg_id,fprocess_groupe,fnode_count,
+          fcreate_time,fupdate_time,fcreate_operator_id,fupdate_operator_id,FPROCESS_TYPE)
+          values(#{id},#{processName},#{status},#{bizCodeStr},#{orgId},#{processGroup},#{nodeCount},sysdate,
+                  sysdate,#{operatorId},#{operatorId},#{processType})
+    </insert>
+
+    <insert id="batchInsertFlowNode" parameterType="list">
+        insert into surety.t_wk_pvm_node(fid,fprocess_id,FNODE_TEMPLATE_ID,fassign_type,
+                    fassign_entity_id,fnode_expect_type,FNODE_CONDITION_NAME,FNODE_EXPECT,FREMARK,FCRERTE_TIME,FUPDATE_TIME)
+        select fid,fprocess_id,FNODE_TEMPLATE_ID,fassign_type,
+                    fassign_entity_id,fnode_expect_type,FNODE_CONDITION_NAME,FNODE_EXPECT,FREMARK,FCRERTE_TIME,FUPDATE_TIME
+               from (<foreach collection="list" item="node" separator="UNION ALL">
+                      select
+                      #{node.id} fid,
+                      #{node.processId} fprocess_id,
+                      #{node.nodeTemplateId} FNODE_TEMPLATE_ID,
+                      #{node.assignType} fassign_type,
+                      #{node.assignEntityId} fassign_entity_id,
+                      #{node.nodeExpectType} fnode_expect_type,
+                      #{node.nodeConditionName} fnode_condition_name,
+                      #{node.nodeExpect} fnode_expect,
+                      #{node.nodeRemark} FREMARK,
+                      sysdate fcrerte_time,
+                      sysdate fupdate_time
+                      from dual
+                    </foreach>)
+    </insert>
+
+    <insert id="batchBizInsertFlowNode" parameterType="list">
+        insert into surety.t_wk_pvm_node(fid,fprocess_id,fsub_process_id,
+        FNODE_TEMPLATE_ID,FWARN,FNODE_CONDITION,FREMARK)
+        select fid,fprocess_id,fsub_process_id,
+        FNODE_TEMPLATE_ID,FWARN,FNODE_CONDITION,FREMARK
+        from (<foreach collection="list" item="node" separator="UNION ALL">
+        select
+        #{node.id} fid,
+        #{node.processId} fprocess_id,
+        #{node.subProcessId} fsub_process_id,
+        #{node.nodeTemplateId} FNODE_TEMPLATE_ID,
+        #{node.warn} fwarn,
+        #{node.nodeCondition} fnode_condition,
+        #{node.nodeRemark} FREMARK
+        from dual
+    </foreach>)
+    </insert>
+
+    <insert id="batchInsertFlowTransition" parameterType="list">
+        insert into surety.t_wk_pvm_transition(fid,fprocess_id,fsource_node_id,fdestination_node_id,ftype,FDESTINATION_NODE_ORDER)
+        select fid,fprocess_id,fsource_node_id,fdestination_node_id,ftype,FDESTINATION_NODE_ORDER
+        from (<foreach collection="list" item="tran" separator="UNION ALL">
+              select
+              #{tran.id} fid,
+              #{tran.processId} fprocess_id,
+              #{tran.sourceId} fsource_node_id,
+              #{tran.destinationId} fdestination_node_id,
+              #{tran.destinationOrderNo} fdestination_node_order,
+              #{tran.type} ftype
+              from dual
+              </foreach>)
+    </insert>
+
+    <update id="overrideProcessDefinitionById" parameterType="string">
+        update surety.t_wk_pvm_process set fstatus='OVERRIDE'
+        where fid=#{id}
+    </update>
+
+    <update id="overrideProcessDefinitionByBizCode" parameterType="string">
+        update surety.t_wk_pvm_process set fstatus='OVERRIDE'
+        where fbiz_code=#{bizCodeStr}
+    </update>
+
+    <update id="updateBizCode" parameterType="yhao.micro.service.workflow.apilist.form.flow.FlowProcessBizCodeChangeForm">
+        update surety.t_wk_pvm_process set fbiz_code=#{bizCodeStr}
+        where fid=#{id}
+    </update>
+
+    <insert id="saveNodeTemplate"
+            parameterType="yhao.micro.service.workflow.apilist.form.flow.FlowNodeTemplateForm">
+        insert into surety.t_wk_pvm_node_template(fid,fname,ftype,forg_Id,FREMARK,
+                    fcreate_time,fupdate_time,fcreate_operator_id,fupdate_operator_id)
+          values(#{id},#{nodeName},#{type},#{orgId},#{nodeTemplateRemark}, sysdate,sysdate,#{operatorId},#{operatorId})
+    </insert>
+
+    <update id="updateNodeTemplate" parameterType="yhao.micro.service.workflow.apilist.form.flow.FlowNodeTemplateForm">
+        update surety.t_wk_pvm_node_template
+        set fname=#{nodeName},ftype=#{type},
+            FREMARK = #{nodeTemplateRemark},
+            FUPDATE_TIME = SYSDATE, FUPDATE_OPERATOR_ID = #{operatorId}
+        where fid=#{id}
+    </update>
+
+    <select id="queryProcessDefinitionByBizCode" parameterType="string" resultMap="processDefinitionResult">
+        select *
+        from surety.t_wk_pvm_process
+        where fbiz_code=#{bizCodeStr} and fstatus='ENABLED'
+    </select>
+
+    <select id="queryNodeByProcessId" parameterType="string" resultType="yhao.micro.service.workflow.apilist.model.flow.FlowNodeModel">
+        select PVM_NODE.fid as id,
+               NODE_TEMPLATE.fname as nodeName,
+               NODE_TEMPLATE.ftype as nodeType,
+               PVM_NODE.fprocess_id as processDefinitionId,
+               PVM_NODE.FNODE_TEMPLATE_ID AS nodeTemplateId,
+               PVM_NODE.fassign_type as assignType,
+               PVM_NODE.fassign_entity_id as assignEntityId,
+               PVM_NODE.fwarn as warn,
+               PVM_NODE.FREMARK as remark,
+               PVM_NODE.fsub_process_id as subProcessId,
+               PVM_NODE.fnode_expect_type as nodeExpectType,
+               PVM_NODE.fnode_condition_name as nodeConditionName,
+               PVM_NODE.fnode_expect as nodeExpect,
+               PERSON.FNAME AS personName,
+               ORG_POSITION.FNAME AS positionName
+        FROM surety.t_wk_pvm_node PVM_NODE
+        LEFT JOIN SURETY.T_WK_PVM_NODE_TEMPLATE NODE_TEMPLATE ON NODE_TEMPLATE.FID = PVM_NODE.FNODE_TEMPLATE_ID
+        LEFT JOIN SURETY.T_ERP_PERSON PERSON ON PERSON.FID = PVM_NODE.fassign_entity_id AND PVM_NODE.fassign_type = 'PERSON'
+        LEFT JOIN SURETY.T_ERP_ORG_POSITION ORG_POSITION ON ORG_POSITION.FID = PVM_NODE.fassign_entity_id AND PVM_NODE.fassign_type = 'POSITION'
+        WHERE PVM_NODE.FPROCESS_ID=#{id}
+    </select>
+
+    <select id="queryTransitionByProcessId" parameterType="string" resultType="FlowTransitionModel">
+        select fid as id,
+          fsource_node_id as sourceId,
+          fdestination_node_id as destinationId,
+          fprocess_id as processDefinitionId,
+          ftype as type,
+          FDESTINATION_NODE_ORDER AS destinationNodeOrder
+        from surety.t_wk_pvm_transition
+        where fprocess_id=#{id}
+    </select>
+
+    <insert id="saveNodeItemTemplate"
+            parameterType="yhao.micro.service.workflow.apilist.form.flow.FlowNodeItemTemplateSaveForm">
+        insert into surety.t_wk_pvm_item_template(fid,forg_id,fitem_name,fitem_config,fitem_remark,fitem_type,fitem_status,FITEM_CODE,
+                                                  fcreate_time,fupdate_time,fcreate_operator_id,fupdate_operator_id)
+          values(#{id},#{orgId},#{itemName},#{itemConfig},#{remark},#{itemType},#{itemState},
+                       NVL((select substr(max(t.FITEM_CODE), 0, 4) || TRIM(TO_CHAR(TO_NUMBER(SUBSTR(MAX(t.FITEM_CODE), 5, 4)) + 1, '0000'))
+                            from T_WK_PVM_ITEM_TEMPLATE t), 'ITEM0001'),
+                 sysdate,sysdate,#{operatorId},#{operatorId})
+    </insert>
+
+    <update id="updateNodeItemTemplate" parameterType="yhao.micro.service.workflow.apilist.form.flow.FlowNodeItemTemplateSaveForm">
+        update surety.t_wk_pvm_item_template
+        set forg_id=#{orgId},fitem_name=#{itemName},fitem_config=#{itemConfig},fitem_remark=#{remark},FITEM_STATUS=#{itemState},
+            FUPDATE_TIME = SYSDATE, FUPDATE_OPERATOR_ID = #{operatorId}
+        where fid=#{id}
+    </update>
+
+    <insert id="batchBizInsertFlowNodeItem" parameterType="list">
+        insert into surety.t_wk_pvm_node_item(fid,fnode_id,fitem_expect_type,
+        fitem_expect,fitem_necessary,FITEM_CORE,FITEM_ORDER,FITEM_CODE,FORG_ID)
+        select fid,fnode_id,fitem_expect_type,
+        fitem_expect,fitem_necessary,FITEM_CORE,FITEM_ORDER,FITEM_CODE,FORG_ID
+        from (<foreach collection="list" item="nodeItem" separator="UNION ALL">
+        select
+        #{nodeItem.id} fid,
+        #{nodeItem.nodeId} fnode_id,
+        #{nodeItem.itemCode} FITEM_CODE,
+        #{nodeItem.itemExceptType} fitem_expect_type,
+        #{nodeItem.itemExcept} fitem_expect,
+        #{nodeItem.necessary} fitem_necessary,
+        #{nodeItem.core} FITEM_CORE,
+        #{nodeItem.itemOrder} FITEM_ORDER,
+        #{nodeItem.orgId} FORG_ID
+        from dual
+        </foreach>)
+    </insert>
+
+    <insert id="insertFlowNodeItem" parameterType="yhao.micro.service.workflow.apilist.form.flow.processCenter.FlowNodeItemForm">
+        insert into surety.t_wk_pvm_node_item(fid,fnode_id,FITEM_CODE,fitem_expect,fitem_expect_type,fitem_necessary,fitem_core,
+                                              fitem_order,forg_id,fcrerte_time,fupdate_time)
+        values (#{id},#{nodeId},#{itemCode}, #{itemExpect},#{itemExpectType},#{itemNecessary},#{itemCore},#{itemOrder},
+                #{orgId},sysdate,sysdate)
+    </insert>
+
+
+    <insert id="batchInsertFlowNodeNotify" parameterType="list">
+        insert into surety.t_wk_pvm_node_notify(fid,fnode_id,FIS_NOTIFY,
+        FNOTIFY_TYPE,FNOTIFY_MESSAGE,fperson_id)
+        select fid,fnode_id,FIS_NOTIFY,FNOTIFY_TYPE,FNOTIFY_MESSAGE,fperson_id
+          from (<foreach collection="list" item="nodeNotify" separator="UNION ALL">
+                      select
+                          #{nodeNotify.id} fid,
+                          #{nodeNotify.nodeId} fnode_id,
+                          #{nodeNotify.isNotify} FIS_NOTIFY,
+                          #{nodeNotify.notifyType} FNOTIFY_TYPE,
+                          #{nodeNotify.notifyMessage} FNOTIFY_MESSAGE,
+                          #{nodeNotify.personId} fperson_id
+                        from dual
+                </foreach>)
+    </insert>
+
+    <insert id="insertFlowNodeWarn" parameterType="yhao.micro.service.workflow.apilist.form.flow.processBussiness.BizFlowNodeWarnForm">
+        insert into surety.t_wk_pvm_node_warn(fid,fnode_id,flimit,flimit_warn,flevel_one_warn,flevel_one_warn_is_warn,
+                    flevel_one_warn_type,flevel_one_warn_message,flevel_two_warn,flevel_two_warn_is_warn,flevel_two_warn_type,
+                 flevel_two_warn_message,flevel_three_warn,flevel_three_warn_is_warn,flevel_three_warn_type,flevel_three_warn_message,fwarn_person)
+             values (#{id},#{nodeId},#{limit},#{limitWarn},#{levelOneWarn},#{levelOneWarnIsWarn},#{levelOneWarnType},#{levelOneWarnMessage},
+          #{levelTwoWarn},#{levelTwoWarnIsWarn},#{levelTwoWarnType},#{levelTwoWarnMessage},
+          #{levelThreeWarn},#{levelThreeWarnIsWarn},#{levelThreeWarnType},#{levelThreeWarnMessage},#{warnPerson})
+    </insert>
+
+    <select id="queryNodeItemByNodeId" parameterType="string" resultType="yhao.micro.service.workflow.apilist.model.flow.FlowNodeItemModel">
+      SELECT NODE_ITEM.fid as id,
+             NODE_ITEM.fnode_id as nodeId,
+             NODE_ITEM.FITEM_CODE as itemCode,
+             NODE_ITEM.FORG_ID as orgId,
+             ITEM_TEMPLATE.fitem_name as itemName,
+             ITEM_TEMPLATE.fitem_config as itemConfig,
+             NODE_ITEM.fitem_expect as itemExcept,
+             NODE_ITEM.fitem_expect_type as itemExceptType,
+             NODE_ITEM.fitem_necessary as necessary,
+             NODE_ITEM.fitem_core as core,
+             NODE_ITEM.fitem_order as itemOrder
+      FROM SURETY.T_WK_PVM_NODE_ITEM NODE_ITEM
+      LEFT JOIN SURETY.T_WK_PVM_ITEM_TEMPLATE ITEM_TEMPLATE ON ITEM_TEMPLATE.FITEM_CODE = NODE_ITEM.FITEM_CODE
+      WHERE NODE_ITEM.FNODE_ID=#{nodeId}
+    </select>
+
+    <select id = "queryNodeNotifyByNodeId" parameterType="String" resultType="yhao.micro.service.workflow.apilist.model.flow.FlowNodeNotifyModel" >
+        SELECT FID AS id,
+               FNODE_ID AS nodeId,
+               FPERSON_ID AS personId,
+               FIS_NOTIFY AS isNotify,
+               FNOTIFY_TYPE AS notifyType,
+               FNOTIFY_MESSAGE AS notifyMessage
+          FROM SURETY.T_WK_PVM_NODE_NOTIFY
+         WHERE FNODE_ID = #{nodeId}
+    </select>
+
+    <select id="queryAllNodeTemplateByOrgId" parameterType="yhao.micro.service.workflow.apilist.form.flow.FlowNodeTemplateQueryForm"
+            resultType="yhao.micro.service.workflow.apilist.model.flow.FlowNodeTemplateModel">
+        select A.fid as id,
+               A.FORG_ID as orgId,
+               A.fname as name,
+               A.ftype as type,
+               A.fremark as remark
+        from surety.t_wk_pvm_node_template A
+        <where>
+            <if test = "nodeName != null and nodeName != ''">
+                AND A.FNAME LIKE CONCAT(CONCAT('%',#{nodeName}),'%')
+            </if>
+            <if test = "nodeType != null and nodeType != ''">
+                AND A.FTYPE = #{nodeType}
+            </if>
+            <if test = "orgId != null and orgId != ''">
+                AND A.FORG_ID = #{orgId}
+            </if>
+        </where>
+        ORDER BY A.FCREATE_TIME DESC
+    </select>
+
+
+    <select id="selectNodeWarnByNodeId" parameterType="string" resultType="FlowNodeWarnModel">
+        select
+        fid as id,
+        fnode_id as nodeId,
+        flimit as limit,
+        flimit_warn as limitWarn,
+        flevel_one_warn as levelOneWarn,
+        flevel_one_warn_is_warn as levelOneWarnIsWarn,
+        flevel_one_warn_type as levelOneWarnType,
+        flevel_one_warn_message as levelOneWarnMessage,
+        flevel_two_warn as levelTwoWarn,
+        flevel_two_warn_is_warn as levelTwoWarnIsWarn,
+        flevel_two_warn_type as levelTwoWarnType,
+        flevel_two_warn_message as levelTwoWarnMessage,
+        flevel_three_warn as levelThreeWarn,
+        flevel_three_warn_is_warn as levelThreeWarnIsWarn,
+        flevel_three_warn_type as levelThreeWarnType,
+        flevel_three_warn_message as levelThreeWarnMessage,
+        fwarn_person as warnPerson
+        from surety.t_wk_pvm_node_warn
+        where fnode_id=#{nodeId}
+    </select>
+
+    <select id="selectProcessDefinitionById" parameterType="string" resultMap="processDefinitionResult">
+        select *
+        from surety.t_wk_pvm_process
+        where fid=#{id}
+    </select>
+
+    <select id="queryProcessPage" resultMap="ResultFlowProcessDefinitionModel"
+            parameterType="yhao.micro.service.workflow.apilist.form.flow.FlowProcessQueryForm">
+        select PROCESS.FID AS id,
+               PROCESS.FORG_ID AS orgId,
+               PROCESS.FBIZ_CODE AS bizCode,
+               PROCESS.FNAME AS name,
+               PROCESS.FPROCESS_GROUPE as processGroupe,
+               PROCESS.FNODE_COUNT as nodeCount,
+               PROCESS.FSTATUS as status,
+               PERSON.FNAME as createOperatorName,
+               PROCESS.FCREATE_TIME as createTime
+        from surety.t_wk_pvm_process PROCESS
+        left join SURETY.T_ERP_PERSON PERSON ON PERSON.FID = PROCESS.FCREATE_OPERATOR_ID
+        where 1=1
+        <if test="orgId != null and orgId != ''">
+            and PROCESS.FORG_ID = #{orgId}
+        </if>
+        <if test="name !=null and name != ''">
+            and PROCESS.FNAME LIKE CONCAT(CONCAT('%',#{name}),'%')
+        </if>
+        <if test="processGroupe !=null and processGroupe != ''">
+            and PROCESS.FPROCESS_GROUPE = #{processGroupe}
+        </if>
+        <if test="status!=null and status != ''">
+            and PROCESS.fstatus=#{status}
+        </if>
+        ORDER BY PROCESS.FCREATE_TIME DESC
+    </select>
+    <resultMap id = "ResultFlowProcessDefinitionModel" type = "yhao.micro.service.workflow.apilist.model.flow.FlowProcessDefinitionModel" >
+        <id property="id" column="id" />
+        <result property="orgId" column="orgId" />
+        <result property="bizCode" column="bizCode" />
+        <result property="name" column="name" />
+        <result property="processGroupe" column="processGroupe" />
+        <result property="nodeCount" column="nodeCount" />
+        <result property="status" column="status" />
+        <result property="createOperatorName" column="createOperatorName" />
+        <result property="createTime" column="createTime" />
+     </resultMap>
+
+    <select id="queryAllItemTemplate" parameterType="yhao.micro.service.workflow.apilist.form.flow.FlowNodeItemTemplateQueryForm" resultType="FlowItemTemplateModel">
+        SELECT FID AS id,
+               FORG_ID AS orgId,
+               FITEM_NAME AS itemName,
+               FITEM_CONFIG AS itemConfig,
+               FITEM_REMARK AS itemRemark,
+               FITEM_TYPE AS itemType,
+               FITEM_STATUS AS itemStatus,
+               FITEM_CODE AS itemCode
+          FROM SURETY.T_WK_PVM_ITEM_TEMPLATE
+          <where>
+              <if test="itemStatus!=null" >
+                  and FITEM_STATUS = #{itemStatus}
+              </if>
+              <if test="itemName!=null and itemName!=''" >
+                  and FITEM_NAME like CONCAT(CONCAT('%',#{itemName}),'%')
+              </if>
+              <if test="orgId!=null and orgId!=''" >
+                  AND FORG_ID LIKE CONCAT(CONCAT('%',#{orgId}),'%')
+              </if>
+          </where>
+        ORDER BY FCREATE_TIME DESC
+    </select>
+
+    <delete id = "deleteItemTemplate" parameterType="String" >
+        DELETE FROM SURETY.T_WK_PVM_ITEM_TEMPLATE WHERE FID = #{id}
+    </delete>
+
+    <select id="pickSubProcessId" resultType="yhao.micro.service.workflow.apilist.model.flow.SubProcessNameModel"
+            parameterType="yhao.micro.service.workflow.apilist.form.flow.SubProcessNameQueryForm" >
+        SELECT FID as id,
+               FNAME as name
+          FROM SURETY.T_WK_PVM_PROCESS
+         WHERE FORG_ID = #{orgId}
+           AND FPROCESS_TYPE = #{processType}
+           AND FNAME like CONCAT(CONCAT('%',#{subProcessName}),'%')
+    </select>
+
+    <delete id = "deleteNodeTemplate" parameterType="String" >
+        DELETE FROM SURETY.T_WK_PVM_NODE_TEMPLATE WHERE FID = #{id}
+    </delete>
+
+    <select id = "pickFlowCenterNodeByName" parameterType="yhao.micro.service.workflow.apilist.form.flow.FlowNodeNameForm"
+            resultType="yhao.micro.service.workflow.apilist.model.flow.FlowNodeTemplateModel" >
+            SELECT FID AS id,
+                   FNAME AS name,
+                   FREMARK AS remark
+              FROM SURETY.T_WK_PVM_NODE_TEMPLATE
+             WHERE FNAME LIKE concat(CONCAT('%',#{nodeName}),'%')
+               AND FORG_ID = #{orgId}
+               AND FTYPE = #{nodeType}
+    </select>
+
+    <select id = "selectProcessBizCod" parameterType="String" resultType="FlowProcessDefinitionModel" >
+        SELECT B.FID AS id,
+               B.FBIZ_CODE AS bizCod
+          FROM SURETY.T_WK_TASK A
+    INNER JOIN SURETY.T_WK_PVM_PROCESS B ON A.FPROCESS_ID = B.FID
+         WHERE A.FID = #{taskId}
+    </select>
+
+    <select id = "selectMaxBizCode2Db" resultType="String" >
+        SELECT NVL(FBIZ_CODE,0)
+        FROM(
+            SELECT FBIZ_CODE
+            FROM
+                 (SELECT FBIZ_CODE
+                  FROM SURETY.T_WK_PVM_PROCESS
+                  ORDER BY TO_NUMBER(FBIZ_CODE) DESC) WHERE ROWNUM = 1
+            UNION ALL
+            SELECT NULL as FBIZ_CODE
+            FROM dual
+            )
+    </select>
+
+    <select id = "pickAllNode" parameterType="yhao.micro.service.workflow.apilist.form.flow.FlowNodeTempleteForm"
+            resultType="yhao.micro.service.workflow.apilist.model.flow.FlowNodeTemplateModel" >
+        SELECT FID AS id,
+               FNAME AS name,
+               FTYPE AS type,
+               FREMARK AS remark
+          FROM SURETY.T_WK_PVM_NODE_TEMPLATE
+         WHERE FTYPE = #{nodeType}
+           AND FORG_ID = #{orgId}
+    </select>
+
+    <delete id = "deleteOverrideProcess" >
+        DELETE FROM SURETY.T_WK_PVM_PROCESS WHERE FSTATUS = 'OVERRIDE'
+    </delete>
+
+    <select id = "queryItemConfig" parameterType="yhao.micro.service.workflow.apilist.form.flow.processBussiness.ItemCodeForm"
+            resultType="yhao.micro.service.workflow.apilist.model.flow.ItemConfigModel" >
+        SELECT FID AS id,
+               FITEM_NAME AS itemName,
+               FITEM_CONFIG AS itemConfig,
+               FITEM_CODE AS itemCode
+          FROM SURETY.T_WK_PVM_ITEM_TEMPLATE
+        <where>
+            <if test="itemName != null and itemName != ''" >
+                AND FITEM_NAME LIKE CONCAT(CONCAT('%',#{itemName}),'%')
+            </if>
+            AND FORG_ID LIKE CONCAT(#{orgId},'%')
+        </where>
+    </select>
+
+    <select id = "pickProcessNodeIsDelete" parameterType="String" resultType="int">
+        SELECT COUNT(1) FROM SURETY.T_WK_TASK WHERE FNODE_ID = #{id} AND FSTATUS != 'END'
+    </select>
+
+    <select id = "selectForUpdate" parameterType="java.util.List" resultType="String">
+           SELECT TASK.FID
+             FROM SURETY.T_WK_TASK TASK
+        LEFT JOIN SURETY.T_WK_PVM_TRANSITION TRANSITION ON TASK.FPROCESS_ID = TRANSITION.FPROCESS_ID
+            WHERE TRANSITION.FSOURCE_NODE_ID IN
+           <foreach collection = "list" item="item" open="(" close=")" separator="," >
+               #{item}
+           </foreach>
+               OR TRANSITION.FDESTINATION_NODE_ID IN
+           <foreach collection = "list" item="item" open="(" close=")" separator="," >
+               #{item}
+           </foreach>
+           FOR UPDATE
+    </select>
+
+    <select id = "selectProcessNodeId" parameterType="String" resultType="String" >
+        SELECT PVM_NODE.FID
+          FROM SURETY.T_WK_PVM_PROCESS PVM_PROCESS
+     LEFT JOIN SURETY.T_WK_PVM_NODE PVM_NODE ON PVM_NODE.FPROCESS_ID = PVM_PROCESS.FID
+         WHERE PVM_PROCESS.FID = #{id}
+    </select>
+</mapper>

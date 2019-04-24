@@ -1,0 +1,765 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="yhao.micro.service.surety.business.dao.automapper.TwiceRepayDao">
+
+    <sql id="twicePageSql" >
+                    SELECT GUARANTEE.FID AS guaranteeId,
+                           GUARANTEE.FKGUARANTEE_ID,
+                           GUARANTEE.FGUARANTEE_TYPE,
+                           GUARANTEE.FGUARANTEE_NUM,
+                           TWICE_REPAY.FID,
+                           TWICE_REPAY.FTWICE_REPAY_STATE,
+                           TWICE_REDEEM.FTWICE_CUSTOMER_REPLENISHMENT,
+                           TWICE_REDEEM.FTWICE_REAL_REPAYMENT_FUND,
+                           TWICE_REDEEM.FTWICE_INTEREST,
+                           TWICE_REDEEM.FTWICE_PENALTY_INTEREST,
+                           TWICE_APPLICATION.FID AS applicationId,
+                           TWICE_BILLING.FTWICE_BILLING_AMOUNT, --出账金额
+                           TWICE_REPAY.FTWICE_BILLING_TOTAL,
+                           PERSON.FNAME AS managerName, --客户经理姓名
+                           ORG.FNAME AS orgName,
+                           BUSINESS_TYPE.FBUSINESS_NAME,
+                           ESTATE_SELLER.FID AS estateSellerId,
+                           ESTATE_SELLER.FESTATE_NAME,
+                           PERSONINFO_TRADES.FID AS personinfoTradesId,
+                           PERSONINFO_TRADES.FCLT_TYP,
+                           PERSONINFO_TRADES.FCLT_NAME,
+                           CURRENT_NODE.FNAME AS currentNodeName, --当前节点名称
+                           FUND_PROVIDER.FNAME AS redeemBankName, --赎楼款银行
+                           GUARANTEE_SITUATION.FREDEEM_HOUSE_AMOUNT AS redeemHouseAmount --赎楼金额
+                      FROM SURETY.T_SURETY_TWICE_REPAY TWICE_REPAY
+                 LEFT JOIN SURETY.T_SURETY_GUARANTEE GUARANTEE ON TWICE_REPAY.FGUARANTEE_ID = GUARANTEE.FID
+                 LEFT JOIN SURETY.T_SURETY_TWICE_REDEEM TWICE_REDEEM ON TWICE_REDEEM.FGUARANTEE_ID = TWICE_REPAY.FGUARANTEE_ID
+                 LEFT JOIN SURETY.T_SURETY_TWICE_BILLING TWICE_BILLING ON TWICE_BILLING.FGUARANTEE_ID = TWICE_REPAY.FGUARANTEE_ID
+                 LEFT JOIN SURETY.T_SURETY_TWICE_APPLICATION TWICE_APPLICATION ON TWICE_APPLICATION.FGUARANTEE_ID = TWICE_REPAY.FGUARANTEE_ID
+                 LEFT JOIN SURETY.T_ERP_PERSON PERSON ON PERSON.FID = GUARANTEE.FCREATE_OPERATOR_ID
+                 LEFT JOIN SURETY.T_ERP_ORG ORG ON ORG.FID = PERSON.FORG_ID
+                 LEFT JOIN SURETY.T_SURETY_BUSINESS_TYPE BUSINESS_TYPE ON BUSINESS_TYPE.FID = GUARANTEE.FBIZ_ID
+                 LEFT JOIN SURETY.T_SURETY_G_ESTATE_SELLER ESTATE_SELLER ON ESTATE_SELLER.FGUARANTEE_ID = TWICE_REPAY.FGUARANTEE_ID
+                 LEFT JOIN SURETY.T_SURETY_G_PERSONINFO_TRADES PERSONINFO_TRADES ON PERSONINFO_TRADES.FGUARANTEE_ID = TWICE_REPAY.FGUARANTEE_ID
+                 LEFT JOIN SURETY.T_WK_TASK TASK ON TASK.FBIZ_ENTITY_ID = TWICE_APPLICATION.FID
+                 LEFT JOIN SURETY.T_WK_PVM_NODE CURRENT_NODE ON TASK.FNODE_ID = CURRENT_NODE.FID
+                 LEFT JOIN SURETY.T_SURETY_G_GUARANTEE_SITUATION GUARANTEE_SITUATION ON GUARANTEE_SITUATION.FGUARANTEE_ID = TWICE_REPAY.FGUARANTEE_ID
+                 LEFT JOIN SURETY.T_BASE_FUND_PROVIDER FUND_PROVIDER ON GUARANTEE_SITUATION.FREDEEM_BANK_ID = FUND_PROVIDER.FID
+                 LEFT JOIN SURETY.T_SURETY_G_GUARANTEE_SITUATION GUARANTEE_SITUATION ON GUARANTEE_SITUATION.FGUARANTEE_ID = TWICE_REPAY.FGUARANTEE_ID
+    </sql>
+    <sql id="pageQueryCondition" >
+        <if test="orgId != null and orgId != ''" >
+            and TWICE_REPAY.FORG_ID = #{orgId}
+        </if>
+        <if test="managerId != null and managerId != ''">
+            and GUARANTEE.FCREATE_OPERATOR_ID = #{managerId}
+        </if>
+        <if test="bizTypeId != null and bizTypeId != ''">
+            and GUARANTEE.FBIZ_ID = #{bizTypeId}
+        </if>
+        <if test="mix != null and mix != ''">
+            and (GUARANTEE.FGUARANTEE_NUM = #{mix}
+            or ESTATE_SELLER.FPROPERTY_NAME = #{mix}
+            or PERSONINFO_TRADES.FCLT_NAME = #{mix}
+            or (ESTATE_SELLER.FDEED_NUM = #{mix} and ESTATE_SELLER.FDEED_TYPE = 'FCZ'))
+        </if>
+        <if test="twiceRepayDateType != null and startDate != null" >
+            and ${twiceRepayDateTable}.${twiceRepayDateColumn} between #{startDate} and NVL(#{endDate}, sysdate)
+        </if>
+        <if test="state != null and state.toString() == 'YES' " >
+            and TWICE_REPAY.FTWICE_REPAY_STATE >= #{stateInt}
+        </if>
+        <if test="state != null and state.toString() == 'NO' " >
+            and TWICE_REPAY.FTWICE_REPAY_STATE &lt; #{stateInt}
+            and TWICE_REPAY.FTWICE_REPAY_STATE = #{stateInt} - 1
+        </if>
+        and (TWICE_REPAY.FTWICE_REPAY_STATE = #{stateInt} - 1 or TWICE_REPAY.FTWICE_REPAY_STATE >= #{stateInt} )
+    </sql>
+
+    <select id = "queryTwiceRepayStartPage" parameterType="yhao.micro.service.surety.business.apilist.form.twiceRepay.TwiceRepayPageQueryForm"
+            resultMap="ResultTwiceRepayStartPage" >
+           <include refid = "twicePageSql"/>
+        <where>
+            <include refid = "pageQueryCondition" />
+        </where>
+    </select>
+    <select id = "queryTwiceRepayConfirmPage" parameterType="yhao.micro.service.surety.business.apilist.form.twiceRepay.TwiceRepayPageQueryForm"
+            resultMap="ResultTwiceRepayConfirmPage" >
+        <include refid = "twicePageSql"/>
+        <where>
+            <include refid = "pageQueryCondition" />
+        </where>
+    </select>
+    <select id = "queryTwiceRepayArrivalPage" parameterType="yhao.micro.service.surety.business.apilist.form.twiceRepay.TwiceRepayPageQueryForm"
+            resultMap="ResultTwiceRepayArrivalPage" >
+           <include refid = "twicePageSql"/>
+        <where>
+            <include refid = "pageQueryCondition" />
+        </where>
+    </select>
+    <select id = "queryTwiceRepayApplyPage" parameterType="yhao.micro.service.surety.business.apilist.form.twiceRepay.TwiceRepayPageQueryForm"
+            resultMap="ResultTwiceRepayApplyPage" >
+        <include refid = "twicePageSql"/>
+        <where>
+            <include refid = "pageQueryCondition" />
+        </where>
+    </select>
+    <select id = "queryTwiceRepayBillingPage" parameterType="yhao.micro.service.surety.business.apilist.form.twiceRepay.TwiceRepayPageQueryForm"
+            resultMap="ResultTwiceRepayBillingPage" >
+           SELECT GUARANTEE.FID AS guaranteeId,
+                  GUARANTEE.FKGUARANTEE_ID,
+                  GUARANTEE.FGUARANTEE_TYPE,
+                  GUARANTEE.FGUARANTEE_NUM,
+                  TWICE_REPAY.FID,
+                  TWICE_REPAY.FTWICE_REPAY_STATE,
+                  TWICE_REPAY.FTWICE_ARRIVAL_TOTAL AS totalArrivalAmount, --总到账
+                  TWICE_REDEEM.FTWICE_CUSTOMER_REPLENISHMENT,
+                  TWICE_REDEEM.FTWICE_REAL_REPAYMENT_FUND,
+                  TWICE_REDEEM.FTWICE_INTEREST,
+                  TWICE_REDEEM.FTWICE_PENALTY_INTEREST,
+                  TWICE_REPAY.FTWICE_BILLING_TOTAL,
+                  PERSON.FNAME AS managerName, --客户经理姓名
+                  ORG.FNAME AS orgName,
+                  BUSINESS_TYPE.FBUSINESS_NAME,
+                  ESTATE_SELLER.FID AS estateSellerId,
+                  ESTATE_SELLER.FESTATE_NAME,
+                  PERSONINFO_TRADES.FID AS personinfoTradesId,
+                  PERSONINFO_TRADES.FCLT_TYP,
+                  PERSONINFO_TRADES.FCLT_NAME,
+                  CURRENT_NODE.FNAME AS currentNodeName, --当前节点名称
+                  TWICE_APPLICATION.FID AS applicationId,
+                  TWICE_APPLICATION.FAPPLICATION_AMOUNT, --申请金额
+                  TWICE_APPLICATION_PERSON.FNAME AS applyer, --申请人
+                  TWICE_REDEEM.FCREATE_TIME AS repayDate, --还款时间
+                  TWICE_BILLING.FTWICE_BILLING_AMOUNT AS billedAmount --已出账金额
+             FROM SURETY.T_SURETY_TWICE_REPAY TWICE_REPAY
+        LEFT JOIN SURETY.T_SURETY_GUARANTEE GUARANTEE ON TWICE_REPAY.FGUARANTEE_ID = GUARANTEE.FID
+        LEFT JOIN SURETY.T_ERP_PERSON TWICE_APPLICATION_PERSON ON TWICE_APPLICATION_PERSON.FID = TWICE_APPLICATION_PERSON.FCREATE_OPERATOR_ID
+        LEFT JOIN SURETY.T_ERP_PERSON PERSON ON PERSON.FID = GUARANTEE.FCREATE_OPERATOR_ID
+        LEFT JOIN SURETY.T_ERP_ORG ORG ON ORG.FID = PERSON.FORG_ID
+        LEFT JOIN SURETY.T_SURETY_BUSINESS_TYPE BUSINESS_TYPE ON BUSINESS_TYPE.FID = GUARANTEE.FBIZ_ID
+        LEFT JOIN SURETY.T_SURETY_G_ESTATE_SELLER ESTATE_SELLER ON ESTATE_SELLER.FGUARANTEE_ID = TWICE_REPAY.FGUARANTEE_ID
+        LEFT JOIN SURETY.T_SURETY_G_PERSONINFO_TRADES PERSONINFO_TRADES ON PERSONINFO_TRADES.FGUARANTEE_ID = TWICE_REPAY.FGUARANTEE_ID
+        LEFT JOIN SURETY.T_SURETY_TWICE_APPLICATION TWICE_APPLICATION ON TWICE_APPLICATION.FGUARANTEE_ID = TWICE_REPAY.FGUARANTEE_ID
+        LEFT JOIN SURETY.T_SURETY_TWICE_REDEEM TWICE_REDEEM ON TWICE_REDEEM.FGUARANTEE_ID = TWICE_REPAY.FGUARANTEE_ID
+        LEFT JOIN SURETY.T_WK_TASK TASK ON TASK.FBIZ_ENTITY_ID = TWICE_APPLICATION.FID
+        LEFT JOIN SURETY.T_WK_PVM_NODE CURRENT_NODE ON TASK.FNODE_ID = CURRENT_NODE.FID
+        LEFT JOIN SURETY.T_SURETY_TWICE_BILLING TWICE_BILLING ON TWICE_BILLING.FAPPLICATION_ID = TWICE_APPLICATION.FID
+        <where>
+            <include refid = "pageQueryCondition" />
+            and TASK.FSTATUS = 'END'
+        </where>
+    </select>
+    <select id = "queryTwiceRepayRedeemPage" parameterType="yhao.micro.service.surety.business.apilist.form.twiceRepay.TwiceRepayPageQueryForm"
+            resultMap="ResultTwiceRepayRedeemPage" >
+           SELECT GUARANTEE.FID AS guaranteeId,
+                  GUARANTEE.FKGUARANTEE_ID,
+                  GUARANTEE.FGUARANTEE_TYPE,
+                  GUARANTEE.FGUARANTEE_NUM,
+                  TWICE_REPAY.FID,
+                  TWICE_REPAY.FTWICE_REPAY_STATE,
+                  TWICE_REDEEM.FTWICE_CUSTOMER_REPLENISHMENT,
+                  TWICE_REDEEM.FTWICE_REAL_REPAYMENT_FUND,
+                  TWICE_REDEEM.FTWICE_INTEREST,
+                  TWICE_REDEEM.FTWICE_PENALTY_INTEREST,
+                  TWICE_REDEEM.FPER_REDEEM_STATE AS perRedeemState, --每笔还款状态
+                  TWICE_REDEEM.FBALANCE_CONFIRM_STATE AS perBalanceRedeemState, --每笔余款状态
+                  TWICE_REDEEM.FTWICE_COMPANY_ACCOUNT AS twiceCompanyAccount,--额外添加,用于余款查看, 余款查看不在提供接口
+                  TWICE_REDEEM.FBALANCE_CONFIRM_OPERATOR AS balanceConfirmOperatorId, --确认人ID
+                  OPERATOR.FNAME AS balanceConfirmOperator, --确认人姓名
+                  TWICE_REDEEM.FBALANCE_CONFIRM_DATE AS balanceConfirmDate, --确认时间
+                  TWICE_BILLING.FID AS financeBillingId,
+                  TWICE_BILLING.FTWICE_BILLING_AMOUNT, --出账金额
+                  TWICE_APPLICATION.FRECEIPTER_TYPE AS receipterType, --收款人类型
+                  PERSON.FNAME AS managerName, --客户经理姓名
+                  ORG.FNAME AS orgName,
+                  BUSINESS_TYPE.FBUSINESS_NAME,
+                  ESTATE_SELLER.FID AS estateSellerId,
+                  ESTATE_SELLER.FESTATE_NAME,
+                  PERSONINFO_TRADES.FID AS personinfoTradesId,
+                  PERSONINFO_TRADES.FCLT_TYP,
+                  PERSONINFO_TRADES.FCLT_NAME
+             FROM SURETY.T_SURETY_TWICE_REPAY TWICE_REPAY
+        LEFT JOIN SURETY.T_SURETY_GUARANTEE GUARANTEE ON TWICE_REPAY.FGUARANTEE_ID = GUARANTEE.FID
+        LEFT JOIN SURETY.T_SURETY_TWICE_BILLING TWICE_BILLING ON TWICE_BILLING.FGUARANTEE_ID = TWICE_REPAY.FGUARANTEE_ID
+        LEFT JOIN SURETY.T_SURETY_TWICE_APPLICATION TWICE_APPLICATION ON TWICE_APPLICATION.FID = TWICE_BILLING.FAPPLICATION_ID
+        LEFT JOIN SURETY.T_SURETY_TWICE_REDEEM TWICE_REDEEM ON TWICE_REDEEM.FFINANCE_BILLING_ID = TWICE_BILLING.FID
+        LEFT JOIN SURETY.T_ERP_PERSON OPERATOR ON OPERATOR.FID = TWICE_REDEEM.FBALANCE_CONFIRM_OPERATOR
+        LEFT JOIN SURETY.T_ERP_PERSON PERSON ON PERSON.FID = GUARANTEE.FCREATE_OPERATOR_ID
+        LEFT JOIN SURETY.T_ERP_ORG ORG ON ORG.FID = PERSON.FORG_ID
+        LEFT JOIN SURETY.T_SURETY_BUSINESS_TYPE BUSINESS_TYPE ON BUSINESS_TYPE.FID = GUARANTEE.FBIZ_ID
+        LEFT JOIN SURETY.T_SURETY_G_ESTATE_SELLER ESTATE_SELLER ON ESTATE_SELLER.FGUARANTEE_ID = TWICE_REPAY.FGUARANTEE_ID
+        LEFT JOIN SURETY.T_SURETY_G_PERSONINFO_TRADES PERSONINFO_TRADES ON PERSONINFO_TRADES.FGUARANTEE_ID = TWICE_REPAY.FGUARANTEE_ID
+        <where>
+            <include refid = "pageQueryCondition" />
+        </where>
+    </select>
+    <resultMap id = "ResultTwiceRepayStartPage" type = "yhao.micro.service.surety.business.apilist.model.twiceRepay.TwiceRepayStartPageModel" >
+        <id property="id" column="FID" />
+        <result property="guaranteeId" column="guaranteeId"/>
+        <result property="kguaranteeId" column="FKGUARANTEE_ID"/>
+        <result property="guaranteeType" column="FGUARANTEE_TYPE"/>
+        <result property="guaranteeNum" column="FGUARANTEE_NUM"/>
+        <result property="twiceRepayState" column="FTWICE_REPAY_STATE"/>
+        <result property="managerName" column="managerName"/>
+        <result property="managerOrg" column="orgName"/>
+        <result property="businessName" column="FBUSINESS_NAME"/>
+        <result property="currentNodeName" column="currentNodeName"/>
+        <result property="redeemHouseAmount" column="redeemHouseAmount"/>
+        <result property="redeemBankName" column="redeemBankName"/>
+        <collection property = "estatePageModelList" ofType="yhao.micro.service.surety.business.apilist.model.guarantee.page.EstatePageModel" >
+            <id property="id" column="estateSellerId" />
+            <result property="estateName" column="FESTATE_NAME"/>
+        </collection>
+        <collection property = "applicationPersonModelList" ofType="yhao.micro.service.surety.business.apilist.model.guarantee.page.ApplicationPersonModel" >
+            <id property="id" column="personinfoTradesId" />
+            <result property="cltTyp" column="FCLT_TYP"/>
+            <result property="cltName" column="FCLT_NAME"/>
+        </collection>
+    </resultMap>
+    <resultMap id = "ResultTwiceRepayConfirmPage" type = "yhao.micro.service.surety.business.apilist.model.twiceRepay.TwiceRepayConfirmPageModel" >
+        <id property="id" column="FID" />
+        <result property="guaranteeId" column="guaranteeId"/>
+        <result property="kguaranteeId" column="FKGUARANTEE_ID"/>
+        <result property="guaranteeType" column="FGUARANTEE_TYPE"/>
+        <result property="guaranteeNum" column="FGUARANTEE_NUM"/>
+        <result property="twiceRepayState" column="FTWICE_REPAY_STATE"/>
+        <result property="managerName" column="managerName"/>
+        <result property="managerOrg" column="orgName"/>
+        <result property="businessName" column="FBUSINESS_NAME"/>
+        <result property="currentNodeName" column="currentNodeName"/>
+        <result property="redeemHouseAmount" column="redeemHouseAmount"/>
+        <result property="redeemBankName" column="redeemBankName"/>
+        <collection property = "estatePageModelList" ofType="yhao.micro.service.surety.business.apilist.model.guarantee.page.EstatePageModel" >
+            <id property="id" column="estateSellerId" />
+            <result property="estateName" column="FESTATE_NAME"/>
+        </collection>
+        <collection property = "applicationPersonModelList" ofType="yhao.micro.service.surety.business.apilist.model.guarantee.page.ApplicationPersonModel" >
+            <id property="id" column="personinfoTradesId" />
+            <result property="cltTyp" column="FCLT_TYP"/>
+            <result property="cltName" column="FCLT_NAME"/>
+        </collection>
+    </resultMap>
+    <resultMap id = "ResultTwiceRepayArrivalPage" type = "yhao.micro.service.surety.business.apilist.model.twiceRepay.TwiceRepayArrivalPageModel" >
+        <id property="id" column="FID" />
+        <result property="guaranteeId" column="guaranteeId"/>
+        <result property="kguaranteeId" column="FKGUARANTEE_ID"/>
+        <result property="guaranteeType" column="FGUARANTEE_TYPE"/>
+        <result property="guaranteeNum" column="FGUARANTEE_NUM"/>
+        <result property="twiceRepayState" column="FTWICE_REPAY_STATE"/>
+        <result property="managerName" column="managerName"/>
+        <result property="managerOrg" column="orgName"/>
+        <result property="businessName" column="FBUSINESS_NAME"/>
+        <result property="currentNodeName" column="currentNodeName"/>
+        <result property="redeemHouseAmount" column="redeemHouseAmount"/>
+        <result property="arrivalAmount" column="FARRIVAL_TOTAL_AMOUNT" />
+        <collection property = "estatePageModelList" ofType="yhao.micro.service.surety.business.apilist.model.guarantee.page.EstatePageModel" >
+            <id property="id" column="estateSellerId" />
+            <result property="estateName" column="FESTATE_NAME"/>
+        </collection>
+        <collection property = "applicationPersonModelList" ofType="yhao.micro.service.surety.business.apilist.model.guarantee.page.ApplicationPersonModel" >
+            <id property="id" column="personinfoTradesId" />
+            <result property="cltTyp" column="FCLT_TYP"/>
+            <result property="cltName" column="FCLT_NAME"/>
+        </collection>
+    </resultMap>
+    <resultMap id = "ResultTwiceRepayApplyPage" type = "yhao.micro.service.surety.business.apilist.model.twiceRepay.TwiceRepayApplyPageModel" >
+        <id property="id" column="FID" />
+        <result property="guaranteeId" column="guaranteeId"/>
+        <result property="kguaranteeId" column="FKGUARANTEE_ID"/>
+        <result property="guaranteeType" column="FGUARANTEE_TYPE"/>
+        <result property="guaranteeNum" column="FGUARANTEE_NUM"/>
+        <result property="twiceRepayState" column="FTWICE_REPAY_STATE"/>
+        <result property="managerName" column="managerName"/>
+        <result property="managerOrg" column="orgName"/>
+        <result property="businessName" column="FBUSINESS_NAME"/>
+        <result property="currentNodeName" column="currentNodeName"/>
+        <result property="redeemHouseAmount" column="redeemHouseAmount"/>
+        <result property="redeemBankName" column="redeemBankName"/>
+        <collection property = "estatePageModelList" ofType="yhao.micro.service.surety.business.apilist.model.guarantee.page.EstatePageModel" >
+            <id property="id" column="estateSellerId" />
+            <result property="estateName" column="FESTATE_NAME"/>
+        </collection>
+        <collection property = "applicationPersonModelList" ofType="yhao.micro.service.surety.business.apilist.model.guarantee.page.ApplicationPersonModel" >
+            <id property="id" column="personinfoTradesId" />
+            <result property="cltTyp" column="FCLT_TYP"/>
+            <result property="cltName" column="FCLT_NAME"/>
+        </collection>
+    </resultMap>
+    <resultMap id = "ResultTwiceRepayBillingPage" type = "yhao.micro.service.surety.business.apilist.model.twiceRepay.TwiceRepayBillingPageModel" >
+        <id property="id" column="FID" />
+        <result property="guaranteeId" column="guaranteeId"/>
+        <result property="kguaranteeId" column="FKGUARANTEE_ID"/>
+        <result property="guaranteeType" column="FGUARANTEE_TYPE"/>
+        <result property="guaranteeNum" column="FGUARANTEE_NUM"/>
+        <result property="twiceRepayState" column="FTWICE_REPAY_STATE"/>
+        <result property="businessName" column="FBUSINESS_NAME"/>
+        <result property="currentNodeName" column="currentNodeName"/>
+        <result property="totalArrivalAmount" column="totalArrivalAmount"/>
+        <collection property = "twiceRepayBillingInnerPageModelList" ofType="yhao.micro.service.surety.business.apilist.model.twiceRepay.TwiceRepayBillingInnerPageModel" >
+            <result property="applyingAmount" column="FAPPLICATION_AMOUNT"/>
+            <result property="applyer" column="applyer"/>
+            <result property="repayDate" column="repayDate"/>
+            <result property="billedAmount" column="billedAmount"/>
+            <result property="applicationId" column="applicationId"/>
+        </collection>
+        <collection property = "estatePageModelList" ofType="yhao.micro.service.surety.business.apilist.model.guarantee.page.EstatePageModel" >
+            <id property="id" column="estateSellerId" />
+            <result property="estateName" column="FESTATE_NAME"/>
+        </collection>
+        <collection property = "applicationPersonModelList" ofType="yhao.micro.service.surety.business.apilist.model.guarantee.page.ApplicationPersonModel" >
+            <id property="id" column="personinfoTradesId" />
+            <result property="cltTyp" column="FCLT_TYP"/>
+            <result property="cltName" column="FCLT_NAME"/>
+        </collection>
+    </resultMap>
+    <resultMap id = "ResultTwiceRepayRedeemPage" type = "yhao.micro.service.surety.business.apilist.model.twiceRepay.TwiceRepayRedeemPageModel" >
+        <id property="id" column="FID" />
+        <result property="guaranteeId" column="guaranteeId"/>
+        <result property="kguaranteeId" column="FKGUARANTEE_ID"/>
+        <result property="guaranteeType" column="FGUARANTEE_TYPE"/>
+        <result property="guaranteeNum" column="FGUARANTEE_NUM"/>
+        <result property="twiceRepayState" column="FTWICE_REPAY_STATE"/>
+        <result property="businessName" column="FBUSINESS_NAME"/>
+        <collection property = "twiceRepayRedeemInnerPageModelList" ofType="yhao.micro.service.surety.business.apilist.model.twiceRepay.TwiceRepayRedeemInnerPageModel" >
+            <id property="id" column="financeBillingId"/>
+            <result property="twiceCompanyAccount" column="twiceCompanyAccount"/>
+            <result property="twiceBillingAmount" column="FTWICE_BILLING_AMOUNT"/>
+            <result property="twiceCustomerReplenishment" column="FTWICE_CUSTOMER_REPLENISHMENT" />
+            <result property="twiceRealRepaymentFund" column="FTWICE_REAL_REPAYMENT_FUND" />
+            <result property="twiceInterest" column="FTWICE_INTEREST" />
+            <result property="twicePenaltyInterest" column="FTWICE_PENALTY_INTEREST" />
+            <result property="perRedeemState" column="perRedeemState" />
+            <result property="perBalanceRedeemState" column="perBalanceRedeemState" />
+            <result property="balanceConfirmOperatorId" column="balanceConfirmOperatorId" />
+            <result property="balanceConfirmOperator" column="balanceConfirmOperator" />
+            <result property="balanceConfirmDate" column="balanceConfirmDate" />
+            <result property="receipterType" column="receipterType" />
+        </collection>
+        <collection property = "estatePageModelList" ofType="yhao.micro.service.surety.business.apilist.model.guarantee.page.EstatePageModel" >
+            <id property="id" column="estateSellerId" />
+            <result property="estateName" column="FESTATE_NAME"/>
+        </collection>
+        <collection property = "applicationPersonModelList" ofType="yhao.micro.service.surety.business.apilist.model.guarantee.page.ApplicationPersonModel" >
+            <id property="id" column="personinfoTradesId" />
+            <result property="cltTyp" column="FCLT_TYP"/>
+            <result property="cltName" column="FCLT_NAME"/>
+        </collection>
+    </resultMap>
+
+    <update id = "updateTwiceRepayState" parameterType="yhao.micro.service.surety.business.apilist.form.twiceRepay.TwiceRepayStateForm" >
+        UPDATE SURETY.T_SURETY_TWICE_REPAY
+           <set>
+               FTWICE_REPAY_STATE = #{twiceRepayState},
+               <if test="twiceArrivalTotal != null and twiceArrivalTotal > 0" >FTWICE_ARRIVAL_TOTAL = #{twiceArrivalTotal},</if>
+               <if test="twiceBillingTotal != null and twiceBillingTotal > 0" >FTWICE_BILLING_TOTAL = #{twiceBillingTotal},</if>
+               <if test="twiceBillingDate != null " >FTWICE_BILLING_DATE = #{twiceBillingDate}</if>
+           </set>
+         WHERE FGUARANTEE_ID = #{id}
+    </update>
+
+
+    <update id = "updateRequisitesConfirm" parameterType="yhao.micro.service.surety.business.apilist.form.twiceRepay.RequisitesConfirmForm" >
+        UPDATE SURETY.T_SURETY_TWICE_REPAY
+           SET FTWICE_REPAY_STATE = #{twiceRepayState},
+               FTWICE_REMARK = #{remarks},
+               FUPDATE_OPERATOR_ID = #{operatorId},
+               FUPDATE_TIME = sysdate
+         WHERE FID = #{id}
+    </update>
+
+    <insert id = "saveTwiceArrival" parameterType="yhao.micro.service.surety.business.apilist.form.twiceRepay.TwiceArrivalSaveForm" >
+        INSERT INTO SURETY.T_SURETY_TWICE_ARRIVAL
+                (
+                        FID,
+                        FGUARANTEE_ID,
+                        FARRIVAL_DATE,
+                        FARRIVAL_AMOUNT,
+                        FARRIVAL_REMARK,
+                        FTWICE_BANK_ACCOUNT_ID,
+                        FCREATE_OPERATOR_ID,
+                        FUPDATE_OPERATOR_ID,
+                        FCREATE_TIME,
+                        FUPDATE_TIME
+                        )
+        VALUES (
+                       #{id},
+                       #{guaranteeId},
+                       #{arrivalDate},
+                       #{arrivalAmount},
+                       #{arrivalRemark},
+                       #{twiceBankAccountId},
+                       #{operatorId},
+                       #{operatorId},
+                       sysdate,
+                       sysdate
+                       )
+    </insert>
+
+    <update id = "updateTwiceArrival" parameterType="yhao.micro.service.surety.business.apilist.form.twiceRepay.TwiceArrivalSaveForm" >
+        UPDATE SURETY.T_SURETY_TWICE_ARRIVAL
+           SET FARRIVAL_DATE = #{arrivalDate},
+               FARRIVAL_AMOUNT = #{arrivalAmount},
+               FARRIVAL_REMARK = #{arrivalRemark},
+               FTWICE_BANK_ACCOUNT_ID = #{twiceBankAccountId},
+               FUPDATE_OPERATOR_ID = #{operatorId},
+               FUPDATE_TIME = sysdate
+         WHERE FID = #{id}
+    </update>
+
+    <delete id = "deleteTwiceArrival" parameterType="String" >
+        DELETE FROM SURETY.T_SURETY_TWICE_ARRIVAL WHERE FID = #{id}
+    </delete>
+
+    <select id = "TwiceArrivalIdPageForm" parameterType="yhao.micro.service.surety.business.apilist.form.twiceRepay.TwiceArrivalIdPageForm"
+            resultType="yhao.micro.service.surety.business.apilist.model.twiceRepay.TwiceArrivalModel" >
+            SELECT TWICE_ARRIVAL.FID AS id,
+                   TWICE_ARRIVAL.FARRIVAL_AMOUNT AS arrivalAmount,
+                   TWICE_ARRIVAL.FARRIVAL_DATE AS arrivalDate,
+                   FUND_PROVIDER.FNAME AS bankAccount,
+                   TWICE_ARRIVAL.FARRIVAL_REMARK AS remark,
+                   TWICE_ARRIVAL.FUPDATE_TIME AS operateDate
+              FROM SURETY.T_SURETY_TWICE_ARRIVAL TWICE_ARRIVAL
+         LEFT JOIN SURETY.T_BASE_FUND_PROVIDER FUND_PROVIDER ON FUND_PROVIDER.FID = TWICE_ARRIVAL.FTWICE_BANK_ACCOUNT_ID
+             WHERE TWICE_ARRIVAL.FGUARANTEE_ID = #{guaranteeId}
+    </select>
+
+    <select id = "pickTwiceArrival" parameterType="String" resultType="yhao.micro.service.surety.business.apilist.model.twiceRepay.TwiceArrivalModel">
+          SELECT TWICE_ARRIVAL.FID AS id,
+                 TWICE_ARRIVAL.FARRIVAL_AMOUNT AS arrivalAmount,
+                 TWICE_ARRIVAL.FARRIVAL_DATE AS arrivalDate,
+                 FUND_PROVIDER.FNAME AS bankAccount,
+                 TWICE_ARRIVAL.FARRIVAL_REMARK AS remark,
+                 TWICE_ARRIVAL.FUPDATE_TIME AS operateDate
+            FROM SURETY.T_SURETY_TWICE_ARRIVAL TWICE_ARRIVAL
+       LEFT JOIN SURETY.T_BASE_FUND_PROVIDER FUND_PROVIDER ON FUND_PROVIDER.FID = TWICE_ARRIVAL.FTWICE_BANK_ACCOUNT_ID
+           WHERE TWICE_ARRIVAL.FID = #{id}
+    </select>
+
+    <insert id = "insertApplicationBilling" parameterType="yhao.micro.service.surety.business.apilist.form.twiceRepay.ApplicationBillingSaveForm" >
+        INSERT INTO SURETY.T_SURETY_TWICE_APPLICATION
+                (
+                        FID,
+                        FGUARANTEE_ID,
+                        FRECEIPTER_TYPE,
+                        FRECEIPTER_ACCOUNT,
+                        FCARD_NUMBER,
+                        FBANK,
+                        FREPAY_DATE,
+                        FAPPLICATION_AMOUNT,
+                        FREMARK,
+                        FCREATE_TIME,
+                        FUPDATE_TIME,
+                        FCREATE_OPERATOR_ID,
+                        FUPDATE_OPERATOR_ID
+                        )
+        VALUES (
+                       #{applicationBillingId},
+                       #{guaranteeId},
+                       #{receipterType},
+                       #{receipterAccount},
+                       #{cardNumber},
+                       #{bank},
+                       #{repayDate},
+                       #{applicationAmount},
+                       #{applicationRemark},
+                       sysdate,
+                       sysdate,
+                       #{operatorId},
+                       #{operatorId}
+                       )
+    </insert>
+
+    <select id = "queryApplicationBilling" parameterType="yhao.micro.service.surety.business.apilist.form.twiceRepay.GuaranteeIdPageForm"
+            resultType="yhao.micro.service.surety.business.apilist.model.twiceRepay.TwiceApplicationModel" >
+           SELECT TWICE_APPLICATION.FID AS id,
+                  TWICE_APPLICATION.FGUARANTEE_ID AS guaranteeId,
+                  TWICE_APPLICATION.FRECEIPTER_TYPE AS receipterType,
+                  TWICE_APPLICATION.FRECEIPTER_ACCOUNT AS receipterAccount,
+                  TWICE_APPLICATION.FCARD_NUMBER AS cardNumber,
+                  TWICE_APPLICATION.FBANK AS bank,
+                  TWICE_APPLICATION.FREPAY_DATE AS repayDate,
+                  TWICE_APPLICATION.FAPPLICATION_AMOUNT AS applicationAmount,
+                  TWICE_APPLICATION.FREMARK AS applicationRemark,
+                  TWICE_REPAY.FTWICE_REPAY_STATE AS twiceRepayState,
+                  PERSON.FNAME AS applicationName
+             FROM SURETY.T_SURETY_TWICE_APPLICATION TWICE_APPLICATION
+        LEFT JOIN SURETY.T_SURETY_TWICE_REPAY TWICE_REPAY ON TWICE_REPAY.FGUARANTEE_ID = TWICE_APPLICATION.FGUARANTEE_ID
+        LEFT JOIN SURETY.T_ERP_PERSON PERSON ON PERSON.FID = TWICE_APPLICATION.FCREATE_OPERATOR_ID
+            WHERE TWICE_APPLICATION.FGUARANTEE_ID = #{guaranteeId}
+    </select>
+
+    <select id = "selectApplicationBilling" parameterType="String"
+            resultType="yhao.micro.service.surety.business.apilist.model.twiceRepay.TwiceApplicationModel" >
+        SELECT TWICE_APPLICATION.FID AS id,
+               TWICE_APPLICATION.FGUARANTEE_ID AS guaranteeId,
+               TWICE_APPLICATION.FRECEIPTER_TYPE AS receipterType,
+               TWICE_APPLICATION.FRECEIPTER_ACCOUNT AS receipterAccount,
+               TWICE_APPLICATION.FCARD_NUMBER AS cardNumber,
+               TWICE_APPLICATION.FBANK AS bank,
+               TWICE_APPLICATION.FREPAY_DATE AS repayDate,
+               TWICE_APPLICATION.FAPPLICATION_AMOUNT AS applicationAmount,
+               TWICE_APPLICATION.FREMARK AS applicationRemark
+          FROM SURETY.T_SURETY_TWICE_APPLICATION TWICE_APPLICATION
+         WHERE TWICE_APPLICATION.FID = #{id}
+    </select>
+
+    <select id = "pickTwiceBilling" parameterType="String"
+             resultType="yhao.micro.service.surety.business.apilist.model.twiceRepay.TwiceBillingModel" >
+         SELECT TWICE_BILLING.FID AS id,
+                TWICE_BILLING.FGUARANTEE_ID AS guaranteeId,
+                TWICE_BILLING.FTWICE_BILLING_ACCOUNT_ID AS twiceBillingAccountId,
+                TWICE_BILLING.FTWICE_BILLING_TYPE AS twiceBillingType,
+                TWICE_BILLING.FTWICE_BILLING_AMOUNT AS twiceBillingAmount,
+                TWICE_BILLING.FTWICE_BILLING_DATE AS twiceBillingDate,
+                TWICE_APPLICATION.FRECEIPTER_ACCOUNT AS receipterAccount,
+                TWICE_APPLICATION.FCARD_NUMBER AS cardNumber,
+                TWICE_APPLICATION.FBANK AS bank,
+                PERSON.FNAME AS loanName,
+                TWICE_REDEEM.FCREATE_TIME AS redeemDate,
+                APPLY_NAME.FNAME AS applyName
+           FROM SURETY.T_SURETY_TWICE_BILLING TWICE_BILLING
+      LEFT JOIN SURETY.T_SURETY_TWICE_APPLICATION TWICE_APPLICATION ON TWICE_BILLING.FAPPLICATION_ID = TWICE_BILLING.FID
+      LEFT JOIN SURETY.T_SURETY_TWICE_REDEEM TWICE_REDEEM ON TWICE_REDEEM.FFINANCE_BILLING_ID = TWICE_BILLING.FID
+      LEFT JOIN SURETY.T_ERP_PERSON APPLY_NAME ON APPLY_NAME.FID = TWICE_APPLICATION.FCREATE_OPERATOR_ID
+      LEFT JOIN SURETY.T_SURETY_GUARANTEE GUARANTEE ON GUARANTEE.FREDEEM_ID = TWICE_BILLING.FGUARANTEE_ID
+      LEFT JOIN SURETY.T_ERP_PERSON PERSON ON PERSON.FID = GUARANTEE.FREDEEM_ID
+          WHERE TWICE_BILLING.FID = #{id}
+    </select>
+
+    <insert id = "saveTwiceBilling" parameterType="yhao.micro.service.surety.business.apilist.form.twiceRepay.TwiceBillingSaveForm" >
+        INSERT INTO SURETY.T_SURETY_TWICE_BILLING
+                (
+                        FID,
+                        FGUARANTEE_ID,
+                        FTWICE_BILLING_ACCOUNT_ID,
+                        FTWICE_BILLING_TYPE,
+                        FTWICE_BILLING_AMOUNT,
+                        FTWICE_BILLING_DATE,
+                        FCREATE_TIME,
+                        FUPDATE_TIME,
+                        FCREATE_OPERATOR_ID,
+                        FUPDATE_OPERATOR_ID,
+                        FAPPLICATION_ID
+                        )
+        VALUES (
+                       #{id},
+                       #{guaranteeId},
+                       #{twiceBillingAccountId},
+                       #{twiceBillingType},
+                       #{twiceBillingAmount},
+                       #{twiceBillingDate},
+                       sysdate,
+                       sysdate,
+                       #{operatorId},
+                       #{operatorId},
+                       #{applicationId}
+                       )
+    </insert>
+
+    <update id = "twiceBilling" parameterType="yhao.micro.service.surety.business.apilist.form.twiceRepay.TwiceBillingSaveForm" >
+        UPDATE SURETY.T_SURETY_TWICE_BILLING
+           SET FTWICE_BILLING_ACCOUNT_ID = #{twiceBillingAccountId},
+               FTWICE_BILLING_TYPE = #{twiceBillingType},
+               FTWICE_BILLING_AMOUNT = #{twiceBillingAmount},
+               FTWICE_BILLING_DATE = #{twiceBillingDate},
+               FUPDATE_TIME = sysdate,
+               FUPDATE_OPERATOR_ID = #{operatorId}
+         WHERE FID = #{id}
+    </update>
+
+    <insert id = "insertTwiceRedeem" parameterType="yhao.micro.service.surety.business.apilist.form.twiceRepay.TwiceRedeemSaveForm" >
+        INSERT INTO SURETY.T_SURETY_TWICE_REDEEM
+                (
+                        FID,
+                        FGUARANTEE_ID,
+                        FFINANCE_BILLING_ID,
+                        FTWICE_REDEEM_DATE,
+                        FTWICE_CUSTOMER_REPLENISHMENT,
+                        FTWICE_REAL_REPAYMENT_FUND,
+                        FTWICE_INTEREST,
+                        FTWICE_PENALTY_INTEREST,
+                        FTWICE_COMPANY_ACCOUNT,
+                        FTWICE_REBACK_DATE,
+                        FTWICE_REMARK,
+                        FCERTIFICATE,
+                        FCREATE_TIME,
+                        FUPDATE_TIME,
+                        FCREATE_OPERATOR_ID,
+                        FUPDATE_OPERATOR_ID,
+                        FPER_REDEEM_STATE
+                        )
+        VALUES (
+                       #{id},
+                       #{guaranteeId},
+                       #{financeBillingId},
+                       #{twiceRedeemDate},
+                       #{twiceCustomerReplenishment},
+                       #{twiceRealRepaymentFund},
+                       #{twiceInterest},
+                       #{twicePenaltyInterest},
+                       #{twiceCompanyAccount},
+                       #{twiceRebackDate},
+                       #{twiceRemark},
+                       #{certificate},
+                       sysdate,
+                       sysdate,
+                       #{operatorId},
+                       #{operatorId},
+                       #{perRedeemState}
+                       )
+    </insert>
+
+    <update id = "updateTwiceRedeem" parameterType="yhao.micro.service.surety.business.apilist.form.twiceRepay.TwiceRedeemSaveForm" >
+        UPDATE SURETY.T_SURETY_TWICE_REDEEM
+           <set>
+               <if test="twiceRedeemDate!=null">twiceRedeemDate=#{twiceRedeemDate},</if>
+               <if test="twiceCustomerReplenishment!=null ">FTWICE_CUSTOMER_REPLENISHMENT=#{twiceCustomerReplenishment},</if>
+               <if test="twiceRealRepaymentFund!=null ">FTWICE_REAL_REPAYMENT_FUND=#{twiceRealRepaymentFund},</if>
+               <if test="twiceInterest!=null ">FTWICE_INTEREST=#{twiceInterest},</if>
+               <if test="twicePenaltyInterest!=null ">FTWICE_PENALTY_INTEREST=#{twicePenaltyInterest},</if>
+               <if test="twiceCompanyAccount!=null and twiceCompanyAccount != '' ">FTWICE_COMPANY_ACCOUNT=#{twiceCompanyAccount},</if>
+               <if test="twiceRebackDate!=null ">FTWICE_REBACK_DATE=#{twiceRebackDate},</if>
+               FTWICE_REMARK=#{twiceRemark},
+               <if test="balanceConfirmState!=null ">FBALANCE_CONFIRM_STATE=#{balanceConfirmState},</if>
+               <if test="balanceConfirmOperator!=null and balanceConfirmOperator !='' ">FBALANCE_CONFIRM_OPERATOR=#{operatorId},</if>
+               <if test="balanceConfirmDate!=null ">FBALANCE_CONFIRM_DATE=sysdate,</if>
+               FUPDATE_TIME = sysdate,
+               FUPDATE_OPERATOR_ID = #{operatorId}
+           </set>
+        WHERE FID = #{id}
+    </update>
+
+    <select id = "selectTwiceRepayHistory" parameterType="String" resultType="yhao.micro.service.surety.business.apilist.model.twiceRepay.TwiceRepayHistoryModel" >
+        SELECT TWICE_HISTORY.FID AS id,
+               TWICE_HISTORY.FOPERATE_NAME AS operateName,
+               TWICE_HISTORY.FOPERATOR_NAME AS operatorName,
+               TWICE_HISTORY.FOPERATE_CONTENT AS operateState,
+               TWICE_HISTORY.FOPERATE_CONTENT AS operateContent,
+               TWICE_HISTORY.FUPDATE_TIME AS operateDate,
+               TWICE_HISTORY.FUPDATE_OPERATOR_ID AS operatorId,
+               TWICE_REPAY.FTWICE_ARRIVAL_TOTAL AS secondArrival,
+               TWICE_REDEEM.FTWICE_REAL_REPAYMENT_FUND AS twiceRealRepaymentFund,
+               TWICE_REDEEM.FTWICE_INTEREST AS twiceInterest,
+               TWICE_REDEEM.FTWICE_PENALTY_INTEREST AS twicePenaltyInterest
+          FROM SURETY.T_SURETY_TWICE_HISTORY TWICE_HISTORY
+        LEFT JOIN SURETY.T_SURETY_TWICE_REPAY TWICE_REPAY ON TWICE_REPAY.FGUARANTEE_ID = TWICE_HISTORY.FGUARANTEE_ID
+        LEFT JOIN SURETY.T_SURETY_TWICE_REDEEM TWICE_REDEEM ON TWICE_REDEEM.FGUARANTEE_ID = TWICE_HISTORY.FGUARANTEE_ID
+         WHERE TWICE_HISTORY.FGUARANTEE_ID = #{id}
+    </select>
+
+    <insert id = "insertTwiceRepayHistory" parameterType="yhao.micro.service.surety.business.apilist.form.twiceRepay.TwiceRepayHistorySaveForm" >
+        INSERT INTO SURETY.T_SURETY_TWICE_HISTORY
+                (
+                        FID,
+                        FOPERATE_NAME,
+                        FOPERATOR_NAME,
+                        FOPERATE_STATE,
+                        FOPERATE_CONTENT,
+                        FCREATE_TIME,
+                        FUPDATE_TIME,
+                        FCREATE_OPERATOR_ID,
+                        FUPDATE_OPERATOR_ID,
+                        FGUARANTEE_ID
+                        )
+        VALUES (
+                       #{id},
+                       #{operateName},
+                       #{operatorName},
+                       #{operateState},
+                       #{operateContent},
+                       sysdate,
+                       sysdate,
+                       #{operatorId},
+                       #{operatorId},
+                       #{guaranteeId}
+                       )
+    </insert>
+
+    <select id = "selectTwiceArrivalMoney" parameterType="String" resultType="java.math.BigDecimal" >
+        SELECT FARRIVAL_AMOUNT
+          FROM SURETY.T_SURETY_TWICE_ARRIVAL
+         WHERE FGUARANTEE_ID = #{id}
+    </select>
+
+    <update id = "updateRedeemState" parameterType="yhao.micro.service.surety.business.apilist.form.twiceRepay.BalanceConfirmForm" >
+        UPDATE SURETY.T_SURETY_TWICE_REDEEM
+           SET FBALANCE_CONFIRM_STATE = 'YES',
+               FUPDATE_OPERATOR_ID = #{operatorId},
+               FBALANCE_CONFIRM_OPERATOR = #{operatorId},
+               FBALANCE_CONFIRM_DATE = #{balanceConfirmDate},
+               FUPDATE_TIME = sysdate
+         WHERE FFINANCE_BILLING_ID = #{id}
+    </update>
+    <select id = "selectRedeemState" parameterType="String" resultType="String">
+        SELECT FBALANCE_CONFIRM_STATE FROM SURETY.T_SURETY_TWICE_REDEEM WHERE FID = #{id}
+    </select>
+
+    <select id = "selectArrivalAmount" parameterType="String"
+            resultType="yhao.micro.service.surety.business.apilist.model.twiceRepay.TwiceApplicationRecordModel" >
+           SELECT TWICE_ARRIVAL.FARRIVAL_AMOUNT AS arrivalAmount,
+                  TWICE_APPLICATION.FAPPLICATION_AMOUNT AS applicationAmount,
+                  TWICE_BILLING.FTWICE_BILLING_AMOUNT AS twiceBillingAmount
+             FROM SURETY.T_SURETY_TWICE_ARRIVAL TWICE_ARRIVAL
+        LEFT JOIN SURETY.T_SURETY_TWICE_APPLICATION TWICE_APPLICATION ON TWICE_APPLICATION.FGUARANTEE_ID = TWICE_ARRIVAL.FGUARANTEE_ID
+        LEFT JOIN SURETY.T_SURETY_TWICE_BILLING TWICE_BILLING ON TWICE_BILLING.FGUARANTEE_ID = TWICE_ARRIVAL.FGUARANTEE_ID
+            WHERE TWICE_ARRIVAL.FGUARANTEE_ID = #{guaranteeId}
+    </select>
+
+    <select id = "pickTwiceRedeem" parameterType="String"
+            resultType="yhao.micro.service.surety.business.apilist.model.twiceRepay.TwiceRedeemModel" >
+           SELECT TWICE_REDEEM.FID AS id,
+                  TWICE_REDEEM.FGUARANTEE_ID AS guaranteeId,
+                  TWICE_REDEEM.FFINANCE_BILLING_ID AS financeBillingId,
+                  TWICE_REDEEM.FTWICE_REDEEM_DATE AS twiceRedeemDate,
+                  TWICE_REDEEM.FTWICE_CUSTOMER_REPLENISHMENT AS twiceCustomerReplenishment,
+                  TWICE_REDEEM.FTWICE_REAL_REPAYMENT_FUND AS twiceRealRepaymentFund,
+                  TWICE_REDEEM.FTWICE_INTEREST AS twiceInterest,
+                  TWICE_REDEEM.FTWICE_PENALTY_INTEREST AS twicePenaltyInterest,
+                  TWICE_REDEEM.FTWICE_COMPANY_ACCOUNT AS twiceCompanyAccount,
+                  TWICE_REDEEM.FTWICE_REBACK_DATE AS twiceRebackDate,
+                  TWICE_REDEEM.FTWICE_REMARK AS twiceRemark,
+                  TWICE_REDEEM.FCERTIFICATE AS certificate,
+                  TWICE_REPAY.FTWICE_BILLING_DATE AS twiceBillingDate,
+                  TWICE_REPAY.FTWICE_BILLING_TOTAL AS twiceBillingAmount,
+                  GUARANTEE.FGUARANTEE_NUM AS guaranteeNum,
+                  ESTATE_SELLER.FPROPERTY_NAME AS estateName,
+                  PERSON.FNAME AS managerName,
+                  ORG.FNAME AS orgName
+             FROM SURETY.T_SURETY_TWICE_BILLING TWICE_BILLING
+        LEFT JOIN SURETY.T_SURETY_GUARANTEE GUARANTEE ON TWICE_BILLING.FGUARANTEE_ID = GUARANTEE.FID
+        LEFT JOIN SURETY.T_SURETY_G_ESTATE_SELLER ESTATE_SELLER ON GUARANTEE.FID = ESTATE_SELLER.FGUARANTEE_ID
+        LEFT JOIN SURETY.T_ERP_PERSON PERSON ON PERSON.FID = GUARANTEE.FCREATE_OPERATOR_ID
+        LEFT JOIN SURETY.T_ERP_ORG ORG ON ORG.FID = GUARANTEE.FORG_ID
+        LEFT JOIN SURETY.T_SURETY_TWICE_REPAY TWICE_REPAY ON TWICE_REPAY.FGUARANTEE_ID = TWICE_BILLING.FGUARANTEE_ID
+        LEFT JOIN SURETY.T_SURETY_TWICE_REDEEM TWICE_REDEEM ON TWICE_BILLING.FID = TWICE_REDEEM.FFINANCE_BILLING_ID
+            WHERE TWICE_BILLING.FID = #{id}
+    </select>
+    <insert id = "insertBilling" parameterType="yhao.micro.service.surety.business.apilist.form.twiceRepay.BillingSaveForm" >
+        INSERT INTO SURETY.T_SURETY_TWICE_BILLING
+                (
+                        FID,
+                        FGUARANTEE_ID,
+                        FAPPLICATION_ID
+                        )
+        VALUES (
+                       #{id},
+                       #{guaranteeId},
+                       #{applicationId}
+                       )
+    </insert>
+    <select id = "queryTwiceRepayRedeem" parameterType="String"
+            resultType="yhao.micro.service.surety.business.apilist.model.twiceRepay.TwiceRepayRedeemInnerPageModel" >
+            SELECT TWICE_BILLING.FID,
+                   nvl(TWICE_REDEEM.FPER_REDEEM_STATE , 'NO') AS perRedeemState --每笔还款状态
+              FROM SURETY.T_SURETY_TWICE_REPAY TWICE_REPAY
+         LEFT JOIN SURETY.T_SURETY_TWICE_BILLING TWICE_BILLING ON TWICE_BILLING.FGUARANTEE_ID = TWICE_REPAY.FGUARANTEE_ID
+         LEFT JOIN SURETY.T_SURETY_TWICE_REDEEM TWICE_REDEEM ON TWICE_REDEEM.FFINANCE_BILLING_ID = TWICE_BILLING.FID
+             WHERE TWICE_REPAY.FGUARANTEE_ID = #{id}
+    </select>
+
+    <update id = "updateCancelState" parameterType="String" >
+        UPDATE SURETY.T_SURETY_TWICE_APPLICATION
+        SET FSTATE = 'CANCEL'
+        WHERE FID = #{id}
+    </update>
+</mapper>

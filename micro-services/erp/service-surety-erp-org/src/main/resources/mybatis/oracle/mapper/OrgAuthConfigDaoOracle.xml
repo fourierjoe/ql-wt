@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="yhao.micro.service.surety.erp.org.dao.automapper.OrgAuthConfigDao">
+	<delete id="deleteAllPersonRelationByPositionLinkIds" parameterType="yhao.micro.service.surety.erp.org.apilist.form.IdsForm">
+		delete from t_erp_auth_person_authority
+		where fposition_link_id in
+		<foreach open="(" close=")" collection="ids" separator="," item="id">#{id}</foreach>
+	</delete>
+
+	<delete id="deleteAllPositionRelationByPositionLinkIds" parameterType="yhao.micro.service.surety.erp.org.apilist.form.IdsForm">
+		delete from t_erp_auth_position_authority
+		where fposition_link_id in
+		<foreach open="(" close=")" collection="ids" separator="," item="id">#{id}</foreach>
+	</delete>
+</mapper>

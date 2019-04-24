@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="yhao.micro.service.surety.baseconfig.dao.automapper.CommandDao">
+    <resultMap id="CommandResult" type="yhao.micro.service.surety.baseconfig.apilist.model.CommandModel">
+        <id property="id" column="FID"/>
+        <result property="orgId" column="FORG_ID"/>
+        <result property="businessTypeId" column="FBUSINESS_TYPE_ID"/>
+        <result property="redeemFundProviderId" column="FREDEEM_FUND_PROVIDER_ID"/>
+        <result property="previousFundProviderId" column="FPREVIOUS_FUND_PROVIDER_ID"/>
+        <result property="validityType" column="FVALIDITY_TYPE"/>
+        <result property="dayCount" column="FDAY_COUNT"/>
+        <result property="status" column="FSTATUS"/>
+        <result property="createTime" column="FCREATE_TIME"/>
+        <result property="updateTime" column="FUPDATE_TIME"/>
+        <result property="createOperatorId" column="FCREATE_OPERATOR_ID"/>
+        <result property="updateOperatorId" column="FUPDATE_OPERATOR_ID"/>
+
+        <result property="businessTypeName" column="FBUSINESS_TYPE_NAME"/>
+        <result property="redeemFundProviderName" column="FREDEEM_FUND_PROVIDER_NAME"/>
+        <result property="previousFundProviderName" column="FPREVIOUS_FUND_PROVIDER_NAME"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="yhao.micro.service.surety.baseconfig.apilist.form.CommandSaveForm">
+        insert into T_BASE_COMMAND(FID,FORG_ID, FBUSINESS_TYPE_ID, FREDEEM_FUND_PROVIDER_ID, FPREVIOUS_FUND_PROVIDER_ID, FVALIDITY_TYPE, FDAY_COUNT, FSTATUS, FCREATE_TIME, FUPDATE_TIME, FCREATE_OPERATOR_ID, FUPDATE_OPERATOR_ID)
+                VALUES (sys_guid(),#{orgId},#{businessTypeId},#{redeemFundProviderId},#{previousFundProviderId},#{validityType},#{dayCount},#{status},sysdate,sysdate,#{operatorId},#{operatorId})
+    </insert>
+
+    <update id="update" parameterType="yhao.micro.service.surety.baseconfig.apilist.form.CommandSaveForm">
+        update T_BASE_COMMAND
+        <set>
+            FUPDATE_TIME = sysdate,
+            <if test="businessTypeId!=null and businessTypeId!=''">FBUSINESS_TYPE_ID=#{businessTypeId},</if>
+            <if test="redeemFundProviderId!=null and redeemFundProviderId!=''">FREDEEM_FUND_PROVIDER_ID=#{redeemFundProviderId},</if>
+            <if test="previousFundProviderId!=null and previousFundProviderId!=''">FPREVIOUS_FUND_PROVIDER_ID=#{previousFundProviderId},</if>
+            <if test="validityType!=null">FVALIDITY_TYPE=#{validityType},</if>
+            <if test="dayCount!=null">FDAY_COUNT=#{dayCount},</if>
+            <if test="status!=null">FSTATUS=#{status},</if>
+            <if test="operatorId!=null and operatorId!=''">FUPDATE_OPERATOR_ID=#{operatorId},</if>
+            <if test="orgId!=null and orgId!=''">FORG_ID=#{orgId},</if>
+        </set>
+        where FID=#{id}
+    </update>
+
+    <update id="statusChange" parameterType="yhao.micro.service.surety.baseconfig.apilist.form.StatusChangeForm">
+        UPDATE T_BASE_COMMAND SET FSTATUS=#{status} WHERE FID = #{id}
+    </update>
+
+    <delete id="deleteById" parameterType="yhao.infra.apilist.validate.IdForm">
+        delete from T_BASE_COMMAND where FID=#{id}
+    </delete>
+
+    <select id="query" parameterType="yhao.micro.service.surety.baseconfig.apilist.form.CommandQueryForm" resultMap="CommandResult">
+        SELECT C.*,B.FBUSINESS_NAME AS FBUSINESS_TYPE_NAME,RM.FNAME AS FREDEEM_FUND_PROVIDER_NAME,PM.FNAME AS FPREVIOUS_FUND_PROVIDER_NAME  FROM T_BASE_COMMAND C
+        LEFT JOIN T_SURETY_BUSINESS_TYPE B ON C.FBUSINESS_TYPE_ID=B.FID
+        LEFT JOIN T_BASE_FUND_PROVIDER RM ON C.FREDEEM_FUND_PROVIDER_ID=RM.FID
+        LEFT JOIN T_BASE_FUND_PROVIDER PM ON C.FPREVIOUS_FUND_PROVIDER_ID=PM.FID
+        <where>
+            <if test="id!=null and id!=''">AND C.FID=#{id}</if>
+            <if test="orgId!=null and orgId!=''">AND C.FORG_ID=#{orgId}</if>
+            <if test="businessTypeId!=null and businessTypeId!=''">AND C.FBUSINESS_TYPE_ID=#{businessTypeId}</if>
+            <if test="redeemFundProviderName!=null and redeemFundProviderName!=''">AND RM.FNAME LIKE '%' || #{redeemFundProviderName} || '%'</if>
+            <if test="previousFundProviderName!=null and previousFundProviderName!=''">AND PM.FNAME LIKE '%' || #{previousFundProviderName} || '%'</if>
+            <if test="validityType!=null">AND C.FVALIDITY_TYPE=#{validityType}</if>
+            <if test="status!=null">AND C.FSTATUS=#{status}</if>
+        </where>
+        ORDER BY C.FCREATE_TIME DESC,C.FID
+    </select>
+</mapper>

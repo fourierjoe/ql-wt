@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="yhao.micro.service.surety.erp.org.dao.automapper.PersonPropertiesDao">
+    <resultMap id="PersonPropertiesResult" type="yhao.micro.service.surety.erp.org.apilist.model.PersonPropertiesModel">
+        <id property="id" column="fid"/>
+        <result property="personId" column="FPERSON_ID"/>
+        <result property="wxOpenId" column="FWX_OPEN_ID"/>
+        <result property="status" column="FSTATUS"/>
+    </resultMap>
+
+    <insert id="insertPersonProperties" parameterType="yhao.micro.service.surety.erp.org.apilist.form.person.PersonPropertiesSaveForm">
+        insert into T_ERP_PERSON_PROPERTY(FID,FPERSON_ID,FWX_OPEN_ID,FSTATUS)
+                values (sys_guid(),#{personId},#{wxOpenId},#{status})
+    </insert>
+
+    <update id="updatePersonProperties" parameterType="yhao.micro.service.surety.erp.org.apilist.form.person.PersonPropertiesSaveForm">
+        update T_ERP_PERSON_PROPERTY
+        <set>
+            <if test="wxOpenId!=null and wxOpenId!=''">FWX_OPEN_ID = #{wxOpenId},</if>
+            <if test="status!=null">FSTATUS=#{status},</if>
+        </set>
+        where FID =#{id}
+    </update>
+
+    <select id="queryPersonPropertiesByPersonId" parameterType="String" resultMap="PersonPropertiesResult">
+        SELECT * FROM T_ERP_PERSON_PROPERTY WHERE FPERSON_ID=#{personId}
+    </select>
+</mapper>

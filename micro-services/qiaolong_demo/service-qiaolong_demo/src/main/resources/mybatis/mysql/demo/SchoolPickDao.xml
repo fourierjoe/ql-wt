@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="yhao.micro.service.qiaolong_demo.dao.automapper.SchoolPickDao">
+
+	<resultMap id="schoolInfoResult" type="SchoolModel">
+		<id property="id" column="fid"/>
+		<result property="ftype" column="ftype" />
+		<result property="fname" column="fname" />
+		<result property="fproperty" column="fproperty" />
+		<result property="fkcityid" column="fkcityid" />
+	</resultMap>
+
+	<select id="pickSchoolInfo" parameterType="java.lang.String" resultMap="schoolInfoResult">
+		select ﻿FID as id,FTYPE,FNAME,FPROPERTY,FKCITYID
+		from test.loupan_school
+		where ﻿FID = #{id}
+	</select>
+
+	<select id="pickStudentInfoById" parameterType="String" resultMap="schoolInfoResult">
+		select ﻿FID as id,FTYPE,FNAME,FPROPERTY,FKCITYID
+		  from test.loupan_school
+		 where ﻿FID = #{id}
+	</select>
+
+	<select id="queryAllStudentInfo" resultType="SchoolModel" >
+		select ﻿FID,FTYPE,FNAME,FPROPERTY,FKCITYID
+		  from test.loupan_school
+	</select>
+</mapper>

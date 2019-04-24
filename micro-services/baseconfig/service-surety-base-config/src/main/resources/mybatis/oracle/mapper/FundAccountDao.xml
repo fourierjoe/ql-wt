@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="yhao.micro.service.surety.baseconfig.dao.automapper.FundAccountDao">
+    <resultMap id="FundAccountResult" type="yhao.micro.service.surety.baseconfig.apilist.model.FundAccountModel">
+        <id property="id" column="FID"/>
+        <result property="orgId" column="FORG_ID"/>
+        <result property="accountType" column="FACCOUNT_TYPE"/>
+        <result property="fundProviderId" column="FFUND_PROVIDER_ID"/>
+        <result property="accountBank" column="FACCOUNT_BANK"/>
+        <result property="accountName" column="FACCOUNT_NAME"/>
+        <result property="accountNumber" column="FACCOUNT_NUMBER"/>
+        <result property="remark" column="FREMARK"/>
+        <result property="status" column="FSTATUS"/>
+        <result property="createTime" column="FCREATE_TIME"/>
+        <result property="updateTime" column="FUPDATE_TIME"/>
+        <result property="createOperatorId" column="FCREATE_OPERATOR_ID"/>
+        <result property="updateOperatorId" column="FUPDATE_OPERATOR_ID"/>
+
+        <result property="orgName" column="FORG_NAME"/>
+        <result property="fundProviderName" column="FFUND_PROVIDER_NAME"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="yhao.micro.service.surety.baseconfig.apilist.form.FundAccountSaveForm">
+        insert into T_BASE_FUND_ACCOUNT(FID,FORG_ID,FACCOUNT_TYPE,FFUND_PROVIDER_ID,FACCOUNT_BANK,FACCOUNT_NAME,FACCOUNT_NUMBER,FREMARK,FSTATUS,FCREATE_TIME,FUPDATE_TIME,FCREATE_OPERATOR_ID,FUPDATE_OPERATOR_ID)
+        values (sys_guid(),#{orgId},#{accountType},#{fundProviderId},#{accountBank},#{accountName},#{accountNumber},#{remark},#{status},sysdate,sysdate,#{operatorId},#{operatorId})
+    </insert>
+
+    <update id="update" parameterType="yhao.micro.service.surety.baseconfig.apilist.form.FundAccountSaveForm">
+        update T_BASE_FUND_ACCOUNT
+        <set>
+            FUPDATE_TIME = sysdate,
+            FREMARK = #{remark},
+            <if test="orgId!=null and orgId!=''">FORG_ID=#{orgId},</if>
+            <if test="fundProviderId!=null and fundProviderId!=''">FFUND_PROVIDER_ID=#{fundProviderId},</if>
+            <if test="accountBank!=null and accountBank!=''">FACCOUNT_BANK=#{accountBank},</if>
+            <if test="accountName!=null and accountName!=''">FACCOUNT_NAME=#{accountName},</if>
+            <if test="accountNumber!=null and accountNumber!=''">FACCOUNT_NUMBER=#{accountNumber},</if>
+            <if test="operatorId!=null and operatorId!=''">FUPDATE_OPERATOR_ID=#{operatorId},</if>
+            <if test="accountType!=null">FACCOUNT_TYPE = #{accountType},</if>
+            <if test="status!=null">FSTATUS = #{status},</if>
+        </set>
+        where fid = #{id}
+    </update>
+
+    <update id="statusChange" parameterType="yhao.micro.service.surety.baseconfig.apilist.form.StatusChangeForm">
+        UPDATE T_BASE_FUND_ACCOUNT SET FSTATUS=#{status} WHERE FID = #{id}
+    </update>
+
+    <delete id="deleteById" parameterType="yhao.infra.apilist.validate.IdForm">
+        delete from T_BASE_FUND_ACCOUNT where FID=#{id}
+    </delete>
+
+    <select id="query" parameterType="yhao.micro.service.surety.baseconfig.apilist.form.FundAccountQueryForm" resultMap="FundAccountResult">
+        select F.*,O.FNAME AS FORG_NAME,P.FNAME AS FFUND_PROVIDER_NAME from T_BASE_FUND_ACCOUNT F
+            LEFT JOIN T_ERP_ORG O ON F.FORG_ID=O.FID
+            LEFT JOIN T_BASE_FUND_PROVIDER P ON F.FFUND_PROVIDER_ID=P.FID
+        <where>
+            <if test="id!=null and id!=''">AND F.FID=#{id}</if>
+            <if test="orgId!=null and orgId!=''">AND F.FORG_ID=#{orgId}</if>
+            <if test="fundProviderId!=null and fundProviderId!=''">AND F.FFUND_PROVIDER_ID=#{fundProviderId}</if>
+            <if test="accountBank!=null and accountBank!=''">AND F.FACCOUNT_BANK=#{accountBank}</if>
+            <if test="accountName!=null and accountName!=''">AND F.FACCOUNT_NAME LIKE '%' || #{accountName} || '%'</if>
+            <if test="accountNumber!=null and accountNumber!=''">AND F.FACCOUNT_NUMBER=#{accountNumber}</if>
+            <if test="accountType!=null">AND F.FACCOUNT_TYPE = #{accountType}</if>
+            <if test="status!=null">AND F.FSTATUS = #{status}</if>
+        </where>
+        ORDER BY F.FCREATE_TIME DESC,F.FID
+    </select>
+</mapper>

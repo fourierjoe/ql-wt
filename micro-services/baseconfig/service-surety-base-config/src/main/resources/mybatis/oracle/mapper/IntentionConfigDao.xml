@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="yhao.micro.service.surety.baseconfig.dao.automapper.IntentionConfigDao">
+    <resultMap id="IntentionConfigResult" type="yhao.micro.service.surety.baseconfig.apilist.model.IntentionConfigModel">
+        <id property="id" column="FID"/>
+        <result property="orgId" column="FORG_ID"/>
+        <result property="positionType" column="FPOSITION_TYPE"/>
+        <result property="personId" column="FPERSON_ID"/>
+        <result property="responsibleOrgIds" column="FRESPONSIBLE_ORG_IDS"/>
+        <result property="status" column="FSTATUS"/>
+        <result property="createTime" column="FCREATE_TIME"/>
+        <result property="updateTime" column="FUPDATE_TIME"/>
+        <result property="createOperatorId" column="FCREATE_OPERATOR_ID"/>
+        <result property="updateOperatorId" column="FUPDATE_OPERATOR_ID"/>
+
+        <result property="orgName" column="FORG_NAME"/>
+        <result property="personName" column="FPERSON_NAME"/>
+    </resultMap>
+    
+    <insert id="insert" parameterType="yhao.micro.service.surety.baseconfig.apilist.form.IntentionConfigSaveForm">
+        insert into T_BASE_INTENTION_CONFIG (FID,FORG_ID,FPOSITION_TYPE,FPERSON_ID,FRESPONSIBLE_ORG_IDS,FSTATUS,FCREATE_TIME,FUPDATE_TIME,FCREATE_OPERATOR_ID,FUPDATE_OPERATOR_ID)
+        values(sys_guid(),#{orgId},#{positionType},#{personId},#{responsibleOrgIds},#{status},sysdate,sysdate,#{operatorId},#{operatorId})
+    </insert>
+
+    <update id="update" parameterType="yhao.micro.service.surety.baseconfig.apilist.form.IntentionConfigSaveForm">
+        update T_BASE_INTENTION_CONFIG
+        <set>
+            FUPDATE_TIME = sysdate,
+            <if test="orgId!=null and orgId!=''">FORG_ID=#{orgId},</if>
+            <if test="positionType!=null">FPOSITION_TYPE=#{positionType},</if>
+            <if test="personId!=null and personId!=''">FPERSON_ID=#{personId},</if>
+            <choose>
+                <when test="responsibleOrgIds!=null and responsibleOrgIds!=''">FRESPONSIBLE_ORG_IDS=#{responsibleOrgIds},</when>
+                <otherwise>FRESPONSIBLE_ORG_IDS=null,</otherwise>
+            </choose>
+            <if test="status!=null">FSTATUS=#{status},</if>
+            <if test="operatorId!=null and operatorId!=''">FUPDATE_OPERATOR_ID=#{operatorId},</if>
+        </set>
+        where fid = #{id}
+    </update>
+
+    <update id="statusChange" parameterType="yhao.micro.service.surety.baseconfig.apilist.form.StatusChangeForm">
+        UPDATE T_BASE_INTENTION_CONFIG SET FSTATUS=#{status} WHERE FID = #{id}
+    </update>
+
+    <delete id="deleteById" parameterType="yhao.infra.apilist.validate.IdForm">
+        delete from T_BASE_INTENTION_CONFIG WHERE FID = #{id}
+    </delete>
+
+    <select id="query" parameterType="yhao.micro.service.surety.baseconfig.apilist.form.IntentionConfigQueryForm" resultMap="IntentionConfigResult">
+        select I.*,O.FNAME AS FORG_NAME,P.FNAME AS FPERSON_NAME from T_BASE_INTENTION_CONFIG I
+        LEFT JOIN T_ERP_ORG O ON I.FORG_ID=O.FID
+        LEFT JOIN T_ERP_PERSON P ON I.FPERSON_ID=P.FID
+        <where>
+            <if test="positionType!=null">and I.FPOSITION_TYPE=#{positionType}</if>
+            <if test="orgId!=null and orgId!=''">and I.FORG_ID=#{orgId}</if>
+            <if test="excludeId!=null and excludeId!=''">and I.FID!=#{excludeId}</if>
+            <if test="responsibleOrgId!=null and responsibleOrgId!=''">and I.FRESPONSIBLE_ORG_IDS LIKE '%' || #{responsibleOrgId} ||'%'</if>
+            <if test="orResponsibleOrgIdList!=null">
+                AND
+                <foreach collection="orResponsibleOrgIdList" open="(" close=")" item="item" index="index" separator="OR">
+                    I.FRESPONSIBLE_ORG_IDS LIKE '%' || #{item} ||'%'
+                </foreach>
+            </if>
+            <if test="andResponsibleOrgIdList!=null">
+                AND
+                <foreach collection="orResponsibleOrgIdList" open="(" close=")" item="item" index="index" separator="AND">
+                    I.FRESPONSIBLE_ORG_IDS LIKE '%' || #{item} ||'%'
+                </foreach>
+            </if>
+            <if test="personId!=null and personId!=''">and I.FPERSON_ID LIKE '%' || #{personId} ||'%'</if>
+            <if test="status!=null">and I.FSTATUS=#{status}</if>
+        </where>
+        ORDER BY I.FCREATE_TIME DESC,I.FID
+    </select>
+</mapper>

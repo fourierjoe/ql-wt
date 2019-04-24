@@ -1,0 +1,521 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="yhao.micro.service.surety.business.dao.automapper.ExtensionApplicationDao">
+
+    <insert id="extensionApplicationSave" parameterType="yhao.micro.service.surety.business.apilist.form.complex.ExtensionApplicationSaveForm">
+        <if test="types == 1">
+            insert into SURETY.T_SURETY_EXTENSION_APPLICATION(FID,FDAYS,FDAILY_RATE,FSUBTOTAL,FREFUNDABLE_FEE,FSHOULD_PAY_THE_EXTENSION,FPOST_SHOW_DUE_DATE,
+            FREMARKS,FGUARANTEE_ID,FLOAN_ID,FCREATE_TIME,FTYPES)
+            values (#{id},#{days},#{dailyRate},#{subtotal},#{refundableFee},#{shouldPay},TO_Date(#{postShowDueDate}, 'yyyy-MM-dd'),#{remarks},
+            #{guaranteeId},#{loanId},TO_Date(#{createDate}, 'yyyy-MM-dd'),#{types})
+        </if>
+        <if test="types == 2">
+            insert into SURETY.T_SURETY_EXTENSION_APPLICATION(FID,FDAYS,FRATE_OF_CHARGE,FSHOULD_PAY_THE_EXTENSION,FPOST_SHOW_DUE_DATE,
+            FREMARKS,FGUARANTEE_ID,FLOAN_ID,FCREATE_TIME,FTYPES)
+            values (#{id},#{days},#{rateOfCharge},#{shouldPay},TO_Date(#{postShowDueDate}, 'yyyy-MM-dd'),#{remarks},
+            #{guaranteeId},#{loanId},TO_Date(#{createDate}, 'yyyy-MM-dd'),#{types})
+        </if>
+    </insert>
+
+    <update id="extensionApplicationUpdate" parameterType="yhao.micro.service.surety.business.apilist.form.complex.ExtensionApplicationSaveForm">
+        <if test="types == 1">
+            UPDATE SURETY.T_SURETY_EXTENSION_APPLICATION
+            SET FDAYS = #{days},
+            FDAILY_RATE=#{dailyRate},
+            FSUBTOTAL=#{subtotal},
+            FREFUNDABLE_FEE=#{refundableFee},
+            FSHOULD_PAY_THE_EXTENSION = #{shouldPay},
+            FPOST_SHOW_DUE_DATE = TO_Date(#{postShowDueDate}, 'yyyy-MM-dd'),
+            FREMARKS=#{remarks}
+            WHERE
+                FID = #{id}
+        </if>
+        <if test="types == 2">
+            UPDATE SURETY.T_SURETY_EXTENSION_APPLICATION
+            SET FDAYS = #{days},
+            FRATE_OF_CHARGE=#{rateOfCharge},
+            FSHOULD_PAY_THE_EXTENSION = #{shouldPay},
+            FPOST_SHOW_DUE_DATE = TO_Date(#{postShowDueDate}, 'yyyy-MM-dd'),
+            FREMARKS=#{remarks}
+            WHERE
+            FID = #{id}
+        </if>
+    </update>
+
+    <update id="extensionApplicationFeeStatusUpdate" parameterType="yhao.micro.service.surety.business.apilist.form.complex.ExtensionApplicationFeeStatus">
+            UPDATE SURETY.T_SURETY_EXTENSION_APPLICATION
+            SET FCHARGE_STATUS = #{feeStatus}
+            WHERE
+            FID = #{id}
+    </update>
+
+    <resultMap id="ExtensionApplicationList" type="yhao.micro.service.surety.business.apilist.model.ExtensionApplicationModel">
+        <id property="id" column="FID"/>
+        <result property="types" column="FTYPES"/>
+        <result property="rateOfCharge" column="FRATE_OF_CHARGE"/>
+        <result property="days" column="FDAYS"/>
+        <result property="dailyRate" column="FDAILY_RATE"/>
+        <result property="shouldPay" column="FSHOULD_PAY_THE_EXTENSION"/>
+        <result property="refundableFee" column="FREFUNDABLE_FEE"/>
+        <result property="postShowDueDate" column="FPOST_SHOW_DUE_DATE"/>
+        <result property="remarks" column="FREMARKS"/>
+        <result property="status" column="FSTATUS"/>
+        <result property="guaranteeId" column="FGUARANTEE_ID"/>
+        <result property="loanId" column="FLOAN_ID"/>
+        <result property="subtotal" column="FSUBTOTAL"/>
+        <result property="createDate" column="FCREATE_TIME"/>
+        <result property="statusFee" column="FCHARGE_STATUS"/>
+    </resultMap>
+
+    <select id="queryExtensionApplicationById" parameterType="yhao.micro.service.surety.business.apilist.form.complex.QueryExtensionByIdForm" resultMap="ExtensionApplicationList">
+        select FID,FTYPES,FRATE_OF_CHARGE,FDAYS,FDAILY_RATE,FSHOULD_PAY_THE_EXTENSION,FREFUNDABLE_FEE,to_char( FPOST_SHOW_DUE_DATE, 'yyyy-MM-dd' ) AS FPOST_SHOW_DUE_DATE,
+         FREMARKS,FSTATUS,FGUARANTEE_ID,FLOAN_ID,FSUBTOTAL,to_char( FCREATE_TIME, 'yyyy-MM-dd' ) AS FCREATE_TIME,FCHARGE_STATUS from SURETY.T_SURETY_EXTENSION_APPLICATION where FID = #{id}
+    </select>
+
+
+    <select id="queryExtensionListById" parameterType="yhao.micro.service.surety.business.apilist.form.complex.QueryExtensionByIdForm" resultMap="ExtensionApplicationList">
+        select FID,FRATE_OF_CHARGE,FDAYS,FDAILY_RATE,FSHOULD_PAY_THE_EXTENSION,FREFUNDABLE_FEE,to_char( FPOST_SHOW_DUE_DATE, 'yyyy-MM-dd' ) AS FPOST_SHOW_DUE_DATE,
+         FREMARKS,FSTATUS,FGUARANTEE_ID,FLOAN_ID,FSUBTOTAL,to_char( FCREATE_TIME, 'yyyy-MM-dd' ) AS FCREATE_TIME,FCHARGE_STATUS from SURETY.T_SURETY_EXTENSION_APPLICATION where FLOAN_ID = #{id}
+         order by FCREATE_TIME desc
+    </select>
+
+    <resultMap id="queryExtensionApplicationList" type="yhao.micro.service.surety.business.apilist.model.ExtensionApplicationListModel">
+        <id property="guaranteeId" column="FID"/>
+        <result property="guaranteeNum" column="FGUARANTEE_NUM"/>
+        <result property="businessType" column="FBUSINESS_NAME"/>
+        <result property="accountManager" column="FMANAGER_NAME"/>
+        <result property="accountManagerId" column="FMANAGER_ID"/>
+        <result property="extensionId" column="EXTENSIONID"/>
+        <result property="days" column="DAYS"/>
+        <result property="loanId" column="FLOAN_ID"/>
+        <result property="dailyRate" column="FDAILY_RATE"/>
+        <result property="rateOfCharge" column="FRATE_OF_CHARGE"/>
+        <result property="shouldPay" column="FSHOULD_PAY_THE_EXTENSION"/>
+        <result property="statusFee" column="FCHARGE_STATUS"/>
+        <result property="status" column="FSTATUS"/>
+        <result property="types" column="FTYPES"/>
+        <result property="money" column="FBALANCE"/>
+        <result property="createDate" column="FCREATE_TIME"/>
+        <collection property="sellers" ofType="yhao.micro.service.surety.business.apilist.model.OwnerModel">
+            <id property="id" column="BSSFID"></id>
+            <result property="owner" column="SELLER"></result>
+        </collection>
+        <collection property="buyers" ofType="yhao.micro.service.surety.business.apilist.model.BuyModel">
+            <id property="id" column="BSFID"></id>
+            <result property="buyer" column="BUYER"></result>
+        </collection>
+    </resultMap>
+
+    <resultMap id="queryExtensionIds" type="yhao.micro.service.surety.business.apilist.model.ExtensionNoUseModel">
+        <result column="FID" property="extensionId"></result>
+    </resultMap>
+
+    <select id="extensionApplicationList" parameterType="yhao.micro.service.surety.business.apilist.form.complex.ApplicationQueryForm" resultMap="queryExtensionApplicationList">
+        SELECT
+        gu.FID AS FID,
+        gu.FGUARANTEE_NUM AS FGUARANTEE_NUM,
+        ty.FBUSINESS_NAME AS FBUSINESS_NAME,
+        me.FMANAGER_NAME AS FMANAGER_NAME,
+        me.FMANAGER_ID AS FMANAGER_ID,
+        ea.FID AS EXTENSIONID,
+        ea.FDAYS AS DAYS,
+        ea.FLOAN_ID AS FLOAN_ID,
+        ea.FDAILY_RATE AS FDAILY_RATE,
+        ea.FRATE_OF_CHARGE AS FRATE_OF_CHARGE,
+        ea.FSHOULD_PAY_THE_EXTENSION AS FSHOULD_PAY_THE_EXTENSION,
+        ea.FCHARGE_STATUS AS FCHARGE_STATUS,
+        ea.FSTATUS AS FSTATUS,
+        ea.FTYPES AS FTYPES,
+        ea.FBALANCE AS FBALANCE,
+        ea.FCREATE_TIME AS FCREATE_TIME,
+        bs.FCLT_NAME AS BUYER,
+        bs.FID AS BSFID,
+        bss.FID AS BSSFID,
+        bss.FCLT_NAME AS SELLER
+        FROM
+        T_SURETY_GUARANTEE gu
+        INNER JOIN T_SURETY_EXTENSION_APPLICATION ea ON ea.FGUARANTEE_ID = gu.FID
+        INNER JOIN T_SURETY_BUSINESS_TYPE ty ON gu.FBIZ_ID = ty.FID
+        INNER JOIN T_SURETY_G_LOAN_DETAILS de ON de.FID = ea.FLOAN_ID
+        INNER JOIN T_SURETY_G_PARTNER me ON me.FGUARANTEE_ID = gu.FID
+        AND me.FIS_MAJOR_MANAGER = 'YES'
+        LEFT JOIN T_SURETY_G_ESTATE_SELLER ls ON ls.FGUARANTEE_ID = gu.FID
+        INNER JOIN T_SURETY_G_PERSONINFO_TRADES bs ON bs.FGUARANTEE_ID = gu.FID
+        AND bs.FCLT_TYP = 'BUYER'
+        INNER JOIN T_SURETY_G_PERSONINFO_TRADES bss ON bss.FGUARANTEE_ID = gu.FID
+        AND bss.FCLT_TYP = 'SELLER'
+        INNER JOIN T_ERP_ORG o ON me.FORG_ID = o.FID
+        <include refid="yhao.infra.service.base.DataAuthRef.tableSql"/>
+        WHERE
+        1 = 1
+        <if test="orgId != null and orgId !='' ">
+            AND o.FLONG_NUMBER LIKE CONCAT(( SELECT s.FLONG_NUMBER FROM T_ERP_ORG s WHERE s.FID = #{orgId} ), '%' )
+        </if>
+        <if test="otherConditions != null and otherConditions !='' ">
+            AND (
+            gu.FGUARANTEE_NUM LIKE concat(concat('%',#{otherConditions}),'%') OR ls.FPROPERTY_NAME LIKE concat(concat('%',#{otherConditions}),'%') OR bs.FCLT_NAME LIKE concat(concat('%',#{otherConditions}),'%')OR bss.FCLT_NAME LIKE concat( concat( '%', #{otherConditions}), '%' ))
+        </if>
+        <if test="accountManagerName != null and accountManagerName !='' ">
+            AND me.FMANAGER_NAME = #{accountManagerName}
+        </if>
+        <if test="status != null">
+            AND ea.FSTATUS = #{status}
+        </if>
+        <if test="statusFee != null">
+            AND ea.FCHARGE_STATUS = #{statusFee}
+        </if>
+        <include refid="yhao.infra.service.base.DataAuthRef.conditionSql"/>
+        ORDER BY de.FARRANGED_REPAY  desc
+    </select>
+
+    <select id="queryExtensionId" resultMap="queryExtensionIds">
+        SELECT
+            ap.FID as FID
+        FROM
+            T_SURETY_EXTENSION_APPLICATION ap
+            INNER JOIN T_SURETY_G_LOAN_DETAILS de ON ap.FLOAN_ID = de.FID
+        WHERE
+            1 = 1
+            AND ap.FCHARGE_STATUS != 3
+            AND ap.FSTATUS = 1
+            AND TO_DATE( TO_CHAR( SYSDATE, 'yyyy-MM-dd' ), 'yyyy-MM-dd' ) > de.FARRANGED_REPAY
+    </select>
+
+    <update id="updateExtensionNoUse" parameterType="string">
+        UPDATE T_SURETY_EXTENSION_APPLICATION
+        SET FSTATUS = 3
+        WHERE
+            FID = #{id}
+    </update>
+
+    <update id="cancelExtension" parameterType="string">
+        UPDATE T_SURETY_EXTENSION_APPLICATION
+        SET FSTATUS = 2
+        WHERE
+            FID = #{id}
+    </update>
+
+    <select id="findExtensionByLoanId" parameterType="string" resultMap="ExtensionApplicationList">
+        select FID,FRATE_OF_CHARGE,FDAYS,FDAILY_RATE,FSHOULD_PAY_THE_EXTENSION,FREFUNDABLE_FEE,to_char( FPOST_SHOW_DUE_DATE, 'yyyy-MM-dd' ) AS FPOST_SHOW_DUE_DATE,
+         FREMARKS,FSTATUS,FGUARANTEE_ID,FLOAN_ID,FSUBTOTAL,to_char( FCREATE_TIME, 'yyyy-MM-dd' ) AS FCREATE_TIME,FCHARGE_STATUS from SURETY.T_SURETY_EXTENSION_APPLICATION where FLOAN_ID = #{loanId}
+         and FCHARGE_STATUS != 3 and  FSTATUS = 1
+         order by FCREATE_TIME desc
+    </select>
+
+    <insert id="overdueToExtension" parameterType="yhao.micro.service.surety.business.apilist.form.complex.OverdueToExtensionForm">
+        insert into T_SURETY_OVERDUE_TO_EXTENSION(FID,FWARRANTY_ID,FLOAN_ID,FPAYBACK_ID,FRATE) values
+        (#{id},#{warrantyId},#{loanId},#{paybackId},#{rate})
+    </insert>
+
+    <select id="selectOverdueTaskById" parameterType="string" resultType="string">
+        select FID from T_SURETY_OVERDUE_TASK where FGUARANTEE_PID = #{id} and FIS_CANCLE = 1
+    </select>
+
+    <update id="OverdueTaskExtCancel" parameterType="string">
+        update T_SURETY_OVERDUE_TASK set FIS_CANCLE = 2 where FID = #{id}
+    </update>
+
+    <update id="OverdueTaskNoCancel" parameterType="string">
+        update T_SURETY_OVERDUE_TASK set FIS_CANCLE = 1 where FID = #{id}
+    </update>
+
+
+    <update id="OverdueToExtCancel" parameterType="string">
+        update T_SURETY_OVERDUE_TO_EXTENSION set FSTATUS = 2 where FWARRANTY_ID = #{id}
+    </update>
+
+    <update id="OverdueToExtNoCancel" parameterType="string">
+        update T_SURETY_OVERDUE_TO_EXTENSION set FSTATUS = 1 where FWARRANTY_ID = #{id}
+    </update>
+
+    <resultMap id="LoanDailyRate" type="yhao.micro.service.surety.business.apilist.model.LoanDailyRateModel">
+        <id property="id" column="FID"></id>
+        <result property="loanDailyRate" column="FMARKET_FEE_RATE"></result>
+    </resultMap>
+
+    <select id="findLoanDailyRateByGuaranteeId" parameterType="string" resultMap="LoanDailyRate" >
+        select FID,FMARKET_FEE_RATE from T_SURETY_G_LOAN_DETAILS where FID = #{id}
+    </select>
+
+    <resultMap id="queryOverDueList" type="yhao.micro.service.surety.business.apilist.model.OverDueListModel">
+        <id property="guaranteeId" column="FID"/>
+        <result property="taskId" column="TASK_FID"/>
+        <result property="guaranteeNum" column="FGUARANTEE_NUM"/>
+        <result property="businessType" column="FBUSINESS_NAME"/>
+        <result property="accountManager" column="FMANAGER_NAME"/>
+        <result property="accountManagerId" column="FMANAGER_ID"/>
+        <result property="loanAmount" column="FLOAN_TOTAL_AMOUNT"/>
+        <result property="paymentAmount" column="FTOTAL_BILLING_AMOUNT"/>
+        <result property="cumulativeCharge" column="AMOUNT"/>
+        <result property="paymentStatus" column="FIS_CONFIRM"/>
+        <result property="applicationStatus" column="FSTATUS"/>
+        <collection property="sellers" ofType="yhao.micro.service.surety.business.apilist.model.OwnerModel">
+            <id property="id" column="BSSFID"></id>
+            <result property="owner" column="SELLER"></result>
+        </collection>
+        <collection property="buyers" ofType="yhao.micro.service.surety.business.apilist.model.BuyModel">
+            <id property="id" column="BSFID"></id>
+            <result property="buyer" column="BUYER"></result>
+        </collection>
+        <collection property="propertys" ofType="yhao.micro.service.surety.business.apilist.model.PropertyModel">
+            <id property="id" column="LSFID"></id>
+            <result property="propertyName" column="FPROPERTY_NAME"></result>
+        </collection>
+    </resultMap>
+
+    <select id="overDueList" parameterType="yhao.micro.service.surety.business.apilist.form.complex.OverDueQueryForm" resultMap="queryOverDueList">
+        SELECT
+            gu.FID AS FID,
+            ta.FID AS TASK_FID,
+            gu.FGUARANTEE_NUM AS FGUARANTEE_NUM,
+            pr.FBIZ_CODE,
+            ty.FBUSINESS_NAME AS FBUSINESS_NAME,
+            me.FMANAGER_NAME AS FMANAGER_NAME,
+            me.FMANAGER_ID AS FMANAGER_ID,
+            ls.FPROPERTY_NAME AS FPROPERTY_NAME,
+            ls.FID AS LSFID,
+            ge.FLOAN_TOTAL_AMOUNT AS FLOAN_TOTAL_AMOUNT,--//借款总额
+            gen.FTOTAL_BILLING_AMOUNT AS FTOTAL_BILLING_AMOUNT,--//出账金额
+            ( tol.FWARRANTY_TOTAL_AMOUNT + tol.FDELAY_TOTAL_AMOUNT + tol.FOVERDUE_TOTAL_AMOUNT ) AS AMOUNT,--//累计收费
+            pay.FIS_CONFIRM AS FIS_CONFIRM,--//回款状态YES/NO
+            ta.FSTATUS AS FSTATUS,
+            bs.FCLT_NAME AS BUYER,
+            bs.FID AS BSFID,
+            bss.FID AS BSSFID,
+            bss.FCLT_NAME AS SELLER
+        FROM
+            T_SURETY_GUARANTEE gu
+            INNER JOIN T_SURETY_BUSINESS_TYPE ty ON gu.FBIZ_ID = ty.FID and ty.FFUND_TYPE = 'CASH'
+            INNER JOIN T_SURETY_G_PARTNER me ON me.FGUARANTEE_ID = gu.FID
+            AND me.FIS_MAJOR_MANAGER = 'YES'
+            LEFT JOIN T_SURETY_G_ESTATE_SELLER ls ON ls.FGUARANTEE_ID = gu.FID
+            INNER JOIN T_SURETY_G_PERSONINFO_TRADES bs ON bs.FGUARANTEE_ID = gu.FID
+            AND bs.FCLT_TYP = 'BUYER'
+            INNER JOIN T_SURETY_G_PERSONINFO_TRADES bss ON bss.FGUARANTEE_ID = gu.FID
+            AND bss.FCLT_TYP = 'SELLER'
+            INNER JOIN T_ERP_ORG o ON me.FORG_ID = o.FID
+            INNER JOIN T_SURETY_G_LOAN_GENERAL ge ON ge.FGUARANTEE_ID = gu.FID
+            INNER JOIN T_SURETY_FN_BILLING_GENERAL gen ON gen.FGUARANTEE_ID = gu.FID
+            INNER JOIN T_SURETY_TOLL_GENERAL tol ON tol.FGUARANTEE_ID = gu.FID
+            INNER JOIN T_SURETY_FN_PAYBACK_DETAIL pade on pade.FGUARANTEE_ID = gu.FID and pade.FOVERDUE_DAYS > 0
+            INNER JOIN T_SURETY_FN_PAYBACK_GENERAL pay ON pay.FGUARANTEE_ID = gu.FID and pay.FIS_CONFIRM = 'YES'
+            LEFT JOIN T_SURETY_OVERDUE_TO_EXTENSION ov ON ov.FWARRANTY_ID = gu.FID
+            LEFT JOIN T_WK_TASK ta ON ta.FBIZ_ENTITY_ID = ov.FID
+            LEFT JOIN T_WK_PVM_PROCESS pr ON ta.fprocess_id = pr.FID  AND pr.FBIZ_CODE = '30'
+            <include refid="yhao.infra.service.base.DataAuthRef.tableSql"/>
+        WHERE
+        1 = 1 AND FGUARANTEE_STATE != 'RECALL'
+        <if test="orgId != null and orgId !='' ">
+            AND o.FLONG_NUMBER LIKE CONCAT(( SELECT s.FLONG_NUMBER FROM T_ERP_ORG s WHERE s.FID = #{orgId} ), '%' )
+        </if>
+        <if test="otherConditions != null and otherConditions !='' ">
+            AND (
+            gu.FGUARANTEE_NUM LIKE concat(concat('%',#{otherConditions}),'%') OR ls.FPROPERTY_NAME LIKE concat(concat('%',#{otherConditions}),'%') OR bs.FCLT_NAME LIKE concat(concat('%',#{otherConditions}),'%')OR bss.FCLT_NAME LIKE concat( concat( '%', #{otherConditions}), '%' ))
+        </if>
+        <if test="accountManagerName != null and accountManagerName !='' ">
+            AND me.FMANAGER_NAME = #{accountManagerName}
+        </if>
+        <if test="requisitionStatus != 'ALL'">
+            <choose>
+                <when test="requisitionStatus != 'NULL'">
+                    AND ta.FSTATUS = #{requisitionStatus}
+                </when>
+                <otherwise>
+                    AND pr.FBIZ_CODE is null
+                </otherwise>
+            </choose>
+        </if>
+        <include refid="yhao.infra.service.base.DataAuthRef.conditionSql"/>
+    </select>
+
+    <select id="queryActualReceivable" parameterType="string" resultType="Double" >
+        SELECT
+            sum( de.FREAL_NOMAL_AMOUNT )
+        FROM
+            T_SURETY_GUARANTEE gu
+            INNER JOIN T_SURETY_FN_PAYBACK_DETAIL de ON de.FGUARANTEE_ID = gu.FID
+        WHERE
+            gu.FID = #{id}
+    </select>
+
+    <select id="queryOverdueFee" parameterType="string" resultType="Double" >
+        SELECT
+            sum( de.FOVERDUE )
+        FROM
+            T_SURETY_GUARANTEE gu
+            INNER JOIN T_SURETY_FN_PAYBACK_DETAIL de ON de.FGUARANTEE_ID = gu.FID
+        WHERE
+            gu.FID = #{id}
+    </select>
+
+    <resultMap id="queryCreateExtensionList" type="yhao.micro.service.surety.business.apilist.model.CreateExtensionListModel">
+        <id property="guaranteeId" column="FID"/>
+        <result property="guaranteeNum" column="FGUARANTEE_NUM"/>
+        <result property="shouldGuaranteePay" column="FGUARANTEE_AMOUNT"/>
+        <result property="businessType" column="FBUSINESS_NAME"/>
+        <collection property="extensionLoans" ofType="yhao.micro.service.surety.business.apilist.model.ExtensionLoans">
+            <id property="loanId" column="LOAN_ID"></id>
+            <result property="loanAmount" column="FLOAN_AMOUNT"></result>
+            <result property="residualLoan" column="FLOAN_REMAIN"></result>
+            <result property="repaymentDate" column="FARRANGED_REPAY"></result>
+            <result property="extensionsNumber" column="EXTENSION_NUMBER"></result>
+            <result property="types" column="FTYPES"/>
+        </collection>
+        <collection property="sellers" ofType="yhao.micro.service.surety.business.apilist.model.OwnerModel">
+            <id property="id" column="BSSFID"></id>
+            <result property="owner" column="SELLER"></result>
+        </collection>
+        <collection property="buyers" ofType="yhao.micro.service.surety.business.apilist.model.BuyModel">
+            <id property="id" column="BSFID"></id>
+            <result property="buyer" column="BUYER"></result>
+        </collection>
+        <collection property="propertys" ofType="yhao.micro.service.surety.business.apilist.model.PropertyModel">
+            <id property="id" column="LSFID"></id>
+            <result property="propertyName" column="FPROPERTY_NAME"></result>
+        </collection>
+    </resultMap>
+
+    <select id="createExtensionApplicationList" parameterType="yhao.micro.service.surety.business.apilist.form.complex.CreateExtensionListForm" resultMap="queryCreateExtensionList">
+        SELECT
+            gu.FID AS FID,
+            gu.FGUARANTEE_NUM AS FGUARANTEE_NUM,
+            si.FGUARANTEE_AMOUNT AS FGUARANTEE_AMOUNT,
+            ty.FBUSINESS_NAME AS FBUSINESS_NAME,
+            (select count(1) from T_SURETY_EXTENSION_APPLICATION WHERE FLOAN_ID = de.FID and FSTATUS = 1 and FCHARGE_STATUS = 3)
+            AS EXTENSION_NUMBER,
+            ty.FFUND_TYPE AS FTYPES,
+            de.FID AS LOAN_ID,
+            de.FLOAN_AMOUNT AS FLOAN_AMOUNT,
+            de.FLOAN_REMAIN AS FLOAN_REMAIN,
+            to_char( de.FARRANGED_REPAY, 'yyyy-MM-dd' ) AS FARRANGED_REPAY,
+            ls.FPROPERTY_NAME AS FPROPERTY_NAME,
+            ls.FID AS LSFID,
+            bs.FCLT_NAME AS BUYER,
+            bs.FID AS BSFID,
+            bss.FID AS BSSFID,
+            bss.FCLT_NAME AS SELLER
+        FROM
+            T_SURETY_GUARANTEE gu
+            INNER JOIN T_SURETY_G_GUARANTEE_SITUATION si on si.FGUARANTEE_ID = gu.FID
+            INNER JOIN T_SURETY_BUSINESS_TYPE ty ON gu.FBIZ_ID = ty.FID
+            INNER JOIN T_SURETY_FN_PAYBACK_GENERAL ge ON ge.FGUARANTEE_ID = gu.FID
+            INNER JOIN T_SURETY_G_LOAN_DETAILS de ON de.FGUARANTEE_ID = gu.FID
+            INNER JOIN T_SURETY_G_PARTNER me ON me.FGUARANTEE_ID = gu.FID
+            AND me.FIS_MAJOR_MANAGER = 'YES'
+            LEFT JOIN T_SURETY_G_ESTATE_SELLER ls ON ls.FGUARANTEE_ID = gu.FID
+            INNER JOIN T_SURETY_G_PERSONINFO_TRADES bs ON bs.FGUARANTEE_ID = gu.FID
+            AND bs.FCLT_TYP = 'BUYER'
+            INNER JOIN T_SURETY_G_PERSONINFO_TRADES bss ON bss.FGUARANTEE_ID = gu.FID
+            AND bss.FCLT_TYP = 'SELLER'
+            INNER JOIN T_ERP_ORG o ON me.FORG_ID = o.FID
+        WHERE
+            1 = 1
+            AND ge.FIS_CONFIRM = 'NO'
+            AND gu.FGUARANTEE_STATE != 'RECALL'
+            AND gu.FCREATE_OPERATOR_ID = #{loginId}
+        <if test="otherConditions != null and otherConditions !='' ">
+            AND (
+            gu.FGUARANTEE_NUM LIKE concat(concat('%',#{otherConditions}),'%') OR ls.FPROPERTY_NAME LIKE concat(concat('%',#{otherConditions}),'%') OR bs.FCLT_NAME LIKE concat(concat('%',#{otherConditions}),'%')OR bss.FCLT_NAME LIKE concat( concat( '%', #{otherConditions}), '%' ))
+        </if>
+            ORDER BY de.FARRANGED_REPAY
+    </select>
+
+    <select id="queryLoanSomeField" parameterType="yhao.micro.service.surety.business.apilist.form.complex.ExtensionSomeFiledForm" resultType="yhao.micro.service.surety.business.apilist.model.ExtensionSomeFiledModel">
+        SELECT
+            FLOAN_REMAIN AS amount,
+            TO_CHAR( FARRANGED_REPAY, 'yyyy-MM-dd' ) AS arrivalDate,
+            FMARKET_FEE_RATE AS rate
+        FROM
+            T_SURETY_G_LOAN_DETAILS
+        WHERE
+            Fid = #{id}
+    </select>
+
+    <select id="querySomeField" parameterType="yhao.micro.service.surety.business.apilist.form.complex.ExtensionSomeFiledForm" resultType="yhao.micro.service.surety.business.apilist.model.ExtensionSomeFiledModel">
+        SELECT
+            si.FREDEEM_HOUSE_AMOUNT AS amount,
+            TO_CHAR( de.FARRANGED_REPAY, 'yyyy-MM-dd' ) AS arrivalDate,
+            de.FMARKET_FEE_RATE AS rate
+        FROM
+            T_SURETY_GUARANTEE gu
+            INNER JOIN T_SURETY_G_GUARANTEE_SITUATION si on si.FGUARANTEE_ID = gu.FID
+            INNER JOIN T_SURETY_G_LOAN_DETAILS de on de.FGUARANTEE_ID = gu.FID
+        WHERE
+            gu.Fid = #{id}
+    </select>
+
+    <select id="findNoFee" parameterType="string" resultType="string">
+        select FID from T_SURETY_EXTENSION_APPLICATION where FLOAN_ID = #{loanId} and FCHARGE_STATUS = 1
+    </select>
+
+
+    <resultMap id="queryLookOverdueRecordMap" type="yhao.micro.service.surety.business.apilist.form.finance.OverdueRecordResultForm">
+        <id property="id" column="FID" />
+        <result property="isConfirm" column="FIS_CONFIRM"/>
+        <result property="guaranteeId" column="FGUARANTEE_ID"/>
+        <result property="loanAmount" column="FLOAN_AMOUNT"/>
+        <result property="arrangedRepay" column="FARRANGED_REPAY"/>
+        <result property="marketFeeRate" column="FMARKET_FEE_RATE"/>
+        <collection property="payBackDetailList" ofType="yhao.micro.service.surety.business.apilist.model.finance.FundPayBackDetailModel">
+            <id property="id" column="PAY_ID" />
+            <result property="overdue" column="FOVERDUE"/>
+            <result property="repayAmount" column="FREPAY_AMOUNT"/>
+            <result property="realNomalAmount" column="FREAL_NOMAL_AMOUNT"/>
+            <result property="overdueDays" column="FOVERDUE_DAYS"/>
+            <result property="repayDate" column="FREPAY_DATE"/>
+            <result property="overdueRate" column="FOVERDUE_RATE"/>
+            <result property="startRate" column="START_RATE"/>
+        </collection>
+    </resultMap>
+
+    <select id="queryLookOverdueRecord" parameterType="yhao.infra.apilist.validate.IdForm" resultMap="queryLookOverdueRecordMap">
+        SELECT
+        PAYBACK_DETAIL.FID AS PAY_ID,
+        PAYBACK_DETAIL.FREPAY_DATE,
+        PAYBACK_DETAIL.FREAL_NOMAL_AMOUNT,
+        PAYBACK_DETAIL.FOVERDUE,
+        PAYBACK_DETAIL.FREPAY_AMOUNT,
+        PAYBACK_DETAIL.FOVERDUE_RATE AS START_RATE,
+        ov.FRATE AS FOVERDUE_RATE,
+        PAYBACK_DETAIL.FOVERDUE_DAYS,
+        LOAN_DETAILS.FARRANGED_REPAY,
+        LOAN_DETAILS.FID,
+        LOAN_DETAILS.FGUARANTEE_ID,
+        LOAN_DETAILS.FLOAN_AMOUNT,
+        LOAN_DETAILS.FMARKET_FEE_RATE
+        FROM T_SURETY_FN_PAYBACK_DETAIL PAYBACK_DETAIL
+        LEFT JOIN T_SURETY_G_LOAN_DETAILS LOAN_DETAILS ON LOAN_DETAILS.FID =  PAYBACK_DETAIL.FLOAN_ID
+        LEFT JOIN T_SURETY_OVERDUE_TO_EXTENSION ov ON ov.FPAYBACK_ID =  PAYBACK_DETAIL.FID and ov.FSTATUS = 1
+        where PAYBACK_DETAIL.FGUARANTEE_ID = #{id}
+        ORDER BY PAYBACK_DETAIL.FCREATE_TIME DESC
+    </select>
+
+    <delete id="delete" parameterType="string">
+        DELETE from T_SURETY_OVERDUE_TO_EXTENSION where Fid = #{id}
+    </delete>
+
+    <delete id="delete2" parameterType="string">
+        DELETE from T_SURETY_OVERDUE_TASK where Fid = #{id}
+    </delete>
+
+
+    <insert id="overdueExtensionTask" parameterType="yhao.micro.service.surety.business.apilist.form.complex.OverdueExtensionTaskForm">
+        insert into T_SURETY_OVERDUE_TASK(FID,FGUARANTEE_PID) values
+        (#{id},#{warrantyId})
+    </insert>
+
+    <select id="selectOverdueByPackId" parameterType="string" resultType="yhao.micro.service.surety.business.apilist.model.OverDueModel">
+        select FID as id, FWARRANTY_ID as warrantyId,FLOAN_ID as loanId,FPAYBACK_ID as paybackId,FRATE as overDueRate, FSTATUS as state
+        from T_SURETY_OVERDUE_TO_EXTENSION where FPAYBACK_ID =#{paybackId} and FSTATUS = 1
+    </select>
+
+    <update id="UpdateOverdueByPackId" parameterType="yhao.micro.service.surety.business.apilist.form.complex.OverdueToExtensionForm">
+            UPDATE SURETY.T_SURETY_OVERDUE_TO_EXTENSION
+            SET FRATE = #{overDueRate}
+            WHERE
+            FPAYBACK_ID = #{paybackId}
+    </update>
+
+</mapper>

@@ -1,0 +1,480 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="yhao.micro.service.surety.business.dao.automapper.FinanceTollManagerDao">
+
+    <resultMap id="tollGeneralMap"
+               type="yhao.micro.service.surety.business.apilist.model.finance.FinanceTollGeneralModel">
+        <id property="id" column="FID"/>
+        <result property="guaranteeId" column="FGUARANTEE_ID"/>
+        <result property="confirmWarranty" column="FCONFIRM_WARRANTY"/>
+        <result property="confirmDelay" column="FCONFIRM_DELAY"/>
+        <result property="confirmOverdue" column="FCONFIRM_OVERDUE"/>
+        <result property="warrantyTotalAmount" column="FWARRANTY_TOTAL_AMOUNT"/>
+        <result property="delayTotalAmount" column="FDELAY_TOTAL_AMOUNT"/>
+        <result property="overdueTotalAmount" column="FOVERDUE_TOTAL_AMOUNT"/>
+        <result property="createTime" column="FCREATE_TIME"/>
+        <result property="createOperatorId" column="FCREATE_OPERATOR_ID"/>
+        <result property="updateTime" column="FUPDATE_TIME"/>
+        <result property="updateOperatorId" column="FUPDATE_OPERATOR_ID"/>
+        <result property="warrantyStatus" column="FWARRANTY_STATUS"/>
+        <result property="delayStatus" column="FDELAY_STATUS"/>
+        <result property="overdueStatus" column="FOVERDUE_STATUS"/>
+        <result property="isPayOff" column="FIS_PAY_OFF"/>
+    </resultMap>
+
+    <resultMap id="tollDetailMap"
+               type="yhao.micro.service.surety.business.apilist.model.finance.FinanceTollDetailModel">
+        <id property="id" column="FID"/>
+        <result property="guaranteeId" column="FGUARANTEE_ID"/>
+        <result property="delayApplyId" column="FDELAY_APPLY_ID"/>
+        <result property="tollAmount" column="FTOLL_AMOUNT"/>
+        <result property="chargeType" column="FCHARGE_TYPE"/>
+        <result property="payType" column="FPAY_TYPE"/>
+        <result property="handlingFee" column="FHANDLING_FEE"/>
+        <result property="companyAccountId" column="FCOMPANY_ACCOUNT_ID"/>
+        <result property="chargeDate" column="FCHARGE_DATE"/>
+        <result property="isInvoice" column="FIS_INVOICE"/>
+        <result property="invoiceName" column="FINVOICE_NAME"/>
+        <result property="createTime" column="FCREATE_TIME"/>
+        <result property="createOperatorId" column="FCREATE_OPERATOR_ID"/>
+        <result property="updateTime" column="FUPDATE_TIME"/>
+        <result property="updateOperatorId" column="FUPDATE_OPERATOR_ID"/>
+        <result property="operateName" column="FNAME"/>
+
+    </resultMap>
+
+    <sql id="tollDetailSql">
+        FID,FGUARANTEE_ID,FDELAY_APPLY_ID,FTOLL_AMOUNT,FCHARGE_TYPE,
+       FPAY_TYPE,FHANDLING_FEE,FCOMPANY_ACCOUNT_ID,FCHARGE_DATE,FIS_INVOICE,FINVOICE_NAME,
+       FCREATE_TIME,FCREATE_OPERATOR_ID
+    </sql>
+    <insert id="insertTollGeneral" parameterType="FinanceTollGeneralModel">
+        insert into T_SURETY_TOLL_GENERAL(FID,FGUARANTEE_ID,FWARRANTY_STATUS,FDELAY_STATUS,
+        FOVERDUE_STATUS,FWARRANTY_TOTAL_AMOUNT,FDELAY_TOTAL_AMOUNT,FOVERDUE_TOTAL_AMOUNT,
+        FCREATE_TIME,FCREATE_OPERATOR_ID,FUPDATE_TIME,FUPDATE_OPERATOR_ID,FIS_PAY_OFF)
+        values (#{id},#{guaranteeId},#{warrantyStatus},#{delayStatus},#{overdueStatus},
+        #{warrantyTotalAmount},#{delayTotalAmount},#{overdueTotalAmount},#{createTime},
+        #{createOperatorId},#{updateTime},#{updateOperatorId},#{isPayOff})
+    </insert>
+    <insert id="insertTollDetail"
+            parameterType="yhao.micro.service.surety.business.apilist.form.finance.FinanceTollSaveForm">
+       insert into  T_SURETY_TOLL_DETAIL(FID,FGUARANTEE_ID,FDELAY_APPLY_ID,FTOLL_AMOUNT,FCHARGE_TYPE,
+       FPAY_TYPE,FHANDLING_FEE,FCOMPANY_ACCOUNT_ID,FCHARGE_DATE,FIS_INVOICE,FINVOICE_NAME,
+       FCREATE_TIME,FCREATE_OPERATOR_ID)
+       values (#{id},#{guaranteeId},#{delayApplyId},#{tollAmount},
+       #{chargeType},#{payType},#{handlingFee},#{companyAccountId},#{chargeDate},
+       #{isInvoice},#{invoiceName},#{operatorTime},#{operatorId})
+    </insert>
+    <select id="queryTollDetail" parameterType="string" resultMap="tollDetailMap">
+        select
+        TOLL_DETAIL.FID,TOLL_DETAIL.FGUARANTEE_ID,TOLL_DETAIL.FDELAY_APPLY_ID,TOLL_DETAIL.FTOLL_AMOUNT,TOLL_DETAIL.FCHARGE_TYPE,
+        TOLL_DETAIL.FPAY_TYPE,TOLL_DETAIL.FHANDLING_FEE,TOLL_DETAIL.FCOMPANY_ACCOUNT_ID,TOLL_DETAIL.FCHARGE_DATE,
+        TOLL_DETAIL.FIS_INVOICE,TOLL_DETAIL.FINVOICE_NAME,
+        TOLL_DETAIL.FCREATE_TIME,TOLL_DETAIL.FCREATE_OPERATOR_ID,ERP_PERSON.FNAME
+        from T_SURETY_TOLL_DETAIL TOLL_DETAIL
+        LEFT JOIN SURETY.T_ERP_PERSON ERP_PERSON ON    ERP_PERSON.FID = TOLL_DETAIL.FCREATE_OPERATOR_ID
+        where FGUARANTEE_ID=#{id}
+    </select>
+
+    <select id="pickLoanGeneral" parameterType="string" resultMap="pickLoanGeneralMap">
+        SELECT NG.FLOAN_TOTAL_AMOUNT,
+               NG.FCHARGE_TOTAL,
+               LOAN_DETAILS.FLOAN_AMOUNT,
+               LOAN_DETAILS.FMARKET_FEE_RATE,
+               LOAN_DETAILS.FLOAN_DAYS,
+               LOAN_DETAILS.FCHARGE_GUARANTEE_FEE,
+               LOAN_DETAILS.FID AS DETAILS_FID,
+               TG.FWARRANTY_TOTAL_AMOUNT
+        FROM T_SURETY_G_LOAN_GENERAL NG INNER JOIN
+             T_SURETY_TOLL_GENERAL TG ON NG.FGUARANTEE_ID = TG.FGUARANTEE_ID
+        LEFT JOIN T_SURETY_G_LOAN_DETAILS LOAN_DETAILS ON LOAN_DETAILS.FGUARANTEE_ID = TG.FGUARANTEE_ID
+        WHERE NG.FGUARANTEE_ID=#{id}
+    </select>
+    <resultMap id="pickLoanGeneralMap" type="yhao.micro.service.surety.business.apilist.form.finance.GeneralLoanDetailQueryResultForm">
+        <id property="id" column="FID"/>
+        <result property="realTotalCharges" column="FWARRANTY_TOTAL_AMOUNT"/>
+        <result property="loanTotalAmount" column="FLOAN_TOTAL_AMOUNT"/>
+        <result property="totalReceivable" column="FCHARGE_TOTAL"/>
+        <collection property="loanDetailList" ofType="yhao.micro.service.surety.business.apilist.model.guarantee.output.LoanDetailsModel">
+            <id property="id" column="DETAILS_FID"/>
+            <result property="marketFeeRate" column="FMARKET_FEE_RATE"/>
+            <result property="loanDays" column="FLOAN_DAYS"/>
+            <result property="chargeGuaranteeFee" column="FCHARGE_GUARANTEE_FEE"/>
+        </collection>
+    </resultMap>
+
+    <update id="confirmToll"
+            parameterType="yhao.micro.service.surety.business.apilist.form.finance.FinanceTollConfirmSaveForm">
+        update T_SURETY_TOLL_GENERAL
+        <set>
+            <if test="chargeType !=null and chargeType == 'WARRANTY'">
+                FWARRANTY_STATUS ='CONFIRM',
+            </if>
+            <if test="chargeType !=null and chargeType == 'DELAY' ">
+                FDELAY_STATUS  ='CONFIRM',
+            </if>
+            <if test="chargeType !=null and chargeType == 'OVERDUE'">
+                FOVERDUE_STATUS ='CONFIRM',
+            </if>
+            <if test=" operatorTime !=null ">FUPDATE_TIME =#{operatorTime},</if>
+            <if test="operatorId !=null">FUPDATE_OPERATOR_ID =#{operatorId}</if>
+        </set>
+        where FID=#{id}
+    </update>
+    <delete id="delTollDetail">
+        delete from T_SURETY_TOLL_DETAIL
+        where FID=#{id}
+    </delete>
+    <update id="updateTollGeneral" parameterType="FinanceTollGeneralModel">
+        update T_SURETY_TOLL_GENERAL
+        <set>
+            <if test=" warrantyStatus !=null ">
+                FWARRANTY_STATUS = #{warrantyStatus},
+            </if>
+            <if test=" delayStatus !=null ">
+                FDELAY_STATUS = #{delayStatus},
+            </if>
+            <if test=" overdueStatus !=null ">
+                FOVERDUE_STATUS = #{overdueStatus},
+            </if>
+            <if test=" warrantyTotalAmount !=null and warrantyTotalAmount >0">
+                FWARRANTY_TOTAL_AMOUNT=#{warrantyTotalAmount},
+            </if>
+            <if test="delayTotalAmount !=null and delayTotalAmount >0">
+                FDELAY_TOTAL_AMOUNT =#{delayTotalAmount},
+            </if>
+            <if test="overdueTotalAmount !=null and overdueTotalAmount >0">
+                FOVERDUE_TOTAL_AMOUNT=#{overdueTotalAmount},
+            </if>
+            <if test=" updateTime !=null ">FUPDATE_TIME =#{updateTime},</if>
+            <if test="updateOperatorId !=null">FUPDATE_OPERATOR_ID =#{updateOperatorId}</if>
+        </set>
+        where FID=#{id}
+    </update>
+    <update id="updateTollDetail" parameterType="FinanceTollDetailModel">
+        update T_SURETY_TOLL_DETAIL
+        <set>
+            <if test="tollAmount !=null and tollAmount > 0 ">FTOLL_AMOUNT =#{tollAmount},</if>
+            <if test="payType !=null ">FPAY_TYPE =#{payType},</if>
+            <if test="handlingFee !=null and handlingFee > 0">FHANDLING_FEE =#{handlingFee},</if>
+            <if test="companyAccountId !=null ">FCOMPANY_ACCOUNT_ID =#{companyAccountId},</if>
+            <if test="chargeDate !=null">FCHARGE_DATE =#{chargeDate},</if>
+            <if test="isInvoice !=null">FIS_INVOICE =#{isInvoice},</if>
+            <if test="invoiceName !=null">FINVOICE_NAME =#{invoiceName},</if>
+            <if test=" updateTime !=null ">FUPDATE_TIME =#{updateTime},</if>
+            <if test="updateOperatorId !=null">FUPDATE_OPERATOR_ID =#{updateOperatorId}</if>
+        </set>
+        where FID=#{id}
+    </update>
+
+    <select id="pickTollGeneral" resultMap="tollGeneralMap" parameterType="string">
+        SELECT FID,FGUARANTEE_ID,FWARRANTY_STATUS,FDELAY_STATUS,
+        FOVERDUE_STATUS,FWARRANTY_TOTAL_AMOUNT,FDELAY_TOTAL_AMOUNT,FOVERDUE_TOTAL_AMOUNT,
+        FCREATE_TIME,FCREATE_OPERATOR_ID,FUPDATE_TIME,FUPDATE_OPERATOR_ID,FIS_PAY_OFF
+        FROM T_SURETY_TOLL_GENERAL
+        WHERE FGUARANTEE_ID=#{guaranteeId}
+    </select>
+    <select id="pickTollDetail" parameterType="string" resultMap="tollDetailMap">
+         select FID,FGUARANTEE_ID,FDELAY_APPLY_ID,FTOLL_AMOUNT,FCHARGE_TYPE,
+       FPAY_TYPE,FHANDLING_FEE,FCOMPANY_ACCOUNT_ID,FCHARGE_DATE,FIS_INVOICE,FINVOICE_NAME,
+       FCREATE_TIME,FCREATE_OPERATOR_ID
+       from T_SURETY_TOLL_DETAIL
+       where FID=#{id}
+    </select>
+
+    <select id="pickDiscountApplication" parameterType="string" resultType="string">
+        select FSTATUS as status from T_WK_TASK ts
+        inner  join T_SURETY_DISCOUNT_APLICATION ds on ts.FBIZ_ENTITY_ID=ds.FID
+        inner join T_SURETY_GUARANTEE tg on ds.FGUARANTEE_PID=tg.FID
+        where tg.FIS_DISCOUNTED ='YES'
+        and tg.FID =#{guaranteeId}
+    </select>
+
+
+    <select id="queryWarranty" resultMap="queryTollPage"
+            parameterType="yhao.micro.service.surety.business.apilist.form.finance.FinanceTollQueryForm">
+        SELECT GUARANTEE.FID,
+        GUARANTEE.FGUARANTEE_NUM,
+        GUARANTEE.FGUARANTEE_TYPE,
+        BUSINESS_TYPE.FBUSINESS_NAME,
+        ESTATE_SELLER.FESTATE_NAME,
+        ESTATE_SELLER.FID AS ESTATE_ID,
+        PERSONINFO_TRADES.FCLT_TYP,
+        PERSONINFO_TRADES.FCLT_NAME,
+        concat(concat(ref_org.FNAME,'-'),ERP_PERSON.FNAME) as MANAGER_NAME,
+        GUARANTEE_SITUATION.FGUARANTEE_AMOUNT,
+        LOAN_GENERAL.FLOAN_TOTAL_AMOUNT,
+        LOAN_GENERAL.FCHARGE_TOTAL,
+        NODE_TEMPLATE.FNAME,
+        TOLL_GENERAL.FWARRANTY_STATUS
+        FROM  T_SURETY_GUARANTEE GUARANTEE
+        LEFT JOIN SURETY.T_SURETY_BUSINESS_TYPE BUSINESS_TYPE ON BUSINESS_TYPE.FID = GUARANTEE.FBIZ_ID
+        LEFT JOIN SURETY.T_ERP_PERSON ERP_PERSON ON    ERP_PERSON.FID = GUARANTEE.FCREATE_OPERATOR_ID
+        LEFT JOIN SURETY.T_SURETY_G_GUARANTEE_SITUATION GUARANTEE_SITUATION ON GUARANTEE_SITUATION.FGUARANTEE_ID = GUARANTEE.FID
+        LEFT JOIN SURETY.T_SURETY_G_ESTATE_SELLER ESTATE_SELLER ON ESTATE_SELLER.FGUARANTEE_ID = GUARANTEE.FID
+        LEFT JOIN SURETY.T_SURETY_G_PERSONINFO_TRADES PERSONINFO_TRADES ON PERSONINFO_TRADES.FGUARANTEE_ID = GUARANTEE.FID
+        LEFT JOIN SURETY.T_SURETY_G_LOAN_GENERAL LOAN_GENERAL ON LOAN_GENERAL.FGUARANTEE_ID = GUARANTEE.FID
+        LEFT JOIN SURETY.T_SURETY_TOLL_GENERAL TOLL_GENERAL ON TOLL_GENERAL.FGUARANTEE_ID = GUARANTEE.FID
+        LEFT JOIN SURETY.T_WK_TASK TASK ON TASK.FBIZ_ENTITY_ID = GUARANTEE.FID
+        LEFT JOIN SURETY.T_WK_PVM_NODE CURRENT_NODE ON TASK.FNODE_ID = CURRENT_NODE.FID
+        LEFT JOIN SURETY.T_WK_PVM_NODE_TEMPLATE NODE_TEMPLATE ON  CURRENT_NODE.FNODE_TEMPLATE_ID = NODE_TEMPLATE.FID
+        <include refid="yhao.infra.service.base.DataAuthRef.tableSql"/>
+        <where>
+            <if test="orgId != null and orgId != ''">
+                and GUARANTEE.FORG_ID = #{orgId}
+            </if>
+            <if test="personId != null and personId != ''">
+                and GUARANTEE.FCREATE_OPERATOR_ID = #{personId}
+            </if>
+            <if test="keyWord != null and keyWord != ''">
+                and (GUARANTEE.FGUARANTEE_NUM = #{keyWord}
+                or ESTATE_SELLER.FPROPERTY_NAME = #{keyWord}
+                or PERSONINFO_TRADES.FCLT_NAME = #{keyWord}
+                or (ESTATE_SELLER.FDEED_NUM = #{keyWord} and ESTATE_SELLER.FDEED_TYPE = 'FCZ'))
+            </if>
+            <if test="bizId != null and bizId != ''">
+                and BUSINESS_TYPE.FID = #{bizId}
+            </if>
+            <if test="chargeStatus != null  ">
+                and TOLL_GENERAL.FWARRANTY_STATUS =#{chargeStatus}
+            </if>
+            <if test="confirmTollStartTime != null  ">
+                and TOLL_GENERAL.FCONFIRM_WARRANTY_DATE between #{confirmTollStartTime} and NVL(#{confirmTollEndTime},sysdate)
+            </if>
+        </where>
+        <include refid="yhao.infra.service.base.DataAuthRef.conditionSql"/>
+    </select>
+
+    <resultMap id="queryTollPage" type="yhao.micro.service.surety.business.apilist.form.finance.FinanceTollQueryResultForm">
+        <id property="id" column="FID" />
+        <result property="guaranteeType" column="FGUARANTEE_TYPE"/>
+        <result property="guaranteeNum" column="FGUARANTEE_NUM"/>
+        <result property="businessName" column="FBUSINESS_NAME"/>
+        <result property="guaranteeAmount" column="FGUARANTEE_AMOUNT"/>
+        <result property="managerName" column="MANAGER_NAME"/>
+        <result property="loanTotalAmount" column="FLOAN_TOTAL_AMOUNT"/>
+        <result property="currentNodeName" column="FNAME"/>
+        <result property="chargeStatus" column="FWARRANTY_STATUS"/>
+        <result property="delayBalance" column="FBALANCE"/>
+        <result property="delayDays" column="FDAYS"/>
+        <result property="delayRate" column="FRATE_OF_CHARGE"/>
+        <result property="dayRate" column="FDAILY_RATE"/>
+        <result property="delayCharge" column="FSHOULD_PAY_THE_EXTENSION"/>
+        <result property="delayEndDate" column="FPOST_SHOW_DUE_DATE"/>
+        <result property="submitDate" column="FCREATE_TIME"/>
+        <result property="delayType" column="FTYPES"/>
+        <result property="warranty" column="FCHARGE_TOTAL"/>
+        <result property="repayStatus" column="FIS_CONFIRM"/>
+        <result property="tollTatalAmount" column="tollTatalAmount"/>
+        <result property="realNomalAmount" column="realNomalAmount"/>
+        <result property="isPayOff" column="FIS_PAY_OFF"/>
+
+        <collection property = "applicationPersonModelList" ofType="yhao.micro.service.surety.business.apilist.model.guarantee.page.ApplicationPersonModel" >
+            <id property="id" column="FID" />
+            <result property="cltTyp" column="FCLT_TYP"/>
+            <result property="cltName" column="FCLT_NAME"/>
+        </collection>
+        <collection property = "estatePageModelList" ofType="yhao.micro.service.surety.business.apilist.model.guarantee.page.EstatePageModel" >
+            <id property="id" column="ESTATE_ID" />
+            <result property="estateName" column="FESTATE_NAME"/>
+        </collection>
+    </resultMap>
+
+    <select id="queryConsumeRecord" resultMap="queryConsumeRecordMap" parameterType="yhao.infra.apilist.validate.IdForm">
+        SELECT
+        PAYBACK_DETAIL.FREPAY_DATE,
+        PAYBACK_DETAIL.FREAL_NOMAL_AMOUNT,
+        PAYBACK_DETAIL.FWARRANTY,
+        PAYBACK_DETAIL.FDELAY,
+        PAYBACK_DETAIL.FOVERDUE,
+        PAYBACK_DETAIL.FUSE_DAYS,
+        PAYBACK_DETAIL.FDELAY_RATE,
+        PAYBACK_DETAIL.FOVERDUE_RATE,
+        PAYBACK_DETAIL.FWARRANTY_RATE,
+        PAYBACK_DETAIL.FREPAY_TYPE,
+        LOAN_DETAILS.FMARKET_FEE_RATE,
+        LOAN_DETAILS.FARRANGED_REPAY,
+        LOAN_DETAILS.FID,
+        LOAN_DETAILS.FGUARANTEE_ID,
+        LOAN_DETAILS.FLOAN_AMOUNT,
+        PAYBACK_GENERAL.FIS_CONFIRM,
+        BILLING_GENERAL.FFIRST_BILLING_DATE
+        FROM T_SURETY_FN_PAYBACK_DETAIL PAYBACK_DETAIL
+        LEFT JOIN T_SURETY_G_LOAN_DETAILS LOAN_DETAILS ON LOAN_DETAILS.FID =  PAYBACK_DETAIL.FLOAN_ID
+        LEFT JOIN T_SURETY_FN_PAYBACK_GENERAL PAYBACK_GENERAL ON PAYBACK_GENERAL.FGUARANTEE_ID =  PAYBACK_DETAIL.FGUARANTEE_ID
+        LEFT JOIN T_SURETY_FN_BILLING_GENERAL BILLING_GENERAL ON BILLING_GENERAL.FGUARANTEE_ID =  LOAN_DETAILS.FGUARANTEE_ID
+        WHERE
+        PAYBACK_DETAIL.FGUARANTEE_ID=#{id}
+        ORDER BY PAYBACK_DETAIL.FCREATE_TIME DESC
+    </select>
+
+    <resultMap id="queryConsumeRecordMap" type="yhao.micro.service.surety.business.apilist.form.finance.ConsumeRecordResultForm">
+        <id property="id" column="FID" />
+        <result property="isConfirm" column="FIS_CONFIRM"/>
+        <result property="guaranteeId" column="FGUARANTEE_ID"/>
+        <result property="loanAmount" column="FLOAN_AMOUNT"/>
+        <result property="billingDate" column="FFIRST_BILLING_DATE"/>
+        <collection property="consumeDetailList" ofType="yhao.micro.service.surety.business.apilist.form.finance.ConsumeRecordDetailForm">
+        <result property="warranty" column="FWARRANTY"/>
+        <result property="delay" column="FDELAY"/>
+        <result property="overdue" column="FOVERDUE"/>
+        <result property="fee" column="FREAL_NOMAL_AMOUNT"/>
+        <result property="repayDate" column="FREPAY_DATE"/>
+        <result property="useDays" column="FUSE_DAYS"/>
+        <result property="overdueRate" column="FOVERDUE_RATE"/>
+        <result property="delayRate" column="FDELAY_RATE"/>
+        <result property="warrantyRate" column="FWARRANTY_RATE"/>
+        <result property="chargeType" column="FREPAY_TYPE"/>
+        </collection>
+    </resultMap>
+
+
+
+    <select id="queryDelay" resultMap="queryTollPage"
+            parameterType="yhao.micro.service.surety.business.apilist.form.finance.FinanceTollQueryForm">
+        SELECT GUARANTEE.FID,
+        GUARANTEE.FGUARANTEE_NUM,
+        GUARANTEE.FGUARANTEE_TYPE,
+        BUSINESS_TYPE.FBUSINESS_NAME,
+        ESTATE_SELLER.FESTATE_NAME,
+        ESTATE_SELLER.FID AS ESTATE_ID,
+        PERSONINFO_TRADES.FCLT_TYP,
+        PERSONINFO_TRADES.FCLT_NAME,
+        concat(concat(ref_org.FNAME,'-'),ERP_PERSON.FNAME) as MANAGER_NAME,
+        GUARANTEE_SITUATION.FGUARANTEE_AMOUNT,
+        NODE_TEMPLATE.FNAME,
+        TOLL_GENERAL.FWARRANTY_STATUS,
+        TOLL_GENERAL.FDELAY_TOTAL_AMOUNT,
+        TOLL_DETAIL.FDELAY_APPLY_ID,
+        EXTENSION_APPLICATION.FBALANCE,
+        EXTENSION_APPLICATION.FDAYS,
+        EXTENSION_APPLICATION.FRATE_OF_CHARGE,
+        EXTENSION_APPLICATION.FDAILY_RATE,
+        EXTENSION_APPLICATION.FSHOULD_PAY_THE_EXTENSION,
+        EXTENSION_APPLICATION.FPOST_SHOW_DUE_DATE,
+        EXTENSION_APPLICATION.FCREATE_TIME,
+        EXTENSION_APPLICATION.FTYPES
+        FROM  T_SURETY_GUARANTEE GUARANTEE
+        LEFT JOIN SURETY.T_SURETY_BUSINESS_TYPE BUSINESS_TYPE ON BUSINESS_TYPE.FID = GUARANTEE.FBIZ_ID
+        LEFT JOIN SURETY.T_ERP_PERSON ERP_PERSON ON    ERP_PERSON.FID = GUARANTEE.FCREATE_OPERATOR_ID
+        LEFT JOIN SURETY.T_SURETY_G_GUARANTEE_SITUATION GUARANTEE_SITUATION ON GUARANTEE_SITUATION.FGUARANTEE_ID = GUARANTEE.FID
+        LEFT JOIN SURETY.T_SURETY_G_ESTATE_SELLER ESTATE_SELLER ON ESTATE_SELLER.FGUARANTEE_ID = GUARANTEE.FID
+        LEFT JOIN SURETY.T_SURETY_G_PERSONINFO_TRADES PERSONINFO_TRADES ON PERSONINFO_TRADES.FGUARANTEE_ID = GUARANTEE.FID
+        LEFT JOIN SURETY.T_SURETY_TOLL_GENERAL TOLL_GENERAL ON TOLL_GENERAL.FGUARANTEE_ID = GUARANTEE.FID
+        LEFT JOIN SURETY.T_SURETY_EXTENSION_APPLICATION EXTENSION_APPLICATION ON EXTENSION_APPLICATION.FGUARANTEE_ID = GUARANTEE.FID
+        LEFT JOIN SURETY.T_SURETY_TOLL_DETAIL TOLL_DETAIL ON TOLL_DETAIL.FDELAY_APPLY_ID = EXTENSION_APPLICATION.FID
+        LEFT JOIN SURETY.T_WK_TASK TASK ON TASK.FBIZ_ENTITY_ID = GUARANTEE.FID
+        LEFT JOIN SURETY.T_WK_PVM_NODE CURRENT_NODE ON TASK.FNODE_ID = CURRENT_NODE.FID
+        LEFT JOIN SURETY.T_WK_PVM_NODE_TEMPLATE NODE_TEMPLATE ON  CURRENT_NODE.FNODE_TEMPLATE_ID = NODE_TEMPLATE.FID
+        <include refid="yhao.infra.service.base.DataAuthRef.tableSql"/>
+        <where>
+            EXTENSION_APPLICATION.FSTATUS ='1'
+
+            <if test="orgId != null and orgId != ''">
+                and GUARANTEE.FORG_ID = #{orgId}
+            </if>
+            <if test="personId != null and personId != ''">
+                and GUARANTEE.FCREATE_OPERATOR_ID = #{personId}
+            </if>
+            <if test="keyWord != null and keyWord != ''">
+                and (GUARANTEE.FGUARANTEE_NUM = #{keyWord}
+                or ESTATE_SELLER.FPROPERTY_NAME = #{keyWord}
+                or PERSONINFO_TRADES.FCLT_NAME = #{keyWord}
+                or (ESTATE_SELLER.FDEED_NUM = #{keyWord} and ESTATE_SELLER.FDEED_TYPE = 'FCZ'))
+            </if>
+            <if test="bizId != null and bizId != ''">
+                and BUSINESS_TYPE.FID = #{bizId}
+            </if>
+            <if test="chargeStatus != null  ">
+                and TOLL_GENERAL.FWARRANTY_STATUS =#{chargeStatus}
+            </if>
+            <if test="confirmTollStartTime != null  ">
+                and TOLL_GENERAL.FCONFIRM_WARRANTY_DATE between #{confirmTollStartTime} and NVL(#{confirmTollEndTime},sysdate)
+            </if>
+        </where>
+        <include refid="yhao.infra.service.base.DataAuthRef.conditionSql"/>
+    </select>
+
+
+
+
+
+    <select id="queryOverdue" resultMap="queryTollPage"
+            parameterType="yhao.micro.service.surety.business.apilist.form.finance.FinanceTollQueryForm">
+        SELECT GUARANTEE.FID,
+        GUARANTEE.FGUARANTEE_NUM,
+        GUARANTEE.FGUARANTEE_TYPE,
+        BUSINESS_TYPE.FBUSINESS_NAME,
+        ESTATE_SELLER.FESTATE_NAME,
+        ESTATE_SELLER.FID AS ESTATE_ID,
+        PERSONINFO_TRADES.FCLT_TYP,
+        PERSONINFO_TRADES.FCLT_NAME,
+        concat(concat(ref_org.FNAME,'-'),ERP_PERSON.FNAME) as MANAGER_NAME,
+        GUARANTEE_SITUATION.FGUARANTEE_AMOUNT,
+        LOAN_GENERAL.FLOAN_TOTAL_AMOUNT,
+        PAYBACK_GENERAL.FIS_CONFIRM,
+        NODE_TEMPLATE.FNAME,
+        TOLL_GENERAL.FWARRANTY_STATUS,
+        TOLL_GENERAL.FIS_PAY_OFF,
+        (NVL(TOLL_GENERAL.FWARRANTY_TOTAL_AMOUNT,0)+NVL(TOLL_GENERAL.FDELAY_TOTAL_AMOUNT,0)
+        +NVL(TOLL_GENERAL.FDELAY_TOTAL_AMOUNT,0)) AS tollTatalAmount,
+        NVL(TB.realNomalAmount,0) AS realNomalAmount
+        FROM  T_SURETY_GUARANTEE GUARANTEE
+        LEFT JOIN SURETY.T_SURETY_BUSINESS_TYPE BUSINESS_TYPE ON BUSINESS_TYPE.FID = GUARANTEE.FBIZ_ID
+        LEFT JOIN SURETY.T_ERP_PERSON ERP_PERSON ON    ERP_PERSON.FID = GUARANTEE.FCREATE_OPERATOR_ID
+        LEFT JOIN SURETY.T_SURETY_G_GUARANTEE_SITUATION GUARANTEE_SITUATION ON GUARANTEE_SITUATION.FGUARANTEE_ID = GUARANTEE.FID
+        LEFT JOIN SURETY.T_SURETY_G_ESTATE_SELLER ESTATE_SELLER ON ESTATE_SELLER.FGUARANTEE_ID = GUARANTEE.FID
+        LEFT JOIN SURETY.T_SURETY_G_PERSONINFO_TRADES PERSONINFO_TRADES ON PERSONINFO_TRADES.FGUARANTEE_ID = GUARANTEE.FID
+        LEFT JOIN SURETY.T_SURETY_G_LOAN_GENERAL LOAN_GENERAL ON LOAN_GENERAL.FGUARANTEE_ID = GUARANTEE.FID
+        LEFT JOIN SURETY.T_SURETY_FN_PAYBACK_GENERAL PAYBACK_GENERAL ON PAYBACK_GENERAL.FGUARANTEE_ID = GUARANTEE.FID
+        LEFT JOIN SURETY.T_SURETY_TOLL_GENERAL TOLL_GENERAL ON TOLL_GENERAL.FGUARANTEE_ID = GUARANTEE.FID
+        LEFT JOIN
+        (  SELECT (SUM(NVL(PAYBACK_DETAIL.FREAL_NOMAL_AMOUNT,0))-SUM(NVL(PAYBACK_DETAIL.FREDUCE_AMOUNT,0))) AS realNomalAmount,
+           PAYBACK_DETAIL.FGUARANTEE_ID AS FGUARANTEE_ID
+           FROM SURETY.T_SURETY_FN_PAYBACK_DETAIL  PAYBACK_DETAIL
+           INNER JOIN T_SURETY_GUARANTEE GUARANTEE_G ON PAYBACK_DETAIL.FGUARANTEE_ID = GUARANTEE_G.FID
+           GROUP BY  PAYBACK_DETAIL.FGUARANTEE_ID
+        )TB ON TB.FGUARANTEE_ID = GUARANTEE.FID
+        LEFT JOIN SURETY.T_WK_TASK TASK ON TASK.FBIZ_ENTITY_ID = GUARANTEE.FID
+        LEFT JOIN SURETY.T_WK_PVM_NODE CURRENT_NODE ON TASK.FNODE_ID = CURRENT_NODE.FID
+        LEFT JOIN SURETY.T_WK_PVM_NODE_TEMPLATE NODE_TEMPLATE ON  CURRENT_NODE.FNODE_TEMPLATE_ID = NODE_TEMPLATE.FID
+        <include refid="yhao.infra.service.base.DataAuthRef.tableSql"/>
+        <where>
+            <if test="orgId != null and orgId != ''">
+                and GUARANTEE.FORG_ID = #{orgId}
+            </if>
+            <if test="personId != null and personId != ''">
+                and GUARANTEE.FCREATE_OPERATOR_ID = #{personId}
+            </if>
+            <if test="keyWord != null and keyWord != ''">
+                and (GUARANTEE.FGUARANTEE_NUM = #{keyWord}
+                or ESTATE_SELLER.FPROPERTY_NAME = #{keyWord}
+                or PERSONINFO_TRADES.FCLT_NAME = #{keyWord}
+                or (ESTATE_SELLER.FDEED_NUM = #{keyWord} and ESTATE_SELLER.FDEED_TYPE = 'FCZ'))
+            </if>
+            <if test="bizId != null and bizId != ''">
+                and BUSINESS_TYPE.FID = #{bizId}
+            </if>
+            <if test="chargeStatus != null  ">
+                and TOLL_GENERAL.FWARRANTY_STATUS =#{chargeStatus}
+            </if>
+            <if test="confirmTollStartTime != null  ">
+                and TOLL_GENERAL.FCONFIRM_WARRANTY_DATE between #{confirmTollStartTime} and NVL(#{confirmTollEndTime},sysdate)
+            </if>
+        </where>
+        <include refid="yhao.infra.service.base.DataAuthRef.conditionSql"/>
+
+    </select>
+
+
+
+
+
+
+
+
+
+
+</mapper>

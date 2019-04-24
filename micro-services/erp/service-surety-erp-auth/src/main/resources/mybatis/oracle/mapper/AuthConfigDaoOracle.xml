@@ -1,0 +1,304 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="yhao.micro.service.surety.erp.auth.dao.automapper.AuthConfigDao">
+	<resultMap id="authTypeResult" type="AuthTypeModel">
+		<id property="id" column="fid"/>
+		<result property="name" column="fname"/>
+		<result property="parentId" column="fparent_id"/>
+		<result property="order" column="forder"/>
+		<result property="systemKey" column="fsystem_key"/>
+		<result property="parentName" column="fparent_name"/>
+	</resultMap>
+	<resultMap id="authLeafResult" type="AuthLeafModel">
+		<id property="id" column="fid"/>
+		<result property="name" column="fname"/>
+		<result property="url" column="furl"/>
+		<result property="typeId" column="fauth_type_id"/>
+		<result property="order" column="forder"/>
+		<result property="menu" column="fis_menu"/>
+		<result property="typeName" column="ftype_name"/>
+		<result property="typeOrder" column="ftype_order"/>
+		<result property="typeTopName" column="ftype_top_name"/>
+		<result property="typeTopId" column="ftype_top_id"/>
+		<result property="typeTopOrder" column="ftype_top_order"/>
+		<result property="authType" column="fauth_type"/>
+	</resultMap>
+	<resultMap id="erpDataAuthResult" type="DataAuthModel">
+		<id property="id" column="fid"/>
+		<result property="personId" column="fperson_id"/>
+		<result property="authType" column="fauth_type"/>
+		<result property="orgId" column="forg_id"/>
+		<result property="systemKey" column="fsystem_key"/>
+		<result property="dataType" column="fdata_type"/>
+		<result property="positionLinkId" column="fposition_link_id"/>
+		<result property="orgLongNumber" column="forg_long_number"/>
+		<result property="orgNumber" column="forg_number"/>
+	</resultMap>
+
+	<select id="queryAuthType" parameterType="yhao.micro.service.surety.erp.auth.apilist.form.auth.AuthTypeQueryForm"
+			resultMap="authTypeResult">
+		select
+			tp.*,
+			tparent.fname as fparent_name
+		from t_erp_auth_authority_type tp
+		LEFT join t_erp_auth_authority_type tparent on tp.fparent_id=tparent.fid
+		<where>
+			<if test="name!=null and name!=''">
+				and tp.fname like '%' || #{queryKey} || '%'
+			</if>
+			<if test="systemKey!=null and systemKey!=''">
+				and tp.fsystem_key=#{systemKey}
+			</if>
+		</where>
+		order by tp.fsystem_key,tp.fparent_id,tp.forder
+	</select>
+
+	<select id="pickAuthTypeById" parameterType="string" resultMap="authTypeResult">
+		select tp.*,tparent.fname as fparent_name
+		from t_erp_auth_authority_type tp
+		LEFT join t_erp_auth_authority_type tparent on tp.fparent_id=tparent.fid
+		where tp.fid=#{id}
+	</select>
+
+	<delete id="deleteAuthType" parameterType="string">
+		delete from t_erp_auth_authority_type
+		where fid=#{id}
+	</delete>
+
+	<select id="queryAuthLeaf" parameterType="yhao.micro.service.surety.erp.auth.apilist.form.auth.AuthLeafQueryForm"
+			resultMap="authLeafResult">
+		select * from t_erp_auth_authority
+		where 1=1
+		<if test="typeId!=null and typeId!=''">
+			and fauth_type_id=#{typeId}
+		</if>
+		order by forder asc
+	</select>
+
+	<select id="queryAuthByParentId" parameterType="string" resultMap="authTypeResult">
+		select * from t_erp_auth_authority_type where fparent_id=#{id} order by forder asc
+	</select>
+
+	<insert id="insertAuthType" parameterType="yhao.micro.service.surety.erp.auth.apilist.form.auth.AuthTypeSaveForm">
+		insert into t_erp_auth_authority_type(fid,fname,fparent_id,forder,fsystem_key)
+		values(sys_guid(),#{name},#{parentId},#{order},#{systemKey})
+	</insert>
+
+	<update id="updateAuthType" parameterType="yhao.micro.service.surety.erp.auth.apilist.form.auth.AuthTypeSaveForm">
+		update t_erp_auth_authority_type
+		<set>
+			<if test="name!=null and name!=''">fname=#{name},</if>
+			<if test="order!=null and order!=0">forder=#{order},</if>
+			<if test="parentId!=null and parentId!=''">fparent_id=#{parentId},</if>
+			<if test="systemKey!=null and systemKey!=''">fsystem_key=#{systemKey},</if>
+		</set>
+		where FID=#{id}
+	</update>
+
+	<delete id="deleteAuthLeaf" parameterType="string">
+		delete from t_erp_auth_authority
+		where fid=#{id}
+	</delete>
+
+	<insert id="insertAuthLeaf" parameterType="yhao.micro.service.surety.erp.auth.apilist.form.auth.AuthLeafSaveForm">
+		insert into t_erp_auth_authority(fid,fname,furl,fauth_type_id,forder,fis_menu,fsystem_key)
+		values(sys_guid(),#{name},#{url},#{typeId},#{order},#{menu},#{systemKey})
+	</insert>
+
+	<update id="updateAuthLeaf" parameterType="yhao.micro.service.surety.erp.auth.apilist.form.auth.AuthLeafSaveForm">
+		update t_erp_auth_authority
+		<set>
+			<if test="name!=null and name!=''">fname=#{name},</if>
+			<if test="url!=null and url!=''">furl=#{url},</if>
+			<if test="order!=null and order!=0">forder=#{order},</if>
+			<if test="menu!=null">fis_menu=#{menu},</if>
+		</set>
+		where FID=#{id}
+	</update>
+
+	<select id="pickAuthLeafById" parameterType="string" resultMap="authLeafResult">
+		select * from t_erp_auth_authority
+		where fid=#{id}
+	</select>
+
+	<select id="queryAuthLeafBySystemKey" parameterType="yhao.micro.service.surety.erp.auth.apilist.form.auth.AuthLeafQueryForm" resultMap="authLeafResult">
+		select
+			ta.*,
+			tp.fname as ftype_name ,
+			tp.forder as ftype_order,
+			tparent.fname as ftype_top_name,
+			tparent.fid as ftype_top_id,
+			tparent.forder as ftype_top_order
+		from t_erp_auth_authority ta
+		left JOIN t_erp_auth_authority_type tp on tp.fid=ta.Fauth_type_id
+		left JOIN t_erp_auth_authority_type tparent on tparent.fid=tp.fparent_id
+		where tp.fsystem_key = #{systemKey}
+		order by tparent.forder,tp.forder,ftype_top_name,ftype_name,ta.fname
+	</select>
+
+	<select id="pickPositionIdByLinkId" parameterType="string" resultType="string">
+		select fposition_id from t_erp_org_position_link where fid = #{positionLinkId}
+	</select>
+
+	<select id="queryAllPositionLinkAuthorityId" parameterType="yhao.micro.service.surety.erp.auth.apilist.form.auth.AuthTreeQueryForm" resultMap="authLeafResult">
+		select tpa.fauth_id as fid,tpa.ftype as fauth_type
+		from t_erp_auth_position_authority tpa
+		<if test="url!=null and url!=''">
+			left join t_erp_auth_authority tea on tpa.fauth_id=tea.fid
+		</if>
+		where tpa.fsystem_key = #{systemKey} and tpa.fposition_link_id=#{positionLinkId}
+		<if test="url!=null and url!=''">
+			and tea.furl like '%' || #{url} || '%'
+		</if>
+	</select>
+
+	<select id="queryAllPositionBaseAuthorityId" parameterType="yhao.micro.service.surety.erp.auth.apilist.form.auth.AuthTreeQueryForm" resultMap="authLeafResult">
+		select tpa.fauth_id as fid
+		from t_erp_auth_pos_base_authority tpa
+		<if test="url!=null and url!=''">
+			left join t_erp_auth_authority tea on tpa.fauth_id=tea.fid
+		</if>
+		where tpa.fsystem_key = #{systemKey} and tpa.fposition_id=#{positionId}
+		<if test="url!=null and url!=''">
+			and tea.furl like '%' || #{url} || '%'
+		</if>
+	</select>
+
+	<delete id="deleteRelationByPositionId" parameterType="yhao.micro.service.surety.erp.auth.apilist.form.auth.PositionAuthSaveForm">
+		delete from t_erp_auth_position_authority
+		where fposition_link_id=#{positionLinkId} and fsystem_key=#{systemKey}
+	</delete>
+
+	<delete id="deleteBaseRelationByPositionId" parameterType="yhao.micro.service.surety.erp.auth.apilist.form.auth.PositionAuthSaveForm">
+		delete from t_erp_auth_pos_base_authority
+		where fposition_id=#{positionId} and fsystem_key=#{systemKey}
+	</delete>
+
+	<insert id="savePositionAuth" parameterType="yhao.micro.service.surety.erp.auth.apilist.form.auth.PositionAuthSaveForm">
+		insert into t_erp_auth_position_authority(fid,fposition_link_id,fauth_id,fsystem_key,ftype)
+		<foreach collection="authIdArray" item="authId" index="index" separator=" union all ">
+			select sys_guid(),#{positionLinkId},#{authId},#{systemKey},#{type} from dual
+		</foreach>
+	</insert>
+
+	<insert id="savePositionBaseAuth" parameterType="yhao.micro.service.surety.erp.auth.apilist.form.auth.PositionAuthSaveForm">
+		insert into t_erp_auth_pos_base_authority(fid,fposition_id,fauth_id,fsystem_key)
+		<foreach collection="authIdArray" item="authId" index="index" separator=" union all ">
+			select sys_guid(),#{positionId},#{authId},#{systemKey} from dual
+		</foreach>
+	</insert>
+
+	<select id="queryAllPersonAuthorityId" parameterType="yhao.micro.service.surety.erp.auth.apilist.form.auth.AuthTreeQueryForm" resultMap="authLeafResult">
+		select tpa.fauth_id as fid,tpa.ftype as fauth_type
+		from t_erp_auth_person_authority tpa
+		<if test="url!=null and url!=''">
+			left join t_erp_auth_authority tea on tpa.fauth_id=tea.fid
+		</if>
+		where tpa.fsystem_key = #{systemKey} and tpa.fperson_id=#{personId}
+		<if test="positionLinkId!=null and positionLinkId!=''">
+			and tpa.fposition_link_id = #{positionLinkId}
+		</if>
+		<if test="url!=null and url!=''">
+			and tea.furl like '%' || #{url} || '%'
+		</if>
+	</select>
+
+	<delete id="deleteRelationByPersonId" parameterType="yhao.micro.service.surety.erp.auth.apilist.form.auth.AuthTreeQueryForm">
+		delete from t_erp_auth_person_authority
+		where fperson_id=#{personId} and fsystem_key=#{systemKey}
+		and fposition_link_id = #{positionLinkId}
+	</delete>
+
+	<insert id="savePersonAuth" parameterType="yhao.micro.service.surety.erp.auth.apilist.form.auth.AuthTreeSaveForm">
+		insert into t_erp_auth_person_authority(fid,fperson_id,fposition_link_id,fauth_id,ftype,fsystem_key)
+		<foreach collection="authIdArray" item="authId" index="index" separator=" union all ">
+			select sys_guid(),#{personId},#{positionLinkId},#{authId},#{type},#{systemKey} from dual
+		</foreach>
+	</insert>
+
+	<select id="queryAuthLeafListByIds" parameterType="yhao.micro.service.surety.erp.auth.apilist.form.auth.AuthLeafIdsForm" resultMap="authLeafResult">
+		select ta.*,tp.fname as ftype_name ,tparent.fname as ftype_top_Name
+		from t_erp_auth_authority ta
+		left JOIN t_erp_auth_authority_type tp on tp.fid=ta.fauth_type_id
+		left JOIN t_erp_auth_authority_type tparent on tparent.fid=tp.fparent_id
+		<where>
+			ta.fid in <foreach open="(" close=")" collection="ids" separator=","
+							   item="id">#{id}</foreach>
+		</where>
+		order by tparent.forder asc,tp.forder asc,ta.forder asc
+	</select>
+
+	<select id="queryAllPositionDataAuthority" parameterType="yhao.micro.service.surety.erp.auth.apilist.form.auth.DataAuthTreeQueryForm"
+			resultMap="erpDataAuthResult">
+		select t.*,
+			torg.flong_number as forg_long_number,
+			torg.fnumber as forg_number
+		from t_erp_auth_position_data t
+		left join t_erp_org torg on torg.fid=t.forg_id
+		where t.fposition_link_id = #{positionLinkId}
+		<if test="dataType!=null and dataType!=''">
+			and t.fdata_type = #{dataType}
+		</if>
+		<if test="systemKey!=null and systemKey!=''">
+			and t.fsystem_key = #{systemKey}
+		</if>
+	</select>
+
+	<delete id="deletePositionDataAuthRelation" parameterType="yhao.micro.service.surety.erp.auth.apilist.form.auth.PositionDataAuthSaveForm">
+		delete from t_erp_auth_position_data
+		where fdata_type=#{dataType} and fsystem_key=#{systemKey}
+		and fposition_link_id = #{positionLinkId}
+	</delete>
+
+	<delete id="deletePersonAuthByAuthLeafId" parameterType="string">
+		delete from T_ERP_AUTH_PERSON_AUTHORITY where FAUTH_ID=#{id}
+	</delete>
+
+	<delete id="deletePositionAuthByAuthLeafId" parameterType="string">
+		delete from T_ERP_AUTH_POSITION_AUTHORITY where FAUTH_ID=#{id}
+	</delete>
+
+	<delete id="deleteBasePositionAuthByAuthLeafId" parameterType="string">
+		delete from T_ERP_AUTH_POS_BASE_AUTHORITY where FAUTH_ID=#{id}
+	</delete>
+
+	<insert id="savePositionDataAuth" parameterType="yhao.micro.service.surety.erp.auth.apilist.form.auth.PositionDataAuthSaveForm">
+		insert into t_erp_auth_position_data(fid,fposition_link_id,forg_id,fdata_type,fsystem_key)
+		<foreach collection="orgIdArray" item="orgId" index="index" separator=" union all ">
+			select sys_guid(),#{positionLinkId},#{orgId},#{dataType},#{systemKey} from dual
+		</foreach>
+	</insert>
+
+	<delete id="deletePersonDataAuthRelation" parameterType="yhao.micro.service.surety.erp.auth.apilist.form.auth.PersonDataAuthSaveForm">
+		delete from t_erp_auth_person_data
+		where fdata_type=#{dataType} and fsystem_key=#{systemKey}
+		and fposition_link_id=#{positionLinkId} and fperson_id=#{personId}
+	</delete>
+
+	<insert id="savePersonDataAuth" parameterType="yhao.micro.service.surety.erp.auth.apilist.form.auth.PositionDataAuthSaveForm">
+		insert into t_erp_auth_person_data(fid,fperson_id,fauth_type,fposition_link_id,forg_id,fdata_type,fsystem_key)
+		<foreach collection="orgIdArray" item="orgId" index="index" separator=" union all ">
+			select sys_guid(),#{personId},#{authType},#{positionLinkId},#{orgId},#{dataType},#{systemKey} from dual
+		</foreach>
+	</insert>
+
+	<select id="queryAllPersonDataAuthority" parameterType="yhao.micro.service.surety.erp.auth.apilist.form.auth.DataAuthTreeQueryForm" resultMap="erpDataAuthResult">
+		select t.*,
+			torg.flong_number as forg_long_number,
+			torg.fnumber as forg_number
+		from t_erp_auth_person_data t
+		left join t_erp_org torg on torg.fid=t.forg_id
+		where t.fperson_id = #{personId}
+		<if test="dataType!=null and dataType!=''">
+			and t.fdata_type = #{dataType}
+		</if>
+		<if test="positionLinkId!=null and positionLinkId!=''">
+			and t.fposition_link_id = #{positionLinkId}
+		</if>
+		<if test="systemKey!=null and systemKey!=''">
+			and t.fsystem_key = #{systemKey}
+		</if>
+	</select>
+</mapper>

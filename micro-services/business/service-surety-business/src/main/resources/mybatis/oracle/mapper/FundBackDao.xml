@@ -1,0 +1,344 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="yhao.micro.service.surety.business.dao.automapper.FinanceFundBackDao">
+
+    <resultMap id="detailMap" type="FundPayBackDetailModel">
+        <id property="id" column="FID"/>
+        <result property="guaranteeId" column="FGUARANTEE_ID"/>
+        <result property="loanId" column="FLOAND_ID"/>
+        <result property="companyAccountId" column="FCOMPANY_ACCOUNT_ID"/>
+        <result property="repayRealAmount" column="FREPAY_REAL_AMOUNT"/>
+        <result property="repayType" column="FREPAY_TYPE"/>
+        <result property="repayDate" column="FREPAY_DATE"/>
+        <result property="warranty" column="FWARRANTY"/>
+        <result property="delay" column="FDELAY"/>
+        <result property="overdue" column="FOVERDUE"/>
+        <result property="overdueDays" column="FOVERDUE_DAYS"/>
+        <result property="reduceAmount" column="FREDUCE_AMOUNT"/>
+        <result property="realNomalAmount" column="FREAL_NOMAL_AMOUNT"/>
+        <result property="createTime" column="FCREATE_TIME"/>
+        <result property="createOperatorId" column="FCREATE_OPERATOR_ID"/>
+        <result property="updateTime" column="FUPDATE_TIME"/>
+        <result property="updateOperatorId" column="FUPDATE_OPERATOR_ID"/>
+        <result property="useDays" column="FUSE_DAYS"/>
+        <result property="repayAmount" column="FREPAY_AMOUNT"/>
+        <result property="warrantyRate" column="FWARRANTY_RATE"/>
+        <result property="delayRate" column="FDELAY_RATE"/>
+        <result property="overdueRate" column="FOVERDUE_RATE"/>
+        <result property="repayAccountId" column="FREPAY_ACCOUNT_ID"/>
+
+    </resultMap>
+
+    <resultMap id="generalMap" type="FundPayBackGeneralModel">
+        <id property="id" column="FID"/>
+        <result property="guaranteeId" column="FGUARANTEE_ID"/>
+        <result property="repayTotalAmount" column="FREPAY_TOTAL_AMOUNT"/>
+        <result property="repayBalance" column="FREPAY_BALANCE"/>
+        <result property="isConfirm" column="FIS_CONFIRM"/>
+        <result property="confirmDate" column="FCONFIRM_DATE"/>
+        <result property="createTime" column="FCREATE_TIME"/>
+        <result property="createOperatorId" column="FCREATE_OPERATOR_ID"/>
+        <result property="updateTime" column="FUPDATE_TIME"/>
+        <result property="updateOperatorId" column="FUPDATE_OPERATOR_ID"/>
+    </resultMap>
+
+    <sql id="detailSql">
+        FID,FGUARANTEE_ID,FLOAN_ID,FPAYBACK_GENERAL_ID,
+        FCOMPANY_ACCOUNT_ID,FREPAY_REAL_AMOUNT,FREPAY_TYPE,FREPAY_DATE,FWARRANTY,FDELAY,FOVERDUE,FREPAY_AMOUNT,
+        FOVERDUE_DAYS,FREDUCE_AMOUNT,FREAL_NOMAL_AMOUNT,FCREATE_TIME,FCREATE_OPERATOR_ID,FUPDATE_TIME,FUPDATE_OPERATOR_ID,FUSE_DAYS,
+        FWARRANTY_RATE,FDELAY_RATE,FOVERDUE_RATE,FREPAY_ACCOUNT_ID
+    </sql>
+
+
+     <select id="queryFundPayBack" parameterType="yhao.micro.service.surety.business.apilist.form.finance.FundPaybackQueryForm"
+     resultMap="queryFundPayBackPage">
+        SELECT GUARANTEE.FID,
+        GUARANTEE.FGUARANTEE_NUM,
+        GUARANTEE.FGUARANTEE_TYPE,
+        BUSINESS_TYPE.FBUSINESS_NAME,
+        ESTATE_SELLER.FESTATE_NAME,
+        PERSONINFO_TRADES.FCLT_TYP,
+        PERSONINFO_TRADES.FCLT_NAME,
+        BILLING_GENERAL.FCONFIRM_BILLING_DATE,
+        TR.FREDEEM_TOTAL_AMOUNT,
+        TR.FREDEEM_BALANCE,
+        LOAN_GENERAL.FLOAN_TOTAL_AMOUNT,
+        PAYBACK_GENERAL.FREPAY_TOTAL_AMOUNT,
+        PAYBACK_GENERAL.FREPAY_BALANCE,
+        TP.REFUND_AMOUNT,
+        PAYBACK_GENERAL.FIS_CONFIRM,
+        LOAN_DETAILS.FID AS LOAN_DETAILS_ID,
+        LOAN_DETAILS.FLOAN_AMOUNT,
+        LOAN_DETAILS.FARRANGED_REPAY
+        FROM  T_SURETY_GUARANTEE GUARANTEE
+        LEFT JOIN SURETY.T_SURETY_BUSINESS_TYPE BUSINESS_TYPE ON BUSINESS_TYPE.FID = GUARANTEE.FBIZ_ID
+        LEFT JOIN SURETY.T_SURETY_G_ESTATE_SELLER ESTATE_SELLER ON ESTATE_SELLER.FGUARANTEE_ID = GUARANTEE.FID
+        LEFT JOIN SURETY.T_SURETY_G_PERSONINFO_TRADES PERSONINFO_TRADES ON PERSONINFO_TRADES.FGUARANTEE_ID = GUARANTEE.FID
+        LEFT JOIN SURETY.T_SURETY_G_LOAN_GENERAL LOAN_GENERAL ON LOAN_GENERAL.FGUARANTEE_ID = GUARANTEE.FID
+        LEFT JOIN T_SURETY_FN_BILLING_GENERAL BILLING_GENERAL ON  BILLING_GENERAL.FGUARANTEE_ID =GUARANTEE.FID
+        LEFT JOIN SURETY.T_SURETY_G_LOAN_DETAILS LOAN_DETAILS ON LOAN_DETAILS.FGUARANTEE_ID = GUARANTEE.FID
+        LEFT JOIN SURETY.T_SURETY_G_LOAN_GENERAL LOAN_GENERAL ON LOAN_GENERAL.FGUARANTEE_ID = GUARANTEE.FID
+        LEFT JOIN (
+              SELECT SUM(NVL(FREDEEM_TOTAL_AMOUNT,0)) AS FREDEEM_TOTAL_AMOUNT,SUM(NVL(FREDEEM_BALANCE,0)) AS FREDEEM_BALANCE,REDEEM.FGUARANTEE_PID AS FGUARANTEE_ID
+              FROM T_SURETY_REDEEM REDEEM INNER JOIN   T_SURETY_GUARANTEE G ON REDEEM.FGUARANTEE_PID =G.FID GROUP BY REDEEM.FGUARANTEE_PID
+              )TR ON TR.FGUARANTEE_ID = GUARANTEE.FID
+        LEFT JOIN T_SURETY_FN_PAYBACK_GENERAL PAYBACK_GENERAL ON PAYBACK_GENERAL.FGUARANTEE_ID = TR.FGUARANTEE_ID
+        LEFT JOIN (
+              SELECT (SUM(NVL(TOLL.FWARRANTY_TOTAL_AMOUNT,0)+NVL(TOLL.FDELAY_TOTAL_AMOUNT,0)+NVL(TOLL.FOVERDUE_TOTAL_AMOUNT,0))-
+                     SUM(NVL(FREAL_NOMAL_AMOUNT,0))) AS REFUND_AMOUNT,TOLL.FGUARANTEE_ID AS FGUARANTEE_ID
+              FROM T_SURETY_TOLL_GENERAL TOLL
+              INNER JOIN   T_SURETY_FN_PAYBACK_DETAIL PAYBACK_DETAIL ON TOLL.FGUARANTEE_ID =PAYBACK_DETAIL.FID
+         GROUP BY TOLL.FGUARANTEE_ID
+             )TP ON TP.FGUARANTEE_ID= GUARANTEE.FID
+        <include refid="yhao.infra.service.base.DataAuthRef.tableSql"/>
+        <where>
+            <if test="orgId != null and orgId != ''">
+                and GUARANTEE.FORG_ID = #{orgId}
+            </if>
+            <if test="personId != null and personId != ''">
+                and GUARANTEE.FCREATE_OPERATOR_ID = #{personId}
+            </if>
+            <if test="payBackStatus != null and payBackStatus != ''">
+                and PAYBACK_GENERAL.FIS_CONFIRM = #{payBackStatus}
+            </if>
+            <if test="keyWord != null and keyWord != ''">
+                and (GUARANTEE.FGUARANTEE_NUM = #{keyWord}
+                or ESTATE_SELLER.FPROPERTY_NAME = #{keyWord}
+                or PERSONINFO_TRADES.FCLT_NAME = #{keyWord}
+                or (ESTATE_SELLER.FDEED_NUM = #{keyWord} and ESTATE_SELLER.FDEED_TYPE = 'FCZ'))
+            </if>
+            <if test="billingStartDate != null ">
+                and BILLING_GENERAL.FCONFIRM_BILLING_DATE between #{billingStartDate} and NVL(#{billingEndDate},sysdate)
+            </if>
+            <if test="realPayBackStartDate != null ">
+                and PAYBACK_GENERAL.FCONFIRM_DATE between #{realPayBackStartDate} and NVL(#{realPayBackEndDate},sysdate)
+            </if>
+        </where>
+        <include refid="yhao.infra.service.base.DataAuthRef.conditionSql"/>
+
+
+     </select>
+
+
+
+    <resultMap id = "queryFundPayBackPage" type = "yhao.micro.service.surety.business.apilist.form.finance.FundPayBackQueryResultForm" >
+        <id property="id" column="FID" />
+        <result property="guaranteeType" column="FGUARANTEE_TYPE"/>
+        <result property="guaranteeNum" column="FGUARANTEE_NUM"/>
+        <result property="billingConfirmDate" column="FCONFIRM_BILLING_DATE"/>
+        <result property="redemptionAmount" column="FREDEEM_TOTAL_AMOUNT"/>
+        <result property="redemptionBalance" column="FREDEEM_BALANCE"/>
+        <result property="loanTotalAmount" column="FLOAN_TOTAL_AMOUNT"/>
+        <result property="payBackTotalAmount" column="FREPAY_TOTAL_AMOUNT"/>
+        <result property="payBackBalanceAmount" column="FREPAY_BALANCE"/>
+        <result property="refundAmount" column="REFUND_AMOUNT"/>
+        <result property="isConfirm" column="FIS_CONFIRM"/>
+
+        <collection property = "estatePageModelList" ofType="yhao.micro.service.surety.business.apilist.model.guarantee.page.EstatePageModel" >
+            <id property="id" column="FID" />
+            <result property="estateName" column="FESTATE_NAME"/>
+        </collection>
+        <collection property = "applicationPersonModelList" ofType="yhao.micro.service.surety.business.apilist.model.guarantee.page.ApplicationPersonModel" >
+            <id property="id" column="FID" />
+            <result property="cltTyp" column="FCLT_TYP"/>
+            <result property="cltName" column="FCLT_NAME"/>
+        </collection>
+        <collection property = "loanDetails" ofType="yhao.micro.service.surety.business.apilist.model.guarantee.output.LoanDetailsModel" >
+            <id property="id" column="LOAN_DETAILS_ID" />
+            <result property="loanAmount" column="FLOAN_AMOUNT"/>
+            <result property="arrangedRepay" column="FARRANGED_REPAY"/>
+        </collection>
+    </resultMap>
+
+
+    <select id="queryFundPayBackRecord" resultMap="detailMap">
+        select
+        <include refid="detailSql"/>
+        from T_SURETY_FN_PAYBACK_DETAIL
+        where FLOAN_ID=#{loanId}
+    </select>
+
+    <insert id="insertFundPayBackGeneral" parameterType="FundPayBackGeneralModel">
+        insert into T_SURETY_FN_PAYBACK_GENERAL(FID,FGUARANTEE_ID,FREPAY_TOTAL_AMOUNT,FREPAY_BALANCE,
+        FIS_CONFIRM,FCONFIRM_DATE,FCREATE_TIME,FCREATE_OPERATOR_ID,FUPDATE_TIME,FUPDATE_OPERATOR_ID)
+        values(#{id},#{guaranteeId},#{repayTotalAmount},#{repayBalance},#{isConfirm},#{confirmDate},#{createTime},
+        #{createOperatorId},#{updateTime},#{updateOperatorId})
+    </insert>
+
+
+    <insert id="insertFundPayBackDetail" parameterType="FundPayBackDetailModel">
+        insert into T_SURETY_FN_PAYBACK_DETAIL(FID,FGUARANTEE_ID,FLOAN_ID,
+        FCOMPANY_ACCOUNT_ID,FREPAY_REAL_AMOUNT,FREPAY_TYPE,FREPAY_DATE,FWARRANTY,FDELAY,FOVERDUE,
+        FOVERDUE_DAYS,FREDUCE_AMOUNT,FREAL_NOMAL_AMOUNT,FUSE_DAYS,FCREATE_TIME,FCREATE_OPERATOR_ID,
+        FUPDATE_TIME,FUPDATE_OPERATOR_ID,FUSE_DAYS,FREPAY_AMOUNT,FWARRANTY_RATE,FDELAY_RATE,FOVERDUE_RATE,FREPAY_ACCOUNT_ID)
+        values (#{id},#{guaranteeId},#{loanId},#{companyAccountId},
+        #{repayRealAmount},#{repayType},#{repayDate},#{warranty},#{delay},#{overdue},#{overdueDays},#{reduceAmount},
+        #{realNomalAmount},#{useDays},#{createTime},#{createOperatorId},#{updateTime},#{updateOperatorId},#{useDays},#{repayAmount},
+        #{warrantyRate},#{delayRate},#{overdueRate},#{repayAccountId})
+    </insert>
+
+    <update id="fundPayBackConfirm" parameterType="string">
+        update T_SURETY_FN_PAYBACK_GENERAL
+        set
+        FIS_CONFIRM ='YES',
+        FCONFIRM_DATE =sysdate
+        where FID=#{id}
+
+    </update>
+
+
+    <select id="pickFeeRate" parameterType="string"
+            resultType="yhao.micro.service.surety.business.apilist.form.finance.FinanceFeeRateResultForm">
+        select d.FMARKET_FEE_RATE as loanFeeRate ,bt.FOVERDUE_RATE_JSON as overdueRateJson,
+        fb.FFIRST_BILLING_DATE as firstBillingDate
+        from T_SURETY_G_LOAN_DETAILS d
+        left join T_SURETY_FN_BILLING_GENERAL fb on d.FGUARANTEE_ID =fb.FGUARANTEE_ID
+        left join T_SURETY_GUARANTEE g on fb.FGUARANTEE_ID =g.FID
+        left join T_SURETY_BUSINESS_TYPE bt on g.FBIZ_ID =bt.FID
+        where d.FID=#{loanId}
+    </select>
+
+    <update id="updateFundPayBackDetail" parameterType="FundPayBackDetailModel">
+        update T_SURETY_FN_PAYBACK_DETAIL
+        <set>
+            <if test="companyAccountId !=null and companyAccountId != ''">FCOMPANY_ACCOUNT_ID=#{companyAccountId},</if>
+            <if test="repayRealAmount !=null and repayRealAmount != ''">FREPAY_REAL_AMOUNT=#{repayRealAmount},</if>
+            <if test="repayType !=null">FREPAY_TYPE=#{repayType},</if>
+            <if test=" repayDate !=null">FREPAY_DATE=#{repayDate},</if>
+            <if test="warranty !=null and warranty >0">FWARRANTY=#{warranty},</if>
+            <if test="delay !=null and delay >0 ">FDELAY=#{delay},</if>
+            <if test="overdue !=null and overdue >0">FOVERDUE=#{overdue},</if>
+            <if test="overdueDays !=null and overdueDays > 0">FOVERDUE_DAYS=#{overdueDays},</if>
+            <if test="reduceAmount !=null and reduceAmount >0">FREDUCE_AMOUNT=#{reduceAmount},</if>
+            <if test="realNomalAmount !=null and realNomalAmount >0">FREAL_NOMAL_AMOUNT=#{realNomalAmount},</if>
+            <if test="updateTime != null and updateTime != ''" >FUPDATE_TIME = #{updateTime}</if>
+            <if test="updateOperatorId != null and updateOperatorId != ''" >FUPDATE_OPERATOR_ID = #{updateOperatorId}</if>
+            <if test="useDays != null and useDays >0" >FUSE_DAYS = #{useDays}</if>
+            <if test="repayAmount != null and repayAmount >0" >FREPAY_AMOUNT = #{repayAmount}</if>
+        </set>
+        where FID=#{id}
+
+    </update>
+
+
+    <select id="pickPayBackGeneral" resultMap="generalMap" parameterType="string">
+     select FID,FGUARANTEE_ID,FREPAY_TOTAL_AMOUNT,FREPAY_BALANCE,
+        FIS_CONFIRM,FCONFIRM_DATE,FCREATE_TIME,FCREATE_OPERATOR_ID,FUPDATE_TIME,FUPDATE_OPERATOR_ID
+     from T_SURETY_FN_PAYBACK_GENERAL
+     where FGUARANTEE_ID=#{guaranteeId}
+    </select>
+
+    <select id="queryFundPayBackLoanTotal" parameterType="java.util.List" resultType="yhao.micro.service.surety.business.apilist.form.finance.LoanPayBackTotalQueryForm">
+        SELECT FGUARANTEE_ID as guaranteeId,FLOAN_ID AS LOANID,SUM(FREPAY_AMOUNT) AS PAYBACKTOTALAMOUNT
+        FROM T_SURETY_FN_PAYBACK_DETAIL
+        WHERE FGUARANTEE_ID IN
+        <foreach collection="list" separator="," item="item" open="(" close=")">
+            #{item}
+        </foreach>
+        GROUP BY FGUARANTEE_ID,FLOAN_ID
+    </select>
+
+    <select id="pickTotalFee" parameterType="string" resultType="java.math.BigDecimal">
+      select SUM(FREAL_NOMAL_AMOUNT)
+      from T_SURETY_FN_PAYBACK_DETAIL
+      where FGUARANTEE_ID =#{guaranteeId}
+    </select>
+
+    <select id="queryOverdueRecord" parameterType="yhao.infra.apilist.validate.IdForm" resultMap="queryOverdueRecordMap">
+        SELECT
+        PAYBACK_DETAIL.FID AS PAY_ID,
+        PAYBACK_DETAIL.FREPAY_DATE,
+        PAYBACK_DETAIL.FREAL_NOMAL_AMOUNT,
+        PAYBACK_DETAIL.FOVERDUE,
+        PAYBACK_DETAIL.FREPAY_AMOUNT,
+        PAYBACK_DETAIL.FOVERDUE_RATE,
+        PAYBACK_DETAIL.FOVERDUE_DAYS,
+        LOAN_DETAILS.FARRANGED_REPAY,
+        LOAN_DETAILS.FID,
+        LOAN_DETAILS.FGUARANTEE_ID,
+        LOAN_DETAILS.FLOAN_AMOUNT,
+        LOAN_DETAILS.FMARKET_FEE_RATE
+        FROM T_SURETY_FN_PAYBACK_DETAIL PAYBACK_DETAIL
+        LEFT JOIN T_SURETY_G_LOAN_DETAILS LOAN_DETAILS ON LOAN_DETAILS.FID =  PAYBACK_DETAIL.FLOAN_ID
+        LEFT JOIN T_SURETY_FN_PAYBACK_GENERAL PAYBACK_GENERAL ON PAYBACK_GENERAL.FGUARANTEE_ID =  PAYBACK_DETAIL.FGUARANTEE_ID
+        WHERE
+        PAYBACK_GENERAL.FIS_CONFIRM ='YES'
+        AND
+        (SELECT COUNT(1) FROM T_SURETY_OVERDUE_TO_EXTENSION TO_EXTENSION
+         WHERE PAYBACK_DETAIL.FID =TO_EXTENSION.FPAYBACK_ID AND TO_EXTENSION.FSTATUS =1)=0
+        AND
+        PAYBACK_DETAIL.FOVERDUE_DAYS &gt;0
+        AND
+        PAYBACK_DETAIL.FGUARANTEE_ID=#{id}
+        ORDER BY PAYBACK_DETAIL.FCREATE_TIME DESC
+    </select>
+
+
+    <resultMap id="queryOverdueRecordMap" type="yhao.micro.service.surety.business.apilist.form.finance.OverdueRecordResultForm">
+        <id property="id" column="FID" />
+        <result property="isConfirm" column="FIS_CONFIRM"/>
+        <result property="guaranteeId" column="FGUARANTEE_ID"/>
+        <result property="loanAmount" column="FLOAN_AMOUNT"/>
+        <result property="arrangedRepay" column="FARRANGED_REPAY"/>
+        <result property="marketFeeRate" column="FMARKET_FEE_RATE"/>
+        <collection property="payBackDetailList" ofType="yhao.micro.service.surety.business.apilist.model.finance.FundPayBackDetailModel">
+            <id property="id" column="PAY_ID" />
+            <result property="overdue" column="FOVERDUE"/>
+            <result property="repayAmount" column="FREPAY_AMOUNT"/>
+            <result property="realNomalAmount" column="FREAL_NOMAL_AMOUNT"/>
+            <result property="overdueDays" column="FOVERDUE_DAYS"/>
+            <result property="repayDate" column="FREPAY_DATE"/>
+            <result property="overdueRate" column="FOVERDUE_RATE"/>
+        </collection>
+    </resultMap>
+
+
+    <select id="pickAccountGeneral" parameterType="yhao.infra.apilist.validate.IdForm" resultMap="pickAccountGeneralMap">
+        SELECT GUARANTEE.FID,
+        BILLING_GENERAL.FFIRST_BILLING_DATE,
+        GUARANTEE_SITUATION.FGUARANTEE_APPLICANT_IDS,
+        LOAN_GENERAL.FTOTAL_DAYS,
+        BILLING_GENERAL.FTOTAL_BILLING_AMOUNT,
+        PAYBACK_GENERAL.FREPAY_TOTAL_AMOUNT,
+        PAYBACK_GENERAL.FCONFIRM_DATE,
+        TOLL_GENERAL.FCONFIRM_WARRANTY_DATE,
+        FUND_PLAN.FPRODUCT_TYPE,
+        FUND_PLAN.FFUND_TYPE,
+        FUND_PROVIDER.FNAME,
+        LOAN_GENERAL.FCHARGE_TOTAL,
+        LOAN_GENERAL.FCHARGES,
+        TOLL_GENERAL.FWARRANTY_TOTAL_AMOUNT,
+        TOLL_GENERAL.FDELAY_TOTAL_AMOUNT,
+        TOLL_GENERAL.FOVERDUE_TOTAL_AMOUNT
+        FROM  T_SURETY_GUARANTEE GUARANTEE
+        LEFT JOIN SURETY.T_SURETY_G_GUARANTEE_SITUATION GUARANTEE_SITUATION ON GUARANTEE_SITUATION.FGUARANTEE_ID = GUARANTEE.FID
+        LEFT JOIN SURETY.T_SURETY_G_LOAN_GENERAL LOAN_GENERAL ON LOAN_GENERAL.FGUARANTEE_ID = GUARANTEE.FID
+        LEFT JOIN SURETY.T_SURETY_FN_BILLING_GENERAL BILLING_GENERAL ON BILLING_GENERAL.FGUARANTEE_ID = GUARANTEE.FID
+        LEFT JOIN SURETY.T_SURETY_FN_PAYBACK_GENERAL PAYBACK_GENERAL ON PAYBACK_GENERAL.FGUARANTEE_ID = GUARANTEE.FID
+        LEFT JOIN SURETY.T_SURETY_TOLL_GENERAL TOLL_GENERAL ON TOLL_GENERAL.FGUARANTEE_ID = GUARANTEE.FID
+        LEFT JOIN SURETY.T_SURETY_FN_FUND_PLAN FUND_PLAN ON FUND_PLAN.FGUARANTEE_ID = GUARANTEE.FID
+        LEFT JOIN SURETY.T_BASE_FUND_PROVIDER FUND_PROVIDER ON FUND_PROVIDER.FID = FUND_PLAN.FPLATFORM_ID
+        LEFT JOIN SURETY.T_SURETY_FN_PAYBACK_DETAIL PAYBACK_DETAIL ON PAYBACK_DETAIL.FGUARANTEE_ID = GUARANTEE.FID
+        WHERE GUARANTEE.FID=#{id}
+    </select>
+    <resultMap id="pickAccountGeneralMap" type="yhao.micro.service.surety.business.apilist.form.finance.AccountGeneralForm">
+        <id property="guaranteeId" column="FID" />
+        <result property="billingDate" column="FFIRST_BILLING_DATE"/>
+        <result property="loanerName" column="FGUARANTEE_APPLICANT_IDS"/>
+        <result property="loanDays" column="FTOTAL_DAYS"/>
+        <result property="billingTotalAmount" column="FTOTAL_BILLING_AMOUNT"/>
+        <result property="repayTotalAmount" column="FREPAY_TOTAL_AMOUNT"/>
+        <result property="tollConfirmDate" column="FCONFIRM_DATE"/>
+        <result property="repayConfirmDate" column="FCONFIRM_WARRANTY_DATE"/>
+        <result property="productType" column="FPRODUCT_TYPE"/>
+        <result property="fundName" column="FNAME"/>
+        <result property="chargeTotal" column="FCHARGE_TOTAL"/>
+        <result property="charges" column="FCHARGES"/>
+        <result property="warrantyTotalAmount" column="FWARRANTY_TOTAL_AMOUNT"/>
+        <result property="delayTotalAmount" column="FDELAY_TOTAL_AMOUNT"/>
+        <result property="overdueTotalAmount" column="FOVERDUE_TOTAL_AMOUNT"/>
+    </resultMap>
+
+</mapper>

@@ -1,0 +1,438 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="yhao.micro.service.surety.business.dao.automapper.DiscountApplicationDao">
+
+
+    <resultMap id="queryGuaranteeInfo" type="yhao.micro.service.surety.business.apilist.model.DiscountApplicationInfoModel">
+        <id property="businessNumber" column="FGUARANTEE_NUM"/>
+        <result property="fairDate" column="FNOTARIZATION_DATA"/>
+        <result property="guaranteeMoney" column="FGUARANTEE_AMOUNT"/>
+        <result property="redemptionMoney" column="FREDEEM_HOUSE_AMOUNT"/>
+        <result property="guaranteeDays" column="FGUARANTEE_DAYS"/>
+        <result property="handlingFee" column="FCHARGES"/>
+        <result property="externalRate" column="FMARKET_FEE_RATE"/>
+        <result property="actualRate" column="FREAL_FEE_RATE"/>
+        <result property="securityFeeReceivable" column="FCHARGE_GUARANTEE_FEE"/>
+        <result property="paidGuaranteeFee" column="FCHARGE_REAL_GUARANTEE_FEE"/>
+        <result property="totalReceivable" column="FCHARGE_TOTAL"/>
+        <result property="totalHarvest" column="FCHARGE_REAL_TOTAL"/>
+        <result property="discountReason" column="FDISCOUNT_REASON"/>
+        <result property="discountId" column="FDISCOUNT_ID"/>
+        <result property="accountManager" column="FMANAGER_NAME"/>
+        <result property="accountManagerId" column="FMANAGER_ID"/>
+        <result property="businessType" column="FBUSINESS_NAME"/>
+        <result property="lowestActualRate" column="FMIN_REAL_RATE"/>
+        <result property="rebate" column="FREBATE"/>
+        <collection property="sellers" ofType="yhao.micro.service.surety.business.apilist.model.OwnerModel">
+            <id property="id" column="BSSFID"></id>
+            <result property="owner" column="SELLER"></result>
+        </collection>
+        <collection property="buyers" ofType="yhao.micro.service.surety.business.apilist.model.BuyModel">
+            <id property="id" column="BSFID"></id>
+            <result property="buyer" column="BUYER"></result>
+        </collection>
+        <collection property="propertys" ofType="yhao.micro.service.surety.business.apilist.model.PropertyModel">
+            <id property="id" column="LSFID"></id>
+            <result property="propertyName" column="FPROPERTY_NAME"></result>
+        </collection>
+    </resultMap>
+
+    <select id="queryGuaranteeInfoById" parameterType="String" resultMap="queryGuaranteeInfo">
+       SELECT
+            gu.FID AS FID,
+            gu.FGUARANTEE_NUM AS FGUARANTEE_NUM,
+            to_char( tr.FNOTARIZATION_DATA, 'yyyy-MM-dd HH:mm:ss' ) AS FNOTARIZATION_DATA,
+            si.FGUARANTEE_AMOUNT AS FGUARANTEE_AMOUNT,
+            si.FGUARANTEE_DAYS AS FGUARANTEE_DAYS,
+            si.FREDEEM_HOUSE_AMOUNT AS FREDEEM_HOUSE_AMOUNT,
+            ge.FCHARGES AS FCHARGES,
+            ge.FMARKET_FEE_RATE AS FMARKET_FEE_RATE,
+            lo.FREAL_FEE_RATE AS FREAL_FEE_RATE,
+            lo.FREBATE AS FREBATE,
+            lo.FCHARGE_GUARANTEE_FEE AS FCHARGE_GUARANTEE_FEE,
+            lo.FCHARGE_REAL_GUARANTEE_FEE AS FCHARGE_REAL_GUARANTEE_FEE,
+            ge.FCHARGE_TOTAL AS FCHARGE_TOTAL,
+            ge.FCHARGE_REAL_TOTAL AS FCHARGE_REAL_TOTAL,
+            ap.FDISCOUNT_REASON AS FDISCOUNT_REASON,
+            ap.FID AS FDISCOUNT_ID,
+            me.FMANAGER_NAME AS FMANAGER_NAME,
+            me.FMANAGER_ID AS FMANAGER_ID,
+            ty.FBUSINESS_NAME AS FBUSINESS_NAME,
+            ty.FMIN_REAL_RATE AS FMIN_REAL_RATE,
+            bs.FCLT_NAME AS BUYER,
+            bs.FID AS BSFID,
+            bss.FID AS BSSFID,
+            bss.FCLT_NAME AS SELLER,
+            ls.FPROPERTY_NAME AS FPROPERTY_NAME,
+            ls.FID AS LSFID
+        FROM
+            T_SURETY_GUARANTEE gu
+            LEFT JOIN T_SURETY_BUSINESS_TYPE ty ON gu.FBIZ_ID = ty.FID
+            LEFT JOIN T_SURETY_G_LOAN_GENERAL ge ON ge.FGUARANTEE_ID = gu.FID
+            LEFT JOIN T_SURETY_G_INFO_OF_TRANSACTION tr ON tr.FGUARANTEE_ID = gu.FID
+            LEFT JOIN T_SURETY_G_GUARANTEE_SITUATION si ON si.FGUARANTEE_ID = gu.FID
+            LEFT JOIN T_SURETY_G_LOAN_DETAILS lo ON lo.FGUARANTEE_ID = gu.FID
+            LEFT JOIN T_SURETY_DISCOUNT_APLICATION ap ON gu.FID = ap.FGUARANTEE_PID
+            LEFT JOIN T_SURETY_G_PARTNER me ON me.FGUARANTEE_ID = gu.FID AND me.FIS_MAJOR_MANAGER = 'YES'
+            LEFT JOIN T_SURETY_G_ESTATE_SELLER ls ON ls.FGUARANTEE_ID = gu.FID
+            LEFT JOIN T_SURETY_G_PERSONINFO_TRADES bs ON bs.FGUARANTEE_ID = gu.FID AND bs.FCLT_TYP='BUYER'
+            LEFT JOIN T_SURETY_G_PERSONINFO_TRADES bss ON bss.FGUARANTEE_ID = gu.FID AND bss.FCLT_TYP='SELLER'
+        WHERE
+            gu.FID = #{id} ap.FIS_CANCLE = 1
+    </select>
+
+    <resultMap id="queryDiscountSomeInfo" type="yhao.micro.service.surety.business.apilist.model.DiscountApplicationInfoModel">
+        <id property="businessNumber" column="FGUARANTEE_NUM"/>
+        <result property="fairDate" column="FNOTARIZATION_DATA"/>
+        <result property="discountReason" column="FDISCOUNT_REASON"/>
+        <result property="discountId" column="FDISCOUNT_ID"/>
+        <result property="accountManager" column="FMANAGER_NAME"/>
+        <result property="accountManagerId" column="FMANAGER_ID"/>
+        <result property="businessType" column="FBUSINESS_NAME"/>
+        <result property="lowestActualRate" column="FMIN_REAL_RATE"/>
+        <association property="loanGeneralSaveForm" javaType="yhao.micro.service.surety.business.apilist.form.guarantee.LoanGeneralSaveForm">
+            <id property="id" column="LGFID"></id>
+            <result property="loanTotalAmount" column="FLOAN_TOTAL_AMOUNT"></result>
+            <result property="totalDays" column="FTOTAL_DAYS"></result>
+            <result property="adviceFee" column="FADVICE_FEE"></result>
+            <result property="charges" column="FCHARGES"></result>
+            <result property="chargeTotal" column="FCHARGE_TOTAL"></result>
+        </association>
+        <collection property="sellers" ofType="yhao.micro.service.surety.business.apilist.model.OwnerModel">
+            <id property="id" column="BSSFID"></id>
+            <result property="owner" column="SELLER"></result>
+        </collection>
+        <collection property="buyers" ofType="yhao.micro.service.surety.business.apilist.model.BuyModel">
+            <id property="id" column="BSFID"></id>
+            <result property="buyer" column="BUYER"></result>
+        </collection>
+        <collection property="propertys" ofType="yhao.micro.service.surety.business.apilist.model.PropertyModel">
+            <id property="id" column="LSFID"></id>
+            <result property="propertyName" column="FPROPERTY_NAME"></result>
+        </collection>
+        <collection property="LoanDetailsInfoList" ofType="yhao.micro.service.surety.business.apilist.model.LoanDetailsInfoModel">
+            <id property="id" column="LDFID"></id>
+            <result property="loanAmount" column="FLOAN_AMOUNT"></result>
+            <result property="loanDays" column="FLOAN_DAYS"></result>
+            <result property="marketFeeRate" column="FMARKET_FEE_RATE"></result>
+            <result property="chargeGuaranteeFee" column="FCHARGE_GUARANTEE_FEE"></result>
+        </collection>
+    </resultMap>
+
+
+    <select id="queryDiscountSomeInfoById" parameterType="String" resultMap="queryDiscountSomeInfo">
+       SELECT
+            gu.FID,
+            gu.FGUARANTEE_NUM AS FGUARANTEE_NUM,
+            to_char( tr.FNOTARIZATION_DATA, 'yyyy-MM-dd HH:mm:ss' ) AS FNOTARIZATION_DATA,
+            ap.FDISCOUNT_REASON AS FDISCOUNT_REASON,
+            ap.FID AS FDISCOUNT_ID,
+            ld.FID AS LDFID,
+            ld.FLOAN_AMOUNT AS FLOAN_AMOUNT,
+            ld.FLOAN_DAYS AS FLOAN_DAYS,
+            ld.FMARKET_FEE_RATE AS FMARKET_FEE_RATE,
+            ld.FCHARGE_GUARANTEE_FEE AS FCHARGE_GUARANTEE_FEE,
+            lg.FID AS LGFID,
+            lg.FLOAN_TOTAL_AMOUNT AS FLOAN_TOTAL_AMOUNT,
+            lg.FTOTAL_DAYS AS FTOTAL_DAYS,
+            lg.FMARKET_FEE_RATE AS FMARKET_FEE_RATE,
+            lg.FADVICE_FEE AS FADVICE_FEE,
+            lg.FCHARGES AS FCHARGES,
+            lg.FCHARGE_TOTAL AS FCHARGE_TOTAL,
+            me.FMANAGER_NAME AS FMANAGER_NAME,
+            me.FMANAGER_ID AS FMANAGER_ID,
+            ty.FBUSINESS_NAME AS FBUSINESS_NAME,
+            ty.FMIN_REAL_RATE AS FMIN_REAL_RATE,
+            bs.FCLT_NAME AS BUYER,
+            bs.FID AS BSFID,
+            bss.FID AS BSSFID,
+            bss.FCLT_NAME AS SELLER,
+            ls.FPROPERTY_NAME AS FPROPERTY_NAME,
+            ls.FID AS LSFID
+        FROM
+            T_SURETY_GUARANTEE gu
+            LEFT JOIN T_SURETY_BUSINESS_TYPE ty ON gu.FBIZ_ID = ty.FID
+            LEFT JOIN T_SURETY_G_LOAN_DETAILS ld ON ld.FGUARANTEE_ID = gu.FID
+            LEFT JOIN T_SURETY_G_LOAN_GENERAL lg ON lg.FGUARANTEE_ID = gu.FID
+            LEFT JOIN T_SURETY_G_INFO_OF_TRANSACTION tr ON tr.FGUARANTEE_ID = gu.FID
+            LEFT JOIN T_SURETY_DISCOUNT_APLICATION ap ON gu.FID = ap.FGUARANTEE_PID
+            LEFT JOIN T_SURETY_G_PARTNER me ON me.FGUARANTEE_ID = gu.FID
+            AND me.FIS_MAJOR_MANAGER = 'YES'
+            LEFT JOIN T_SURETY_G_ESTATE_SELLER ls ON ls.FGUARANTEE_ID = gu.FID
+            LEFT JOIN T_SURETY_G_PERSONINFO_TRADES bs ON bs.FGUARANTEE_ID = gu.FID
+            AND bs.FCLT_TYP = 'BUYER'
+            LEFT JOIN T_SURETY_G_PERSONINFO_TRADES bss ON bss.FGUARANTEE_ID = gu.FID
+            AND bss.FCLT_TYP = 'SELLER'
+        WHERE
+            gu.FID = #{id} and ap.FIS_CANCLE = 1
+    </select>
+
+    <resultMap id="queryOwnerInfo" type="yhao.micro.service.surety.business.apilist.model.OwnerModel">
+        <id property="id" column="FID"/>
+        <result property="owner" column="OWNER"/>
+    </resultMap>
+
+    <select id="queryOwnerInfoById" parameterType="String" resultMap="queryOwnerInfo">
+       SELECT
+           gu.FID AS FID,
+		   tr.FCLT_NAME AS OWNER
+        FROM
+            T_SURETY_GUARANTEE gu
+            LEFT JOIN T_SURETY_G_PERSONINFO_TRADES tr ON gu.FID = tr.FGUARANTEE_ID and tr.FCLT_TYP = 'SELLER'
+        WHERE
+            gu.FID = #{id}
+    </select>
+
+    <resultMap id="queryBuyerInfo" type="yhao.micro.service.surety.business.apilist.model.BuyModel">
+        <id property="id" column="FID"/>
+        <result property="buyer" column="BUYER"/>
+    </resultMap>
+
+    <select id="queryBuyerInfoById" parameterType="String" resultMap="queryBuyerInfo">
+       SELECT
+           gu.FID AS FID,
+		   tr.FCLT_NAME AS BUYER
+        FROM
+            T_SURETY_GUARANTEE gu
+            LEFT JOIN T_SURETY_G_PERSONINFO_TRADES tr ON gu.FID = tr.FGUARANTEE_ID and tr.FCLT_TYP = 'BUYER'
+        WHERE
+            gu.FID = #{id}
+    </select>
+
+    <resultMap id="queryPropertyInfo" type="yhao.micro.service.surety.business.apilist.model.PropertyModel">
+        <id property="id" column="FID"/>
+        <result property="propertyName" column="PROPERTYNAME"/>
+        <result property="roomName" column="FESTATE_NAME"/>
+    </resultMap>
+
+    <select id="queryPropertyInfoById" parameterType="String" resultMap="queryPropertyInfo">
+       SELECT
+           gu.FID AS FID,
+		   wu.FPROPERTY_NAME AS PROPERTYNAME,
+		   wu.FESTATE_NAME AS FESTATE_NAME
+        FROM
+            T_SURETY_GUARANTEE gu
+            LEFT JOIN T_SURETY_G_ESTATE_SELLER wu on wu.FGUARANTEE_ID = gu.FID
+        WHERE
+            gu.FID = #{id}
+    </select>
+
+    <insert id="discountApplicationSave" parameterType="yhao.micro.service.surety.business.apilist.form.complex.DiscountApplicationSaveForm">
+        insert into SURETY.T_SURETY_DISCOUNT_APLICATION(FID,FGUARANTEE_PID,FDISCOUNT_REASON,FCRERTE_TIME)
+        values (#{id},#{guaranteeId},#{discountReason},TO_Date(#{createTime}, 'yyyy-MM-dd'))
+    </insert>
+
+    <resultMap id="queryDiscountInfo" type="yhao.micro.service.surety.business.apilist.model.DiscountApplicationByIdModel">
+        <id property="discountId" column="FID"/>
+        <result property="guaranteeId" column="FGUARANTEE_PID"/>
+        <result property="discountReason" column="FDISCOUNT_REASON"/>
+        <result property="createTime" column="FCRERTE_TIME"/>
+    </resultMap>
+
+    <select id="queryDiscountInfoById" parameterType="String" resultMap="queryDiscountInfo">
+       SELECT
+           FID,
+           FGUARANTEE_PID,
+           FDISCOUNT_REASON,
+           FCRERTE_TIME
+        FROM
+            SURETY.T_SURETY_DISCOUNT_APLICATION
+        WHERE
+            FID = #{id}
+    </select>
+
+    <update id="updateDiscountReasonById" parameterType="yhao.micro.service.surety.business.apilist.form.complex.RestartDiscountSaveForm">
+        UPDATE SURETY.T_SURETY_DISCOUNT_APLICATION di
+        SET di.FDISCOUNT_REASON = #{discountReason}
+        WHERE
+	      di.FID = #{discountId}
+    </update>
+
+    <update id="updateDiscountStatusById" parameterType="yhao.micro.service.surety.business.apilist.form.complex.RestartDiscountSaveForm">
+        UPDATE T_SURETY_DISCOUNT_APLICATION
+        SET FIS_CANCLE = 2
+        WHERE
+            FID = #{discountId}
+    </update>
+
+    <update id="restartDiscountStatusById" parameterType="yhao.micro.service.surety.business.apilist.form.complex.RestartDiscountSaveForm">
+        UPDATE T_SURETY_DISCOUNT_APLICATION
+        SET FIS_CANCLE = 1
+        WHERE
+            FID = #{discountId}
+    </update>
+
+    <resultMap id="DiscountApplicationList" type="yhao.micro.service.surety.business.apilist.model.DiscountApplicationModel">
+        <id property="id" column="FID"/>
+        <result property="guaranteeId" column="FGUARANTEE_NUM"/>
+        <result property="singleNumber" column="DIFID"/>
+        <result property="accountManager" column="FMANAGER_NAME"/>
+        <result property="accountManagerId" column="FMANAGER_ID"/>
+        <result property="guaranteeMoney" column="FGUARANTEE_AMOUNT"/>
+        <result property="approvalProgress" column="FSTATUS"/>
+        <result property="guaranteeRate" column="FREAL_FEE_RATE"/>
+        <result property="receivableguaranteeMoney" column="FCHARGE_GUARANTEE_FEE"/>
+        <result property="taskId" column="FTASK_ID"/>
+        <collection property="sellers" ofType="yhao.micro.service.surety.business.apilist.model.OwnerModel">
+            <id property="id" column="BSSFID"></id>
+            <result property="owner" column="SELLER"></result>
+        </collection>
+        <collection property="buyers" ofType="yhao.micro.service.surety.business.apilist.model.BuyModel">
+            <id property="id" column="BSFID"></id>
+            <result property="buyer" column="BUYER"></result>
+        </collection>
+    </resultMap>
+
+    <select id="pageQueryDiscountApplication" parameterType="yhao.micro.service.surety.business.apilist.form.complex.ApplicationQueryForm" resultMap="DiscountApplicationList">
+        SELECT DISTINCT
+            gu.FID AS FID,
+            gu.FGUARANTEE_NUM AS FGUARANTEE_NUM,
+            lo.FREAL_FEE_RATE AS FREAL_FEE_RATE,
+            lo.FCHARGE_GUARANTEE_FEE AS FCHARGE_GUARANTEE_FEE,
+            me.FMANAGER_NAME AS FMANAGER_NAME,
+            me.FMANAGER_ID AS FMANAGER_ID,
+            si.FGUARANTEE_AMOUNT AS FGUARANTEE_AMOUNT,
+            dis.FID AS DIFID,
+            ta.FSTATUS AS FSTATUS,
+            dis.FCRERTE_TIME AS FCRERTE_TIME,
+            ta.FID AS FTASK_ID,
+            bs.FCLT_NAME AS BUYER,
+            bs.FID AS BSFID,
+            bss.FID AS BSSFID,
+            bss.FCLT_NAME AS SELLER
+        FROM
+            T_SURETY_GUARANTEE gu
+            LEFT JOIN T_SURETY_DISCOUNT_APLICATION dis ON dis.FGUARANTEE_PID = gu.FID
+            LEFT JOIN T_SURETY_G_GUARANTEE_SITUATION si ON si.FGUARANTEE_ID = gu.FID
+            LEFT JOIN T_SURETY_G_LOAN_DETAILS lo ON lo.FGUARANTEE_ID = gu.FID
+            LEFT JOIN T_SURETY_G_PARTNER me ON me.FGUARANTEE_ID = gu.FID
+            AND me.FIS_MAJOR_MANAGER = 'YES'
+            LEFT JOIN T_SURETY_G_ESTATE_SELLER ls ON ls.FGUARANTEE_ID = gu.FID
+            LEFT JOIN T_SURETY_G_PERSONINFO_TRADES bs ON bs.FGUARANTEE_ID = gu.FID AND bs.FCLT_TYP='BUYER'
+            LEFT JOIN T_SURETY_G_PERSONINFO_TRADES bss ON bss.FGUARANTEE_ID = gu.FID AND bss.FCLT_TYP='SELLER'
+            LEFT JOIN T_WK_TASK ta ON ta.FBIZ_ENTITY_ID = dis.FID
+            LEFT JOIN T_WK_PVM_PROCESS pr ON ta.fprocess_id = pr.FID
+            LEFT JOIN T_ERP_ORG o ON me.FORG_ID = o.FID
+        <include refid="yhao.infra.service.base.DataAuthRef.tableSql"/>
+        WHERE
+        dis.FIS_CANCLE = 1 AND pr.FBIZ_CODE = '3'
+        <if test="orgId != null and orgId !='' ">
+        AND o.FLONG_NUMBER LIKE CONCAT(( SELECT s.FLONG_NUMBER FROM T_ERP_ORG s WHERE s.FID = #{orgId} ), '%' )
+        </if>
+        <if test="accountManagerName != null and accountManagerName !='' ">
+            AND me.FMANAGER_NAME = #{accountManagerName}
+        </if>
+        <if test="otherConditions != null and otherConditions !='' ">
+            AND (
+            gu.FGUARANTEE_NUM LIKE concat(concat('%',#{otherConditions}),'%') OR ls.FPROPERTY_NAME LIKE concat(concat('%',#{otherConditions}),'%')
+            OR bs.FCLT_NAME LIKE concat(concat('%',#{otherConditions}),'%') OR dis.FID LIKE concat( concat( '%', #{otherConditions} ), '%' )OR bss.FCLT_NAME LIKE concat( concat( '%', #{otherConditions}), '%' ))
+        </if>
+        <if test="startDate != null and startDate !='' and endDate != null and endDate !=''">
+            AND dis.FCRERTE_TIME BETWEEN TO_DATE( #{startDate}, 'yyyy-MM-dd' )
+            AND TO_DATE(
+            #{endDate},
+            'yyyy-MM-dd')
+        </if>
+        <include refid="yhao.infra.service.base.DataAuthRef.conditionSql"/>
+        ORDER BY FCRERTE_TIME DESC
+    </select>
+
+    <select id="pickBusinessTypeByGuaranteeId" parameterType="string" resultType="yhao.micro.service.surety.business.apilist.model.businessType.BusinessTypeModel">
+        select ty.FID AS id,
+        ty.FWORKFLOW_BIZ_CODE AS workflowBizCode,
+        ty.FORG_ID AS orgId,
+        ty.FFUND_TYPE AS fundType,
+        ty.FTRANSACTION_TYPE AS transactionType,
+        ty.FBUSINESS_NAME AS businessName,
+        ty.FMIN_CHARGE AS minCharge,
+        ty.FMIN_EXTERNAL_RATE AS minExternalRate,
+        ty.FMIN_REAL_RATE AS minRealRate,
+        ty.FMIN_REAL_FEE AS minRealFee,
+        ty.FIS_TWICE_REPAY AS isTwiceRepay ,
+        ty.FIS_REDEEMSELF_BIZ AS isRedeemselfBiz,
+        ty.FOVERDUE_RATE_JSON AS overdueRateJson,
+        ty.FSATISFY_SUPERVISION AS satisfySupervision,
+        ty.FMATERIAL_JSON AS materialJson,
+        ty.FSTATE AS state,
+        ty.FCREATE_TIME AS createTime from SURETY.T_SURETY_BUSINESS_TYPE ty left join T_SURETY_GUARANTEE gu on gu.FBIZ_ID = ty.FID where gu.FID = #{guaranteeId}
+    </select>
+
+    <update id="updateGuaranteeInfo" parameterType="yhao.micro.service.surety.baseconfig.apilist.form.IntentionConfigSaveForm">
+        update T_BASE_INTENTION_CONFIG
+        <set>
+            FUPDATE_TIME = sysdate,
+            <if test="orgId!=null and orgId!=''">FORG_ID=#{orgId},</if>
+            <if test="positionType!=null">FPOSITION_TYPE=#{positionType},</if>
+            <if test="personId!=null and personId!=''">FPERSON_ID=#{personId},</if>
+            <if test="responsibleOrgIds!=null and responsibleOrgIds!=''">FRESPONSIBLE_ORG_IDS=#{responsibleOrgIds},</if>
+            <if test="status!=null">FSTATUS=#{status},</if>
+            <if test="operatorId!=null and operatorId!=''">FUPDATE_OPERATOR_ID=#{operatorId},</if>
+        </set>
+        where fid = #{id}
+    </update>
+
+    <update id="updateGuaranteeInfoOne" parameterType="yhao.micro.service.surety.business.apilist.form.complex.RestartDiscountSaveForm">
+        UPDATE T_SURETY_G_LOAN_DETAILS
+        SET FCHARGE_GUARANTEE_FEE =#{securityFeeReceivable},
+        FREAL_FEE_RATE =#{actualRate},
+        FCHARGE_REAL_GUARANTEE_FEE =#{paidGuaranteeFee}
+        WHERE
+            FGUARANTEE_ID =#{guaranteeId}
+    </update>
+
+    <update id="updateGuaranteeInfoTwo" parameterType="yhao.micro.service.surety.business.apilist.form.complex.RestartDiscountSaveForm">
+        UPDATE T_SURETY_G_GUARANTEE_SITUATION
+        SET FGUARANTEE_DAYS =#{guaranteeDays}
+        WHERE
+            FGUARANTEE_ID =#{guaranteeId}
+    </update>
+
+    <update id="updateGuaranteeInfoThree" parameterType="yhao.micro.service.surety.business.apilist.form.complex.RestartDiscountSaveForm">
+        UPDATE T_SURETY_G_LOAN_GENERAL
+        SET FMARKET_FEE_RATE =#{externalRate},
+        FCHARGES =#{handlingFee},
+        FCHARGE_TOTAL =#{shouldFee},
+        FCHARGE_REAL_TOTAL =#{actualFee}
+        WHERE
+            FGUARANTEE_ID =#{guaranteeId}
+    </update>
+
+    <update id="updateLoanInfo" parameterType="yhao.micro.service.surety.business.apilist.form.complex.LoanDetailsInfoForm">
+        UPDATE T_SURETY_G_LOAN_DETAILS
+        SET FMARKET_FEE_RATE = #{dailyRate},
+        FCHARGE_GUARANTEE_FEE = #{chargeGuaranteeFee}
+        WHERE
+            FID =#{loanId}
+    </update>
+
+    <update id="updateLoanGeneralInfo" parameterType="yhao.micro.service.surety.business.apilist.form.complex.RestartDiscountSaveForm">
+        UPDATE T_SURETY_G_LOAN_GENERAL
+        SET FMARKET_FEE_RATE = #{marketFeeRate},
+        FADVICE_FEE = #{adviceFee},
+        FCHARGE_TOTAL = #{shouldFee}
+        WHERE
+            FGUARANTEE_ID =#{guaranteeId}
+    </update>
+
+    <update id="updateDiscountStatus" parameterType="string">
+        UPDATE T_SURETY_GUARANTEE
+        SET FIS_DISCOUNTED = 1
+        WHERE
+            FID = #{id}
+    </update>
+
+    <update id="updateDiscountStatusHave" parameterType="string">
+        UPDATE T_SURETY_GUARANTEE
+        SET FIS_DISCOUNTED = 2
+        WHERE
+            FID = #{id}
+    </update>
+
+    <delete id="delect" parameterType="string">
+        DELETE from T_SURETY_DISCOUNT_APLICATION where Fid = #{id}
+    </delete>
+
+
+</mapper>

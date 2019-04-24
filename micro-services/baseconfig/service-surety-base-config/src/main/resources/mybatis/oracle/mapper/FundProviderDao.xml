@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="yhao.micro.service.surety.baseconfig.dao.automapper.FundProviderDao">
+    <resultMap id="FundProviderResult" type="yhao.micro.service.surety.baseconfig.apilist.model.FundProviderModel">
+        <id property="id" column="FID"/>
+        <result property="orgId" column="FORG_ID"/>
+        <result property="name" column="FNAME"/>
+        <result property="simpleName" column="FSIMPLE_NAME"/>
+        <result property="fundProviderType" column="FTYPE"/>
+        <result property="order" column="FORDER"/>
+        <result property="logoUrl" column="FLOGO_URL"/>
+        <result property="contactPersonName" column="FCONTACT_PERSON_NAME"/>
+        <result property="contactPhone" column="FCONTACT_PHONE"/>
+        <result property="address" column="FADDRESS"/>
+        <result property="isCooperation" column="FIS_COOPERATION"/>
+        <result property="fundTypes" column="FFUND_TYPES"/>
+        <result property="parentId" column="FPARENT_ID"/>
+        <result property="status" column="FSTATUS"/>
+        <result property="createTime" column="FCREATE_TIME"/>
+        <result property="updateTime" column="FUPDATE_TIME"/>
+        <result property="createOperatorId" column="FCREATE_OPERATOR_ID"/>
+        <result property="updateOperatorId" column="FUPDATE_OPERATOR_ID"/>
+
+        <result property="orgName" column="FORG_NAME"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="yhao.micro.service.surety.baseconfig.apilist.form.FundProviderSaveForm">
+        insert into T_BASE_FUND_PROVIDER(FID,FORG_ID,FNAME,FSIMPLE_NAME,FTYPE,FORDER,FLOGO_URL,FCONTACT_PERSON_NAME,FCONTACT_PHONE,FADDRESS,FIS_COOPERATION,FFUND_TYPES,FPARENT_ID,FSTATUS,FCREATE_TIME,FUPDATE_TIME,FCREATE_OPERATOR_ID,FUPDATE_OPERATOR_ID)
+        values(sys_guid(),#{orgId},#{name},#{simpleName},#{fundProviderType},#{order},#{logoUrl},#{contactPersonName},#{contactPhone},#{address},#{isCooperation},#{fundTypes},#{parentId},#{status},sysdate,sysdate,#{operatorId},#{operatorId})
+    </insert>
+
+    <update id="update" parameterType="yhao.micro.service.surety.baseconfig.apilist.form.FundProviderSaveForm">
+        update T_BASE_FUND_PROVIDER
+        <set>
+            FUPDATE_TIME = sysdate,
+            FLOGO_URL = #{logoUrl},
+            FCONTACT_PERSON_NAME = #{contactPersonName},
+            FCONTACT_PHONE = #{contactPhone},
+            FADDRESS = #{address},
+            FIS_COOPERATION = #{isCooperation},
+            FFUND_TYPES = #{fundTypes},
+            <if test="orgId!=null and orgId!=''">FORG_ID=#{orgId},</if>
+            <if test="name!=null and name!=''">FNAME=#{name},</if>
+            <if test="simpleName!=null and simpleName!=''">FSIMPLE_NAME=#{simpleName},</if>
+            <if test="fundProviderType!=null">FTYPE=#{fundProviderType},</if>
+            <if test="parentId!=null and parentId!=''">FPARENT_ID=#{parentId},</if>
+            <if test="order!=null and order!=''">FORDER=#{order},</if>
+            <if test="status!=null">FSTATUS=#{status},</if>
+            <if test="operatorId!=null and operatorId!=''">FUPDATE_OPERATOR_ID=#{operatorId},</if>
+        </set>
+        where fid = #{id}
+    </update>
+
+    <update id="statusChange" parameterType="yhao.micro.service.surety.baseconfig.apilist.form.StatusChangeForm">
+        UPDATE T_BASE_FUND_PROVIDER SET FSTATUS=#{status} WHERE FID = #{id}
+    </update>
+
+    <delete id="deleteById" parameterType="yhao.infra.apilist.validate.IdForm">
+        delete from T_BASE_FUND_PROVIDER where FID=#{id}
+    </delete>
+
+    <select id="query" parameterType="yhao.micro.service.surety.baseconfig.apilist.form.FundProviderQueryForm" resultMap="FundProviderResult">
+        SELECT P.*,O.FNAME AS FORG_NAME FROM T_BASE_FUND_PROVIDER P
+        LEFT JOIN T_ERP_ORG O ON P.FORG_ID=O.FID
+        <where>
+            <if test="id!=null and id!=''">and P.FID=#{id}</if>
+            <if test="fundProviderType!=null">and P.FTYPE=#{fundProviderType}</if>
+            <if test="status!=null">and P.FSTATUS=#{status}</if>
+            <if test="isCooperation!=null">and P.FIS_COOPERATION=#{isCooperation}</if>
+            <if test="fundType!=null and fundType!=''">
+                and exists(SELECT 1 FROM T_BASE_FUND_PROVIDER FP
+                WHERE FP.FTYPE='HEAD' AND FP.FFUND_TYPES like '%' || #{fundType} || '%'
+                START WITH FP.FID=P.FID
+                CONNECT BY PRIOR O.FPARENT_ID= O.FID)
+            </if>
+            <if test="orgId!=null and orgId!=''">and P.FORG_ID=#{orgId}</if>
+            <if test="parentId!=null and parentId!=''">and P.FPARENT_ID=#{parentId}</if>
+            <if test="searchName!=null and searchName!=''">and (P.FNAME like '%' || #{searchName} || '%' OR P.FSIMPLE_NAME LIKE '%' || #{searchName} || '%')</if>
+            <if test="name!=null and name!=''">and P.FNAME=#{name}</if>
+            <if test="excludeId!=null and excludeId!=''">and P.FID !=#{excludeId}</if>
+        </where>
+        ORDER BY P.FORDER,P.FORDER,P.FCREATE_TIME DESC,P.FID
+    </select>
+
+    <select id="queryAllChildByParent" parameterType="yhao.micro.service.surety.baseconfig.apilist.form.FundProviderQueryForm" resultMap="FundProviderResult">
+      SELECT P.*,O.FNAME AS FORG_NAME  FROM T_BASE_FUND_PROVIDER P
+      LEFT JOIN T_ERP_ORG O ON P.FORG_ID=O.FID
+      <where>
+          <if test="fundProviderType!=null">and P.FTYPE=#{fundProviderType}</if>
+          <if test="status!=null">and P.FSTATUS=#{status}</if>
+          <if test="orgId!=null and orgId!=''">and P.FORG_ID=#{orgId}</if>
+          <if test="withSelf!=null and withSelf==false">and P.FID!=#{parentId}</if>
+          <if test="searchName!=null and searchName!=''">and (P.FNAME like '%' || #{searchName} || '%' OR P.FSIMPLE_NAME LIKE '%' || #{searchName} || '%')</if>
+      </where>
+      START WITH P.FID=#{parentId}
+      CONNECT BY P.FPARENT_ID=PRIOR P.FID
+      ORDER BY P.FORDER,P.FCREATE_TIME DESC,P.FID
+    </select>
+
+</mapper>

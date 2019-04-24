@@ -1,0 +1,376 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="yhao.micro.service.surety.business.dao.automapper.FinanceBillingArrivalDao">
+
+    <resultMap id="arrivalGeneralMap" type="FinanceArrivalGeneralModel">
+        <id property="id" column="FID"/>
+        <result property="guaranteeId" column="FGUARANTEE_ID"/>
+        <result property="arrivalTotalAmount" column="FARRIVAL_TOTAL_AMOUNT"/>
+        <result property="isConfirm" column="FIS_CONFIRM"/>
+        <result property="createTime" column="FCREATE_TIME"/>
+        <result property="createOperatorId" column="FCREATE_OPERATOR_ID"/>
+        <result property="updateTime" column="FUPDATE_TIME"/>
+        <result property="updateOperatorId" column="FUPDATE_OPERATOR_ID"/>
+    </resultMap>
+
+    <resultMap id="arrivalDetailMap" type="FinanceArrivalDetailModel">
+        <id property="id" column="FID"/>
+        <result property="arrivalGeneralId" column="FARRIVAL_GENERAL_ID"/>
+        <result property="guaranteeId" column="FGUARANTEE_ID"/>
+        <result property="arrivalAmount" column="FARRIVAL_AMOUNT"/>
+        <result property="arrivalDate" column="FARRIVAL_DATE"/>
+        <result property="bankAccountId" column="FBANK_ACCOUNT_ID"/>
+        <result property="remark" column="FREMARK"/>
+        <result property="createTime" column="FCREATE_TIME"/>
+        <result property="createOperatorId" column="FCREATE_OPERATOR_ID"/>
+        <result property="updateTime" column="FUPDATE_TIME"/>
+        <result property="updateOperatorId" column="FUPDATE_OPERATOR_ID"/>
+
+    </resultMap>
+
+    <select id="queryBilling" parameterType="yhao.micro.service.surety.business.apilist.form.finance.FinanceArrivalBillingQueryForm"
+            resultMap="queryBillingPage">
+        SELECT GUARANTEE.FID,
+        GUARANTEE.FGUARANTEE_NUM,
+        GUARANTEE.FGUARANTEE_TYPE,
+        BUSINESS_TYPE.FBUSINESS_NAME,
+        ESTATE_SELLER.FESTATE_NAME,
+        ESTATE_SELLER.FID AS ESTATE_ID,
+        PERSONINFO_TRADES.FCLT_TYP,
+        PERSONINFO_TRADES.FCLT_NAME,
+        concat(concat(ref_org.FNAME,'-'),ERP_PERSON.FNAME) as MANAGER_NAME,
+        ARRIVAL_GENERAL.FARRIVAL_TOTAL_AMOUNT,
+        BILLING_GENERAL.FTOTAL_BILLING_AMOUNT,
+        BILLING_GENERAL.FBALANCE,
+        BILLING_APPLY.FLOAN_ID,
+        BILLING_APPLY.FID AS APPLY_FID,
+        BILLING_APPLY.FAPPLY_AMOUNT,
+        BILLING_APPLY.FREDEEM_DATE,
+        BILLING_APPLY.FCREATE_OPERATOR_ID,
+        TB.FNAME
+        FROM  T_SURETY_GUARANTEE GUARANTEE
+        LEFT JOIN SURETY.T_SURETY_BUSINESS_TYPE BUSINESS_TYPE ON BUSINESS_TYPE.FID = GUARANTEE.FBIZ_ID
+        LEFT JOIN SURETY.T_ERP_PERSON ERP_PERSON ON    ERP_PERSON.FID = GUARANTEE.FCREATE_OPERATOR_ID
+        LEFT JOIN SURETY.T_SURETY_G_ESTATE_SELLER ESTATE_SELLER ON ESTATE_SELLER.FGUARANTEE_ID = GUARANTEE.FID
+        LEFT JOIN SURETY.T_SURETY_G_PERSONINFO_TRADES PERSONINFO_TRADES ON PERSONINFO_TRADES.FGUARANTEE_ID = GUARANTEE.FID
+        LEFT JOIN SURETY.T_SURETY_G_LOAN_GENERAL LOAN_GENERAL ON LOAN_GENERAL.FGUARANTEE_ID = GUARANTEE.FID
+        LEFT JOIN SURETY.T_SURETY_FN_ARRIVAL_GENERAL ARRIVAL_GENERAL ON  ARRIVAL_GENERAL.FGUARANTEE_ID =GUARANTEE.FID
+        LEFT JOIN SURETY.T_SURETY_FN_BILLING_GENERAL BILLING_GENERAL ON  BILLING_GENERAL.FGUARANTEE_ID =GUARANTEE.FID
+        LEFT JOIN SURETY.T_SURETY_BILLING_APPLY BILLING_APPLY ON  BILLING_APPLY.FGUARANTEE_ID =GUARANTEE.FID
+        LEFT JOIN SURETY.T_SURETY_FN_BILLING_DETAIL BILLING_DETAIL ON  BILLING_DETAIL.FBILLING_APPLY_ID =BILLING_APPLY.FID
+        LEFT JOIN (
+            SELECT ERP_PERSON_B.FNAME AS FNAME, BILLING_APPLY_B.FGUARANTEE_ID AS FGUARANTEE_ID
+            FROM SURETY.T_ERP_PERSON ERP_PERSON_B
+            INNER JOIN SURETY.T_SURETY_BILLING_APPLY  BILLING_APPLY_B
+            ON ERP_PERSON_B.FID = BILLING_APPLY_B.FCREATE_OPERATOR_ID
+        )TB on TB.FGUARANTEE_ID = GUARANTEE.FID
+
+
+        LEFT JOIN SURETY.T_WK_TASK WK_TASK ON  WK_TASK.FBIZ_ENTITY_ID =BILLING_APPLY.FID
+
+        <include refid="yhao.infra.service.base.DataAuthRef.tableSql"/>
+        <where>
+            WK_TASK.FSTATUS = 'END' and ARRIVAL_GENERAL.FIS_CONFIRM = 'YES'
+            and BILLING_DETAIL.FIS_DELETE ='NO'
+        <if test="orgId != null and orgId != ''">
+            and GUARANTEE.FORG_ID = #{orgId}
+        </if>
+        <if test="personId != null and personId != ''">
+            and GUARANTEE.FCREATE_OPERATOR_ID = #{personId}
+        </if>
+        <if test="chargeStatus != null ">
+            and TOLL_GENERAL.FWARRANTY_STATUS= #{chargeStatus}
+        </if>
+        <if test="fundStatus != null ">
+            and BILLING_GENERAL.FIS_CONFIRM= #{fundStatus}
+        </if>
+        <if test="redemptionAccountId != null and redemptionAccountId != '' ">
+            and GUARANTEE_SITUATION.FREDEEM_BANK_ID= #{redemptionAccountId}
+        </if>
+        <if test="keyWord != null and keyWord != ''">
+            and (GUARANTEE.FGUARANTEE_NUM = #{keyWord}
+            or ESTATE_SELLER.FPROPERTY_NAME = #{keyWord}
+            or PERSONINFO_TRADES.FCLT_NAME = #{keyWord}
+            or (ESTATE_SELLER.FDEED_NUM = #{keyWord} and ESTATE_SELLER.FDEED_TYPE = 'FCZ'))
+        </if>
+        <if test="billingStartDate != null ">
+            and BILLING_GENERAL.FCONFIRM_BILLING_DATE between #{billingStartDate} and NVL(#{billingEndDate},sysdate)
+        </if>
+        </where>
+        <include refid="yhao.infra.service.base.DataAuthRef.conditionSql"/>
+
+    </select>
+
+    <resultMap id="queryBillingPage" type="yhao.micro.service.surety.business.apilist.form.finance.FinanceArrivalBillingQueryResultForm">
+        <id property="id" column="FID" />
+        <result property="guaranteeType" column="FGUARANTEE_TYPE"/>
+        <result property="guaranteeNum" column="FGUARANTEE_NUM"/>
+        <result property="businessName" column="FBUSINESS_NAME"/>
+        <result property="guaranteeAmount" column="FGUARANTEE_AMOUNT"/>
+        <result property="managerName" column="MANAGER_NAME"/>
+        <result property="redeemBankName" column="BANK_NAME"/>
+        <result property="arrivalAmount" column="FARRIVAL_TOTAL_AMOUNT"/>
+        <result property="status" column="FIS_CONFIRM"/>
+        <result property="totalBillingAmount" column="FTOTAL_BILLING_AMOUNT"/>
+        <result property="balance" column="FBALANCE"/>
+        <collection property = "billingApplyList" ofType="yhao.micro.service.surety.business.apilist.model.redemption.BillingApplyModel" >
+            <id property="id" column="APPLY_FID" />
+            <result property="loanId" column="FLOAN_ID"/>
+            <result property="billingAmount" column="FAPPLY_AMOUNT"/>
+            <result property="redeemDate" column="FREDEEM_DATE"/>
+            <result property="redeemName" column="FNAME"/>
+            <result property="createOperatorId" column="FCREATE_OPERATOR_ID"/>
+        </collection>
+        <collection property = "estatePageModelList" ofType="yhao.micro.service.surety.business.apilist.model.guarantee.page.EstatePageModel" >
+            <id property="id" column="ESTATE_ID" />
+            <result property="estateName" column="FESTATE_NAME"/>
+        </collection>
+    </resultMap>
+
+
+
+
+    <select id="queryArrival" resultMap="queryArrivalPage"
+            parameterType="yhao.micro.service.surety.business.apilist.form.finance.FinanceArrivalBillingQueryForm">
+        SELECT GUARANTEE.FID,
+        GUARANTEE.FGUARANTEE_NUM,
+        GUARANTEE.FGUARANTEE_TYPE,
+        BUSINESS_TYPE.FBUSINESS_NAME,
+        ESTATE_SELLER.FESTATE_NAME,
+        ESTATE_SELLER.FID AS ESTATE_ID,
+        FUND_PROVIDER.FNAME as BANK_NAME,
+        PERSONINFO_TRADES.FCLT_TYP,
+        PERSONINFO_TRADES.FCLT_NAME,
+        concat(concat(ref_org.FNAME,'-'),ERP_PERSON.FNAME) as MANAGER_NAME,
+        GUARANTEE_SITUATION.FGUARANTEE_AMOUNT,
+        LOAN_GENERAL.FLOAN_TOTAL_AMOUNT,
+        ARRIVAL_GENERAL.FARRIVAL_TOTAL_AMOUNT,
+        ARRIVAL_GENERAL.FIS_CONFIRM
+        FROM  T_SURETY_GUARANTEE GUARANTEE
+        LEFT JOIN SURETY.T_SURETY_BUSINESS_TYPE BUSINESS_TYPE ON BUSINESS_TYPE.FID = GUARANTEE.FBIZ_ID
+        LEFT JOIN SURETY.T_ERP_PERSON ERP_PERSON ON    ERP_PERSON.FID = GUARANTEE.FCREATE_OPERATOR_ID
+        LEFT JOIN SURETY.T_SURETY_G_GUARANTEE_SITUATION GUARANTEE_SITUATION ON GUARANTEE_SITUATION.FGUARANTEE_ID = GUARANTEE.FID
+        LEFT JOIN SURETY.T_SURETY_G_ESTATE_SELLER ESTATE_SELLER ON ESTATE_SELLER.FGUARANTEE_ID = GUARANTEE.FID
+        LEFT JOIN SURETY.T_SURETY_G_PERSONINFO_TRADES PERSONINFO_TRADES ON PERSONINFO_TRADES.FGUARANTEE_ID = GUARANTEE.FID
+        LEFT JOIN SURETY.T_SURETY_G_LOAN_GENERAL LOAN_GENERAL ON LOAN_GENERAL.FGUARANTEE_ID = GUARANTEE.FID
+        LEFT JOIN T_SURETY_FN_ARRIVAL_GENERAL ARRIVAL_GENERAL ON  ARRIVAL_GENERAL.FGUARANTEE_ID =GUARANTEE.FID
+        LEFT JOIN SURETY.T_SURETY_G_LOAN_DETAILS LOAN_DETAILS ON LOAN_DETAILS.FGUARANTEE_ID = GUARANTEE.FID
+        LEFT JOIN SURETY.T_SURETY_G_LOAN_GENERAL LOAN_GENERAL ON LOAN_GENERAL.FGUARANTEE_ID = GUARANTEE.FID
+        LEFT JOIN SURETY.T_SURETY_TOLL_GENERAL TOLL_GENERAL ON TOLL_GENERAL.FGUARANTEE_ID = GUARANTEE.FID
+        LEFT JOIN SURETY.T_BASE_FUND_PROVIDER  FUND_PROVIDER  ON  FUND_PROVIDER.FID = GUARANTEE_SITUATION.FREDEEM_BANK_ID
+        <include refid="yhao.infra.service.base.DataAuthRef.tableSql"/>
+        <where>
+            <if test="orgId != null and orgId != ''">
+                and GUARANTEE.FORG_ID = #{orgId}
+            </if>
+            <if test="personId != null and personId != ''">
+                and GUARANTEE.FCREATE_OPERATOR_ID = #{personId}
+            </if>
+            <if test="chargeStatus != null ">
+                and TOLL_GENERAL.FWARRANTY_STATUS= #{chargeStatus}
+            </if>
+            <if test="fundStatus != null ">
+                and ARRIVAL_GENERAL.FIS_CONFIRM= #{fundStatus}
+            </if>
+            <if test="redemptionAccountId != null and redemptionAccountId != '' ">
+                and GUARANTEE_SITUATION.FREDEEM_BANK_ID= #{redemptionAccountId}
+            </if>
+            <if test="keyWord != null and keyWord != ''">
+                and (GUARANTEE.FGUARANTEE_NUM = #{keyWord}
+                or ESTATE_SELLER.FPROPERTY_NAME = #{keyWord}
+                or PERSONINFO_TRADES.FCLT_NAME = #{keyWord}
+                or (ESTATE_SELLER.FDEED_NUM = #{keyWord} and ESTATE_SELLER.FDEED_TYPE = 'FCZ'))
+            </if>
+            <if test="arrivalStartDate != null ">
+                and ARRIVAL_GENERAL.FCONFIRM_ARRIVAL_DATE between #{arrivalStartDate} and NVL(#{arrivalEndDate},sysdate)
+            </if>
+        </where>
+        <include refid="yhao.infra.service.base.DataAuthRef.conditionSql"/>
+    </select>
+
+    <resultMap id="queryArrivalPage" type="yhao.micro.service.surety.business.apilist.form.finance.FinanceArrivalBillingQueryResultForm">
+        <id property="id" column="FID" />
+        <result property="guaranteeType" column="FGUARANTEE_TYPE"/>
+        <result property="guaranteeNum" column="FGUARANTEE_NUM"/>
+        <result property="businessName" column="FBUSINESS_NAME"/>
+        <result property="guaranteeAmount" column="FGUARANTEE_AMOUNT"/>
+        <result property="managerName" column="MANAGER_NAME"/>
+        <result property="redeemBankName" column="BANK_NAME"/>
+        <result property="arrivalAmount" column="FARRIVAL_TOTAL_AMOUNT"/>
+        <result property="status" column="FIS_CONFIRM"/>
+        <collection property = "applicationPersonModelList" ofType="yhao.micro.service.surety.business.apilist.model.guarantee.page.ApplicationPersonModel" >
+            <id property="id" column="FID" />
+            <result property="cltTyp" column="FCLT_TYP"/>
+            <result property="cltName" column="FCLT_NAME"/>
+        </collection>
+        <collection property = "estatePageModelList" ofType="yhao.micro.service.surety.business.apilist.model.guarantee.page.EstatePageModel" >
+            <id property="id" column="ESTATE_ID" />
+            <result property="estateName" column="FESTATE_NAME"/>
+        </collection>
+    </resultMap>
+
+
+    <insert id="insertArrivalGeneral" parameterType="FinanceArrivalGeneralModel">
+        insert into T_SURETY_FN_ARRIVAL_GENERAL(FID,FGUARANTEE_ID,FARRIVAL_TOTAL_AMOUNT,FIS_CONFIRM,
+         FCREATE_TIME,FCREATE_OPERATOR_ID,FUPDATE_TIME,FUPDATE_OPERATOR_ID)
+        values (#{id},#{guaranteeId},#{arrivalTotalAmount},#{isConfirm},#{createTime},
+               #{createOperatorId},#{updateTime},#{updateOperatorId})
+    </insert>
+
+    <insert id="insertArrivalDetail" parameterType="FinanceArrivalDetailModel">
+      insert into T_SURETY_FN_ARRIVAL_DETAIL(FID,FGUARANTEE_ID,FARRIVAL_GENERAL_ID,
+      FARRIVAL_AMOUNT,FARRIVAL_DATE,FBANK_ACCOUNT_ID,FREMARK,
+      FCREATE_TIME,FCREATE_OPERATOR_ID,FUPDATE_TIME,FUPDATE_OPERATOR_ID,FIS_DELETE)
+      values(#{id},#{guaranteeId},#{arrivalGeneralId},#{arrivalAmount},#{arrivalDate},#{bankAccountId},#{remark},#{createTime},
+            #{createOperatorId},#{updateTime},#{updateOperatorId},#{isDelete})
+    </insert>
+    <select id="pickArrivalGeneral" parameterType="string" resultMap="arrivalGeneralMap">
+     select FID,FGUARANTEE_ID,FARRIVAL_TOTAL_AMOUNT,FIS_CONFIRM,
+            FCREATE_TIME,FCREATE_OPERATOR_ID,FUPDATE_TIME,FUPDATE_OPERATOR_ID
+     from  T_SURETY_FN_ARRIVAL_GENERAL
+     where FGUARANTEE_ID=#{guaranteeId}
+    </select>
+    <select id="pickArrivalDetail" parameterType="string" resultMap="arrivalDetailMap">
+      select FID,FGUARANTEE_ID,FARRIVAL_GENERAL_ID,
+             FARRIVAL_AMOUNT,FARRIVAL_DATE,FBANK_ACCOUNT_ID,FREMARK,
+             FCREATE_TIME,FCREATE_OPERATOR_ID,FUPDATE_TIME,FUPDATE_OPERATOR_ID,FIS_DELETE
+      from T_SURETY_FN_ARRIVAL_DETAIL
+      where FID=#{id}
+    </select>
+
+    <update id="updateArrivalGeneral" parameterType="FinanceArrivalGeneralModel">
+        update T_SURETY_FN_ARRIVAL_GENERAL
+        <set>
+            <if test="arrivalTotalAmount !=null and arrivalTotalAmount >0">FARRIVAL_TOTAL_AMOUNT=#{arrivalTotalAmount},</if>
+            <if test=" updateTime !=null ">FUPDATE_TIME =#{updateTime},</if>
+            <if test="updateOperatorId !=null">FUPDATE_OPERATOR_ID =#{updateOperatorId}</if>
+        </set>
+        where FID=#{id}
+    </update>
+    <update id="confirmArrival" parameterType="yhao.infra.apilist.validate.IdForm">
+      update T_SURETY_FN_ARRIVAL_GENERAL
+      <set>
+          <if test=" operatorTime !=null ">FUPDATE_TIME =#{operatorTime},</if>
+          <if test="operatorId !=null">FUPDATE_OPERATOR_ID =#{operatorId},</if>
+          FIS_CONFIRM='YES'
+      </set>
+      where FGUARANTEE_ID=#{id}
+    </update>
+    <update id="updateArrivalDetail" parameterType="FinanceArrivalDetailModel">
+        update T_SURETY_FN_ARRIVAL_DETAIL
+        <set>
+            <if test=" arrivalAmount !=null and arrivalAmount >0 ">FARRIVAL_AMOUNT =#{arrivalAmount},</if>
+            <if test=" arrivalDate !=null ">FARRIVAL_DATE =#{arrivalDate},</if>
+            <if test=" bankAccountId !=null ">FBANK_ACCOUNT_ID =#{bankAccountId},</if>
+            <if test=" remark !=null ">FREMARK =#{remark},</if>
+            <if test=" updateTime !=null ">FUPDATE_TIME =#{updateTime},</if>
+            <if test="updateOperatorId !=null">FUPDATE_OPERATOR_ID =#{updateOperatorId},</if>
+            <if test="isDelete !=null">FIS_DELETE =#{isDelete}</if>
+        </set>
+        where FID=#{id}
+    </update>
+
+
+    <select id="queryFundBilling" parameterType="yhao.infra.apilist.validate.IdForm" resultMap="queryFundBillingMap">
+        SELECT BILLING_DETAIL.FID, BILLING_DETAIL.FBILLING_AMOUNT, BILLING_DETAIL.FBILLING_DATE,BILLING_DETAIL.FCREATE_TIME,
+        ERP_PERSON.FNAME,REDEEM.FREDEEM_DATE
+        FROM T_SURETY_FN_BILLING_DETAIL BILLING_DETAIL
+        LEFT JOIN SURETY.T_ERP_PERSON ERP_PERSON ON    ERP_PERSON.FID = BILLING_DETAIL.FREDEEM_OPERATOR_ID
+        LEFT JOIN T_SURETY_REDEEM REDEEM ON REDEEM.FFINANCE_BILLING_ID = BILLING_DETAIL.FID
+        WHERE BILLING_DETAIL.FGUARANTEE_ID=#{id}
+    </select>
+    <resultMap id="queryFundBillingMap" type="yhao.micro.service.surety.business.apilist.form.finance.FinanceBillingQueryResultBizForm">
+        <id property="id" column="FID" />
+        <result property="billingAmount" column="FBILLING_AMOUNT"/>
+        <result property="billingDate" column="FBILLING_DATE"/>
+        <result property="redeemName" column="FNAME"/>
+        <result property="redeemDate" column="FREDEEM_DATE"/>
+        <result property="createTime" column="FCREATE_TIME"/>
+    </resultMap>
+
+    <select id="queryFundArrival" resultMap="queryFundArrivalMap" parameterType="yhao.infra.apilist.validate.IdForm">
+        SELECT  ARRIVAL_DETAIL.FID,ARRIVAL_DETAIL.FARRIVAL_AMOUNT, ARRIVAL_DETAIL.FARRIVAL_DATE,
+        ARRIVAL_DETAIL.FCREATE_TIME,ARRIVAL_DETAIL.FREMARK,FUND_PROVIDER.FNAME
+        FROM T_SURETY_FN_ARRIVAL_DETAIL ARRIVAL_DETAIL
+        LEFT JOIN T_BASE_FUND_ACCOUNT FUND_ACCOUNT ON FUND_ACCOUNT.FID = ARRIVAL_DETAIL.FBANK_ACCOUNT_ID
+        LEFT JOIN T_BASE_FUND_PROVIDER FUND_PROVIDER   ON FUND_PROVIDER.FID = FUND_ACCOUNT.FFUND_PROVIDER_ID
+        WHERE ARRIVAL_DETAIL.FIS_DELETE !='YES'
+        AND ARRIVAL_DETAIL.FGUARANTEE_ID =#{id}
+    </select>
+    <resultMap id="queryFundArrivalMap" type="yhao.micro.service.surety.business.apilist.form.finance.FinanceArrivalQueryResultForm">
+        <id property="id" column="FID" />
+        <result property="arrivalAmount" column="FARRIVAL_AMOUNT"/>
+        <result property="arrivalDate" column="FARRIVAL_DATE"/>
+        <result property="createDate" column="FCREATE_TIME"/>
+        <result property="remark" column="FREMARK"/>
+        <result property="bankAccountName" column="FNAME"/>
+    </resultMap>
+
+    <resultMap id="billingGeneralMap" type="yhao.micro.service.surety.business.apilist.model.finance.FinanceBillingGeneralModel">
+        <id property="id" column="FID" />
+        <result property="guaranteeId" column="FGUARANTEE_ID"/>
+        <result property="totalBillingAmount" column="FTOTAL_BILLING_AMOUNT"/>
+        <result property="balance" column="FBALANCE"/>
+        <result property="firstBillingDate" column="FFIRST_BILLING_DATE"/>
+        <result property="confirmBillingDate" column="FCONFIRM_BILLING_DATE"/>
+        <result property="isConfirm" column="FIS_CONFIRM"/>
+        <result property="createTime" column="FCREATE_TIME"/>
+        <result property="createOperatorId" column="FCREATE_OPERATOR_ID"/>
+        <result property="updateTime" column="FUPDATE_TIME"/>
+        <result property="updateOperatorId" column="FUPDATE_OPERATOR_ID"/>
+    </resultMap>
+
+    <select id="pickBillingGeneral" parameterType="string" resultMap="billingGeneralMap">
+          SELECT FID,FGUARANTEE_ID,FTOTAL_BILLING_AMOUNT,FBALANCE,FFIRST_BILLING_DATE,
+          FCONFIRM_BILLING_DATE,FIS_CONFIRM, FCREATE_TIME,
+          FCREATE_OPERATOR_ID,FUPDATE_TIME,FUPDATE_OPERATOR_ID
+          FROM T_SURETY_FN_BILLING_GENERAL
+          WHERE FGUARANTEE_ID =#{id}
+    </select>
+
+    <update id="updateFirstBillingDate" parameterType="FinanceBillingGeneralModel">
+        update T_SURETY_FN_BILLING_GENERAL
+        <set>
+            <if test="totalBillingAmount !=null and totalBillingAmount >0 ">FTOTAL_BILLING_AMOUNT=#{totalBillingAmount},</if>
+            <if test=" updateTime !=null ">FUPDATE_TIME =#{updateTime},</if>
+            <if test="updateOperatorId !=null">FUPDATE_OPERATOR_ID =#{updateOperatorId},</if>
+            FFIRST_BILLING_DATE = null
+        </set>
+        where FID=#{id}
+    </update>
+
+    <update id="updateBillingGeneral" parameterType="FinanceBillingGeneralModel">
+        update T_SURETY_FN_BILLING_GENERAL
+        <set>
+            <if test="totalBillingAmount !=null and totalBillingAmount >0 ">FTOTAL_BILLING_AMOUNT=#{totalBillingAmount},</if>
+            <if test="balance !=null and balance >0 ">FBALANCE=#{balance},</if>
+            <if test=" confirmBillingDate !=null ">FCONFIRM_BILLING_DATE =#{confirmBillingDate},</if>
+            <if test=" isConfirm !=null ">FIS_CONFIRM =#{isConfirm},</if>
+            <if test=" updateTime !=null ">FUPDATE_TIME =#{updateTime},</if>
+            <if test="updateOperatorId !=null">FUPDATE_OPERATOR_ID =#{updateOperatorId},</if>
+        </set>
+        where FID=#{id}
+    </update>
+
+    <update id="batchBillingDel" parameterType="java.util.List">
+        UPDATE T_SURETY_FN_BILLING_DETAIL
+        SET FIS_DELETE = 'YES'
+        WHERE FID IN
+        <foreach collection="list" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+    </update>
+
+
+
+
+
+
+</mapper>
+
+
+
+
+

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="yhao.micro.service.workflow.dao.WorkFlowApproveDao">
+
+    <sql id="pageColumn" >
+            SELECT PROCESS.FPROCESS_GROUPE AS processGroupe,
+                   PROCESS.FBIZ_CODE AS bizCode,
+                   TASK.FID AS id,
+                   TASK.FBIZ_ENTITY_ID AS bizEntityId,
+                   TASK.FTASK_HEAD AS processName,
+                   TASK.FCREATE_TIME AS startDate,
+                   TASK.FSTATUS AS taskstatus,
+                   ITEM.FTASK_NODE_ID AS currentNodeId,
+                   ITEM.FITEM_ID AS itemId,
+                   ITEM.FITEM_CORE AS itemCore,
+                   ITEM.FITEM_NECESSARY AS itemNecessary,
+                   NODE_TEMPLATE.FNAME AS currentNodeName,
+                   TASK.FURL AS url
+              FROM SURETY.T_WK_TASK TASK
+         LEFT JOIN SURETY.T_WK_TASK_NODE_ITEM ITEM ON TASK.FID = ITEM.FTASK_ID
+         LEFT JOIN SURETY.T_WK_PVM_PROCESS PROCESS ON TASK.FPROCESS_ID = PROCESS.FID
+         LEFT JOIN SURETY.T_WK_PVM_NODE NODE ON NODE.FID = ITEM.FTASK_NODE_ID
+         LEFT JOIN SURETY.T_WK_PVM_NODE_TEMPLATE NODE_TEMPLATE ON NODE_TEMPLATE.FID = NODE.FNODE_TEMPLATE_ID
+    </sql>
+
+    <select id="queryTaskOfCurrentPerson" parameterType="yhao.micro.service.workflow.apilist.form.approve.QueryTaskOfCurrentPersonApprovingPageForm"
+            resultType="yhao.micro.service.workflow.apilist.model.approve.TaskPageOfCurrentPersonModel">
+         <include refid = "pageColumn" />
+         <where>
+             <if test="finishPerson!=null and finishPerson!=''">
+                 AND (TASK.FASSIGN_ENTITY_ID = #{finishPerson} AND TASK.FASSIGN_TYPE = 'PERSON')
+             </if>
+             <include refid = "taskQuery"/>
+             AND TASK.FNODE_ID = ITEM.FTASK_NODE_ID
+             AND TASK.FSTATUS != 'END'
+         </where>
+      UNION ALL
+        <include refid = "pageColumn" />
+        <where>
+            <if test="positionId!=null and positionId!=''">
+                AND (TASK.FASSIGN_ENTITY_ID = #{positionId} AND TASK.FASSIGN_TYPE = 'POSITION')
+            </if>
+            <include refid = "taskQuery"/>
+            AND TASK.FNODE_ID = ITEM.FTASK_NODE_ID
+            AND TASK.FSTATUS != 'END'
+        </where>
+    </select>
+
+    <sql id = "taskQuery" >
+        <if test="processName != null and processName != ''" >
+            AND TASK.FTASK_HEAD LIKE CONCAT(CONCAT('%',#{processName}),'%')
+        </if>
+        <if test="startDate!=null ">
+            and TO_CHAR(TASK.FCREATE_TIME,'yyyy-MM-dd') = TO_CHAR(#{startDate},'yyyy-MM-dd')
+        </if>
+        <if test="endDate!=null ">
+            and (TO_CHAR(TASK.FUPDATE_TIME,'yyyy-MM-dd') = TO_CHAR(#{endDate},'yyyy-MM-dd') AND TASK.FSTATUS = 'END')
+        </if>
+        <if test="processGroupe!=null">
+            and PROCESS.FPROCESS_GROUPE = #{processGroupe}
+        </if>
+        AND TRIM(PROCESS.FPROCESS_TYPE) = 'SUB'
+    </sql>
+
+    <select id = "queryTaskOfCurrentPersonApproved" parameterType="yhao.micro.service.workflow.apilist.form.approve.QueryTaskOfCurrentPersonApprovedPageForm"
+            resultType="yhao.micro.service.workflow.apilist.model.approve.TaskPageOfCurrentPersonModel" >
+        <include refid = "pageColumn" />
+        <where>
+            <include refid = "taskQuery"/>
+            <if test="taskstatus!=null">
+                and TASK.FSTATUS = #{taskstatus}
+            </if>
+            AND ITEM.FITEM_FINISH_PERSON = #{finishPerson}
+        </where>
+    </select>
+</mapper>

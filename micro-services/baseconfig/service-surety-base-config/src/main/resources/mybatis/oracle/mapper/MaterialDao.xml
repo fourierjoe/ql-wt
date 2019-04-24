@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="yhao.micro.service.surety.baseconfig.dao.automapper.MaterialDao">
+    <resultMap id="MaterialResult" type="yhao.micro.service.surety.baseconfig.apilist.model.MaterialModel">
+        <id property="id" column="FID"/>
+        <result property="name" column="FNAME"/>
+        <result property="status" column="FSTATUS"/>
+        <result property="createTime" column="FCREATE_TIME"/>
+        <result property="updateTime" column="FUPDATE_TIME"/>
+        <result property="createOperatorId" column="FCREATE_OPERATOR_ID"/>
+        <result property="updateOperatorId" column="FUPDATE_OPERATOR_ID"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="yhao.micro.service.surety.baseconfig.apilist.form.MaterialSaveForm">
+        insert into T_BASE_MATERIAL(FID,FNAME,FSTATUS,FCREATE_TIME,FUPDATE_TIME,FCREATE_OPERATOR_ID,FUPDATE_OPERATOR_ID)
+        values (sys_guid(),#{name},#{status},sysdate,sysdate,#{operatorId},#{operatorId})
+    </insert>
+
+    <update id="update" parameterType="yhao.micro.service.surety.baseconfig.apilist.form.MaterialSaveForm">
+        update T_BASE_MATERIAL
+        <set>
+            FUPDATE_TIME = sysdate,
+            <if test="name!=null and name!=''">FNAME=#{name},</if>
+            <if test="status!=null">FSTATUS=#{status},</if>
+            <if test="operatorId!=null and operatorId!=''">FUPDATE_OPERATOR_ID=#{operatorId},</if>
+        </set>
+        where fid = #{id}
+    </update>
+
+    <update id="statusChange" parameterType="yhao.micro.service.surety.baseconfig.apilist.form.StatusChangeForm">
+        UPDATE T_BASE_MATERIAL SET FSTATUS=#{status} WHERE FID = #{id}
+    </update>
+
+    <delete id="deleteById" parameterType="yhao.infra.apilist.validate.IdForm">
+        delete from T_BASE_MATERIAL WHERE FID = #{id}
+    </delete>
+
+    <select id="query" parameterType="yhao.micro.service.surety.baseconfig.apilist.form.MaterialQueryForm" resultMap="MaterialResult">
+        select * from T_BASE_MATERIAL
+        <where>
+            <if test="id!=null and id!=''">AND FID=#{id}</if>
+            <if test="name!=null and name!=''">AND FNAME LIKE '%' || #{name} || '%'</if>
+            <if test="status!=null">AND FSTATUS = #{status}</if>
+            <if test="idList!=null">
+                AND FID IN
+                <foreach collection="idList" separator="," index="index" item="item" open="(" close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+        ORDER BY FCREATE_TIME DESC,FID
+    </select>
+
+</mapper>

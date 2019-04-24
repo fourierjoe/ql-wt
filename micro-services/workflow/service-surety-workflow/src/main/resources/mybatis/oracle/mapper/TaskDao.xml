@@ -1,0 +1,553 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="yhao.micro.service.workflow.dao.TaskDao">
+    <insert id="startNewTask"
+            parameterType="yhao.micro.service.workflow.apilist.form.task.TaskStartForm">
+        insert into surety.t_wk_task(fid,fbiz_entity_id,fstatus,fprocess_id,fnode_id,fassign_type,fassign_entity_id,
+            fparent_id,fflow_time,fcreate_time,fupdate_time,fcreate_operator_id,fupdate_operator_id,FTASK_HEAD)
+          values(#{id},#{bizEntityId},#{status},#{processId},#{nodeId},#{assignType},#{assignEntityId},
+            #{parentId},sysdate,sysdate,sysdate,#{operatorId},#{operatorId},#{taskHead})
+    </insert>
+
+    <resultMap id="taskModelResult" type="TaskModel">
+        <id property="id" column="fid"/>
+        <result property="bizEntityId" column="fbiz_entity_id"/>
+        <result property="status" column="fstatus"/>
+        <result property="processId" column="fprocess_id"/>
+        <result property="currentNodeId" column="fnode_id"/>
+        <result property="assignType" column="fassign_type"/>
+        <result property="assignEntityId" column="fassign_entity_id"/>
+        <result property="parentId" column="fparent_id"/>
+        <result property="flowTime" column="fflow_time"/>
+        <result property="createTime" column="fcreate_time"/>
+        <result property="updateTime" column="fupdate_time"/>
+        <result property="createOperatorId" column="fcreate_operator_id"/>
+        <result property="updateOperatorId" column="fupdate_operator_id"/>
+    </resultMap>
+
+    <resultMap id="taskNodeAllInfoResult" type="yhao.micro.service.workflow.apilist.model.approve.TaskInfoModel" >
+        <result property="currentNodeId" column="FNODE_ID" />
+        <collection property="taskNodeModelList" ofType="TaskNodeModel" >
+            <id property="id" column="fid"/>
+            <result property="nodeName" column="FNAME" />
+            <result property="assignType" column="FASSIGN_TYPE" />
+            <result property="assignEntityId" column="FASSIGN_ENTITY_ID" />
+            <collection property="taskNodeItemModelList" resultMap="taskNodeItemResult" />
+        </collection>
+    </resultMap>
+    <resultMap id="taskNodeItemResult" type="TaskNodeItemModel" >
+        <result property="itemId" column="FITEM_ID" />
+        <result property="itemName" column="FITEM_NAME"/>
+        <result property="itemResult" column="FITEM_RESULT" />
+        <result property="core" column="FITEM_CORE" />
+        <result property="necessary" column="FITEM_NECESSARY" />
+        <result property="itemExpandResult" column="FITEM_EXPAND_RESULT" />
+        <result property="itemFinishTime" column="FITEM_FINISH_TIME" />
+        <result property="itemFinishPerson" column="FITEM_FINISH_PERSON" />
+    </resultMap>
+
+    <select id="pickTaskById" resultMap="taskModelResult" parameterType="string">
+        select *
+        from surety.t_wk_task
+        where fid=#{id}
+    </select>
+
+    <select id="queryTask" resultMap="taskModelResult"
+            parameterType="yhao.micro.service.workflow.apilist.form.task.TaskQueryForm">
+        select *
+        from surety.t_wk_task
+    </select>
+
+    <select id="queryTaskByParentId" resultMap="taskModelResult" parameterType="string">
+        select *
+        from surety.t_wk_task
+        where fparent_id=#{parentTaskId}
+    </select>
+
+    <update id="taskGoToNext" parameterType="TaskModel">
+        update surety.t_wk_task
+        set fnode_id=#{currentNodeId},fupdate_operator_id=#{updateOperatorId},fupdate_time=sysdate,
+          fassign_type=#{assignType},fassign_entity_id=#{assignEntityId},fstatus=#{status},
+          fflow_time = sysdate
+        where fid=#{id}
+    </update>
+
+    <update id="taskGoToEnd" parameterType="TaskModel">
+        update surety.t_wk_task
+        set fupdate_operator_id=#{updateOperatorId},fupdate_time=sysdate,fstatus=#{status}
+        where fid=#{id}
+    </update>
+
+    <update id="updateNodeItemResult" parameterType="yhao.micro.service.workflow.apilist.form.task.TaskNodeItemForm">
+        UPDATE SURETY.T_WK_TASK_NODE_ITEM
+           SET FITEM_RESULT_CODE = #{itemResultCode},
+               FITEM_RESULT = #{itemResult},
+               FIS_MATCH = #{isMatch},
+               FITEM_EXPAND_RESULT = #{itemExpandResult},
+               FITEM_FINISH_TIME = sysdate,
+               FITEM_FINISH_PERSON = #{itemFinishPerson},
+               FUPDATE_TIME = sysdate
+         WHERE FTASK_ID =#{taskId} AND FITEM_CODE = #{itemCode}
+    </update>
+
+    <update id="updateMainNodeItemResult" parameterType="yhao.micro.service.workflow.apilist.form.task.TaskNodeItemForm">
+        UPDATE SURETY.T_WK_TASK_NODE_ITEM
+           SET FITEM_RESULT_CODE = #{itemResultCode},
+               FITEM_RESULT = #{itemResult},
+               FIS_MATCH = #{isMatch},
+               FITEM_EXPAND_RESULT = #{itemExpandResult},
+               FITEM_FINISH_TIME = sysdate,
+               FITEM_FINISH_PERSON = #{itemFinishPerson},
+               FUPDATE_TIME = sysdate
+         WHERE FTASK_ID =#{taskId} AND FITEM_ID = #{itemId}
+    </update>
+
+    <update id="updateNodeItemResultV2" parameterType="yhao.micro.service.workflow.apilist.form.task.TaskNodeItemForm">
+        update surety.t_wk_task_node_item
+        set FITEM_RESULT = #{result},
+            FITEM_EXPAND_RESULT = #{itemExpandResult},
+            FITEM_FINISH_TIME = sysdate,
+            FITEM_FINISH_PERSON = #{itemFinishPerson},
+            FUPDATE_TIME = sysdate
+        where FITEM_CODE=#{itemCode}
+    </update>
+
+    <select id="queryTaskNodeItem" parameterType="yhao.micro.service.workflow.apilist.form.task.TaskNodeItemQueryForm"
+        resultType="yhao.micro.service.workflow.apilist.model.task.TaskNodeItemModel">
+        select fid as id,
+        ftask_id as taskId,
+        ftask_node_id as taskNodeId,
+        fitem_id as itemId,
+        fitem_config as itemConfig,
+        fitem_result as itemResult,
+        fitem_expect as itemExcept,
+        fitem_expect_type as itemExceptType,
+        fitem_necessary as necessary,
+        fitem_core as core,
+        fitem_finish_time as itemFinishTime
+        from surety.t_wk_task_node_item
+        where ftask_id=#{taskId} and ftask_node_id=#{nodeId}
+    </select>
+
+    <insert id="insertTaskNodeItem" parameterType="list">
+        insert into surety.t_wk_task_node_item(fid,ftask_id,ftask_node_id,fitem_id,FITEM_CODE,FITEM_RESULT,FITEM_EXPAND_RESULT,FITEM_FINISH_PERSON,
+        fitem_expect,fitem_expect_type,fitem_necessary,fitem_core,fitem_finish_time,fnode_schedule_order,FCREATE_TIME,FUPDATE_TIME)
+        select fid,ftask_id,ftask_node_id,fitem_id,FITEM_CODE,FITEM_RESULT,FITEM_EXPAND_RESULT,FITEM_FINISH_PERSON,
+        fitem_expect,fitem_expect_type,fitem_necessary,fitem_core,fitem_finish_time,fnode_schedule_order,FCREATE_TIME,FUPDATE_TIME
+        from (<foreach collection="list" item="taskNodeItem" separator="UNION ALL">
+        select
+        #{taskNodeItem.id} fid,
+        #{taskNodeItem.taskId} ftask_id,
+        #{taskNodeItem.taskNodeId} ftask_node_id,
+        #{taskNodeItem.itemId} fitem_id,
+        #{taskNodeItem.itemCode} fitem_code,
+        #{taskNodeItem.itemResult} fitem_result,
+        #{taskNodeItem.itemExpandResult} fitem_expand_result,
+        #{taskNodeItem.itemFinishPerson} fitem_finish_person,
+        #{taskNodeItem.itemExcept} fitem_expect,
+        #{taskNodeItem.itemExceptType} fitem_expect_type,
+        #{taskNodeItem.necessary} fitem_necessary,
+        #{taskNodeItem.core} fitem_core,
+        nvl2(#{taskNodeItem.itemFinishTime},to_date(#{taskNodeItem.itemFinishTime},'yyyy-MM-dd HH24:MI:SS'),null) fitem_finish_time,
+        #{taskNodeItem.nodeScheduleOrder} fnode_schedule_order,
+        sysdate fcreate_time,
+        sysdate fupdate_time
+        from dual
+    </foreach>)
+    </insert>
+
+    <insert id="insertHistory" parameterType="yhao.micro.service.workflow.apilist.form.task.TaskHistoryForm">
+        insert into surety.t_wk_task_history(fid,ftask_id,ftask_node_id,fhistory,fcreate_time)
+          values(sys_guid(),#{taskId},#{taskNodeId},#{history},sysdate)
+    </insert>
+
+    <select id="queryTaskNodeNotify" resultType="TaskNodeNotifyModel"
+            parameterType="yhao.micro.service.workflow.apilist.form.flow.FlowNodeNotifyQueryForm" >
+        select fperson_id as personId
+        from surety.t_wk_pvm_node_notify
+        where fnode_id=#{nodeId}
+    </select>
+
+    <select id="selectTaskNodeWarn" resultType="TaskNodeWarnModel"
+        parameterType="yhao.micro.service.workflow.apilist.form.task.TaskNodeWarnBaseForm">
+        select
+        <include refid="taskWarnSql"/>
+        from surety.t_wk_task_node_warn
+        where ftask_id=#{taskId} and fnode_id=#{nodeId}
+    </select>
+
+    <insert id="insertTaskNodeWarn" parameterType="TaskNodeWarnModel">
+        insert into surety.t_wk_task_node_warn(fid, ftask_id, fnode_id, fstart_time, fupdate_time,
+        fend_time,flimit_end_time, flimit_warn_time, flevel_one_time, flevel_two_time, flevel_three_time,fcheck_time)
+        values(#{id},#{taskId},#{nodeId},#{startTime},#{updateTime},#{endTime},
+          #{limitEndTime},#{limitWarnTime},#{levelOneTime},#{levelTwoTime},#{levelThreeTime},#{startTime})
+    </insert>
+
+    <update id="resetTaskNodeWarn" parameterType="TaskNodeWarnModel">
+        update surety.t_wk_task_node_warn
+        set fupdate_time=#{updateTime},fend_time=null
+        where ftask_id=#{taskId} and fnode_id=#{nodeId}
+    </update>
+
+    <update id="closeTaskNodeWarn" parameterType="yhao.micro.service.workflow.apilist.form.task.TaskNodeWarnCloseForm">
+        update surety.t_wk_task_node_warn
+        set fend_time=#{endTime}
+        where ftask_id=#{taskId} and fnode_id=#{nodeId}
+    </update>
+
+    <sql id="taskWarnSql">
+        fid as id,
+        ftask_id as taskId,
+        fnode_id as nodeId,
+        fstart_time as startTime,
+        fupdate_time as updateTime,
+        fend_time as endTime,
+        flimit_warn_time as limitWarnTime,
+        flevel_one_time as levelOneTime,
+        flevel_two_time as levelTwoTime,
+        flevel_three_time as levelThreeTime,
+        fwarn_flag as warnFlag
+    </sql>
+
+    <select id="queryUnFlowTask" parameterType="date" resultType="TaskNodeWarnModel">
+        select
+        <include refid="taskWarnSql"/>
+        from surety.t_wk_task_node_warn
+        where fcheck_time &lt; #{checkTime} and fend_time is null
+    </select>
+
+    <update id="checkTaskNodeWarn" parameterType="TaskNodeWarnModel">
+        update surety.t_wk_task_node_warn
+        set fcheck_time=#{checkTime},fwarn_flag=#{warnFlag}
+        where fid=#{id}
+    </update>
+
+    <update id="updateTaskNodeWarnCheckTime"
+            parameterType="yhao.micro.service.workflow.apilist.form.task.TaskNodeWarnCheckTimeUpdateForm">
+        update surety.t_wk_task_node_warn
+        set fcheck_time=#{checkTime}
+        where fid in <foreach collection="warnId" open="(" close=")" separator="," item="id">#{id}</foreach>
+    </update>
+
+    <update id="changeTaskStatus" parameterType="yhao.micro.service.workflow.apilist.form.task.TaskStatusChangeForm">
+        update surety.t_wk_task
+        set fstatus=#{status}
+        where fid=#{id}
+    </update>
+
+    <select id="queryCoreNecessaryItem" resultType="TaskNodeItemModel"
+            parameterType="yhao.micro.service.workflow.apilist.form.task.TaskNodeItemQueryForm" >
+        SELECT FID AS id,
+               FTASK_NODE_ID AS taskNodeId,
+               FITEM_ID AS itemId,
+               FITEM_RESULT_CODE AS itemResultCode,
+               FITEM_RESULT AS itemResult,
+               FITEM_EXPECT AS itemExcept,
+               FITEM_EXPECT_TYPE AS itemExceptType,
+               FITEM_NECESSARY AS necessary,
+               FITEM_CORE AS core,
+               FITEM_FINISH_TIME AS itemFinishTime
+          FROM SURETY.T_WK_TASK_NODE_ITEM
+         WHERE
+              (FITEM_NECESSARY = #{necessary}
+               AND FTASK_ID = #{taskId}
+               AND FTASK_NODE_ID = #{nodeId}
+              )
+           OR (FITEM_CORE = #{core}
+               AND FTASK_ID = #{taskId}
+               AND FTASK_NODE_ID = #{nodeId}
+              )
+    </select>
+
+    <select id="pickNodeCondition" resultType="SubProcessConditionModel" parameterType="String" >
+        SELECT FNODE_EXPECT_TYPE AS nodeExpectType,
+               FNODE_CONDITION_NAME AS nodeConditionName,
+               FNODE_EXPECT AS nodeExpect
+          FROM SURETY.T_WK_PVM_NODE
+         WHERE FID = #{currentNodeId}
+    </select>
+
+    <select id="pickNodeConditionVariable" resultType="ConditionVariableModel" parameterType="String" >
+        SELECT FVARIABLE_NAME AS variableName,
+               FVARIABLE_TEXT AS variableText
+          FROM SURETY.T_WK_TASK_VARIABLE
+         WHERE FBIZ_ENTITY_ID = #{bizEntityId}
+    </select>
+
+    <select id="pickProcessBizCodeByTaskId" parameterType="String" resultType="FlowProcessDefinitionModel" >
+        SELECT PROCESS.FID AS id,
+               PROCESS.FORG_ID AS orgId,
+               PROCESS.FNAME AS name,
+               PROCESS.FSTATUS AS status,
+               PROCESS.FBIZ_CODE AS bizCode
+          FROM SURETY.T_WK_TASK TASK
+         INNER JOIN SURETY.T_WK_PVM_PROCESS PROCESS ON TASK.FPROCESS_ID = PROCESS.FID
+         WHERE TASK.FID = #{taskId}
+    </select>
+    <select id="querycurrentTaskNodeAllInfo" parameterType="String" resultMap="taskNodeAllInfoResult" >
+            SELECT A.FITEM_ID,
+                   D.FITEM_NAME,
+                   A.FITEM_RESULT,
+                   A.FITEM_CORE,
+                   A.FITEM_NECESSARY,
+                   A.FITEM_EXPAND_RESULT,
+                   A.FITEM_FINISH_TIME,
+                   A.FITEM_FINISH_PERSON,
+                   B.FID,
+                   B.FNAME,
+                   B.FASSIGN_TYPE,
+                   B.FASSIGN_ENTITY_ID,
+                   C.FNODE_ID
+              FROM SURETY.T_WK_TASK_NODE_ITEM A
+        INNER JOIN SURETY.T_WK_PVM_NODE B ON A.FTASK_NODE_ID = B.FID
+        INNER JOIN SURETY.T_WK_TASK C ON C.FID = A.FTASK_ID
+        INNER JOIN SURETY.T_WK_PVM_NODE_ITEM D ON D.FID = A.FITEM_ID
+             WHERE A.FTASK_ID = #{id}
+    </select>
+
+    <select id = "pickTaskState" parameterType="String" resultType="TaskModel" >
+        SELECT FID AS id,
+               FSTATUS AS status
+          FROM SURETY.T_WK_TASK
+         WHERE FBIZ_ENTITY_ID = #{id}
+    </select>
+
+    <select id = "selectCoreItem" parameterType="String" resultType="TaskNodeItemModel" >
+        SELECT *
+          FROM SURETY.T_WK_PVM_NODE_ITEM
+         WHERE FID = #{itemId}
+    </select>
+
+    <select id = "pickTaskSchedule" parameterType="String" resultMap="taskScheduleResult" >
+            SELECT A.FID AS id,
+                   A.FTASK_NODE_ID AS taskNodeId,
+                   A.FITEM_RESULT AS itemResult,
+                   A.FITEM_NECESSARY AS itemNecessary,
+                   A.FITEM_CORE AS itemCore,
+                   A.FITEM_EXPAND_RESULT AS itemExpandResult,
+                   A.FITEM_FINISH_TIME AS itemFinishTime,
+                   A.FNODE_SCHEDULE_ORDER AS nodeScheduleOrder,
+                   A.FIS_MATCH AS isMatch,
+                   C.FITEM_ORDER AS itemOrder,
+                   NODE_TEMPLATE.FNAME AS nodeName,
+                   NVL(C.FITEM_NAME,NODE_TEMPLATE.FNAME) AS itemName,
+                   NVL(C.FITEM_ORDER,1) AS itemOrder,
+                   D.FNAME AS itemFinishPersonName,
+                   PO.FNAME AS itemFinishPersonPosition,
+                   F.FBIZ_CODE AS bizCode
+              FROM SURETY.T_WK_TASK_NODE_ITEM A
+         LEFT JOIN SURETY.T_WK_TASK E ON A.FTASK_ID = E.FID
+         LEFT JOIN SURETY.T_WK_PVM_PROCESS F ON E.FPROCESS_ID = F.FID
+         LEFT JOIN SURETY.T_WK_PVM_NODE B ON A.FTASK_NODE_ID = B.FID
+         LEFT JOIN SURETY.T_WK_PVM_NODE_TEMPLATE NODE_TEMPLATE ON B.FNODE_TEMPLATE_ID = NODE_TEMPLATE.FID
+         LEFT JOIN SURETY.T_WK_PVM_NODE_ITEM C ON A.FITEM_ID = C.FID
+         LEFT JOIN SURETY.T_ERP_PERSON D ON A.FITEM_FINISH_PERSON = D.FID
+         LEFT JOIN T_ERP_ORG_POSITION_LINK PL ON D.FPOSITION_LINK_ID = PL.FID
+         LEFT JOIN T_ERP_ORG_POSITION PO ON PL.FPOSITION_ID = PO.FID
+             WHERE FTASK_ID = #{id}
+          ORDER BY A.FNODE_SCHEDULE_ORDER
+
+    </select>
+    <resultMap id = "taskScheduleResult" type = "yhao.micro.service.workflow.apilist.model.task.TaskNodeModel" >
+        <id property="id" column="id" />
+        <result property="bizCode" column="bizCode" />
+        <result property="nodeName" column="nodeName" />
+        <result property="nodeScheduleOrder" column="nodeScheduleOrder"/>
+        <collection property = "items" ofType="yhao.micro.service.workflow.apilist.model.task.TaskNodeItemModel" >
+            <result property="taskNodeId" column="taskNodeId"/>
+            <result property="itemResult" column="itemResult"/>
+            <result property="necessary" column="itemNecessary"/>
+            <result property="core" column="itemCore"/>
+            <result property="itemExpandResult" column="itemExpandResult"/>
+            <result property="itemFinishTime" column="itemFinishTime"/>
+            <result property="itemName" column="itemName"/>
+            <result property="nodeScheduleOrder" column="nodeScheduleOrder"/>
+            <result property="itemOrder" column="itemOrder"/>
+            <result property="itemFinishPersonPosition" column="itemFinishPersonPosition"/>
+            <result property="itemFinishPersonName" column="itemFinishPersonName"/>
+            <result property="isMatch" column="isMatch"/>
+        </collection>
+    </resultMap>
+
+    <select id = "selectPreviousScheduleOrder" parameterType="String"
+            resultType="integer" >
+        SELECT NVL(FNODE_SCHEDULE_ORDER,0)
+        FROM(
+            SELECT FNODE_SCHEDULE_ORDER
+            FROM
+                 (SELECT FNODE_SCHEDULE_ORDER
+                  FROM SURETY.T_WK_TASK_NODE_ITEM
+                  WHERE FTASK_ID = #{taskId}
+                  ORDER BY FNODE_SCHEDULE_ORDER DESC) WHERE ROWNUM = 1
+            UNION ALL
+            SELECT NULL as FNODE_SCHEDULE_ORDER
+             FROM dual
+            )
+    </select>
+
+    <select id = "queryItemResult" resultType="TaskNodeItemModel"
+            parameterType="yhao.micro.service.workflow.apilist.form.task.ItemResultQueryForm" >
+        SELECT FITEM_ID             AS itemId,
+               FITEM_RESULT         AS itemResult,
+               FITEM_EXPAND_RESULT  AS itemExpandResult,
+               FITEM_FINISH_TIME    AS itemFinishTime,
+               FNODE_SCHEDULE_ORDER AS nodeScheduleOrder,
+               FITEM_CORE           AS core,
+               FITEM_FINISH_PERSON  AS itemFinishPerson
+         FROM SURETY.T_WK_TASK_NODE_ITEM
+        WHERE FNODE_SCHEDULE_ORDER =
+              (SELECT FNODE_SCHEDULE_ORDER
+                 FROM (SELECT FNODE_SCHEDULE_ORDER
+                         FROM SURETY.T_WK_TASK_NODE_ITEM
+                        WHERE FTASK_ID = #{taskId}
+                          AND FTASK_NODE_ID = #{nodeId}
+                          AND FITEM_RESULT = FITEM_EXPECT ORDER BY FNODE_SCHEDULE_ORDER
+                      )
+                WHERE ROWNUM = 1
+              )
+          AND FTASK_ID = #{taskId}
+          AND FTASK_NODE_ID = #{nodeId}
+          AND FITEM_RESULT = FITEM_EXPECT
+    </select>
+
+    <select id = "findCurrentNodeId" parameterType="String" resultType="String" >
+        SELECT FNODE_ID
+          FROM SURETY.T_WK_TASK
+         WHERE FID = #{taskId}
+    </select>
+
+    <select id = "pickTaskItemByItemCode" parameterType="yhao.micro.service.workflow.apilist.form.task.ItemByItemCodeQueryForm"
+            resultType="yhao.micro.service.workflow.apilist.model.task.ItemInfoModel" >
+              SELECT A.FID AS id,
+                     A.FTASK_ID AS taskId,
+                     A.FTASK_NODE_ID AS taskNodeId,
+                     A.FITEM_RESULT AS itemResult,
+                     A.FITEM_EXPAND_RESULT AS itemExpandResult,
+                     A.FITEM_FINISH_TIME AS itemFinishTime,
+                     A.FITEM_FINISH_PERSON AS itemFinishPerson,
+                     C.FSTATUS AS status,
+                     C.FBIZ_ENTITY_ID AS bizEntityId
+                FROM SURETY.T_WK_TASK_NODE_ITEM A
+          INNER JOIN SURETY.T_WK_PVM_NODE_ITEM B ON A.FITEM_ID = B.FID
+          INNER JOIN SURETY.T_WK_TASK C ON A.FTASK_ID = C.FID
+        <include refid="yhao.infra.service.base.DataAuthRef.tableSql"/>
+               WHERE B.FITEM_CODE = #{itemCode}
+                 AND B.FORG_ID = #{orgId}
+                 AND B.FITEM_RESULT = #{itemResult}
+    </select>
+
+    <select id = "selectMainNodeBySubNode" parameterType="yhao.micro.service.workflow.apilist.form.task.MainNodeBySubNodeQueryForm"
+            resultType="String" >
+        SELECT FTASK_NODE_ID
+        FROM SURETY.T_WK_TASK_NODE_ITEM
+        WHERE FTASK_ID = #{parentTaskId}
+        AND FITEM_ID = #{subItemId}
+    </select>
+
+    <insert id = "saveTaskVariable" parameterType="yhao.micro.service.workflow.apilist.form.task.TaskVariableSaveForm" >
+        insert into SURETY.T_WK_TASK_VARIABLE(fid,fbiz_entity_id,fvariable_name,fvariable_text)
+        values(#{id},#{bizEntityId},#{variableName},#{variableText})
+    </insert>
+
+    <select id = "selectSubProcessNodeExpect" parameterType="String"
+            resultType="yhao.micro.service.workflow.apilist.model.task.ConditionVariableModel" >
+        select FID AS id,
+               FNODE_CONDITION_NAME AS variableName,
+               FNODE_EXPECT AS variableText
+          from SURETY.T_WK_PVM_NODE
+        WHERE FPROCESS_ID = #{subProcessId}
+    </select>
+    <update id = "updateSubTaskBizEntityId" parameterType="yhao.micro.service.workflow.apilist.form.task.BizEntityIdUpdateForm" >
+        UPDATE SURETY.T_WK_TASK
+           SET FBIZ_ENTITY_ID = #{bizEntityId}
+         WHERE FID = #{id}
+    </update>
+
+    <select id = "findTaskVariableByTaskId" parameterType="String" resultType="yhao.micro.service.workflow.apilist.model.task.TaskScheduleQueryModel" >
+        SELECT B.FPROCESS_ID AS processId,
+               A.FVARIABLE_TEXT AS variableText,
+               B.FPARENT_ID AS taskParentId
+          FROM SURETY.T_WK_TASK B
+     LEFT JOIN SURETY.T_WK_TASK_VARIABLE A ON A.FBIZ_ENTITY_ID = B.FBIZ_ENTITY_ID
+         WHERE B.FID = #{taskId}
+    </select>
+
+    <select id = "selectSubTask" parameterType="String" resultType="yhao.micro.service.workflow.apilist.model.task.TaskModel" >
+        SELECT FID AS id,
+               FBIZ_ENTITY_ID AS bizEntityId,
+               FSTATUS AS status,
+               FPROCESS_ID AS processId,
+               FNODE_ID AS nodeId,
+               FPARENT_ID AS parentId,
+               FASSIGN_TYPE AS assignType,
+               FASSIGN_ENTITY_ID AS assignEntityId
+        FROM SURETY.T_WK_TASK
+        WHERE FPARENT_ID = #{taskId}
+    </select>
+
+    <select id = "selectTask" parameterType="String" resultType="yhao.micro.service.workflow.apilist.model.task.TaskModel" >
+          SELECT
+          <include refid = "T_WK_TASK_SQL"/>
+          FROM SURETY.T_WK_TASK
+        WHERE FID = #{id}
+    </select>
+    <sql id="T_WK_TASK_SQL">
+        FID AS id,
+        FBIZ_ENTITY_ID AS bizEntityId,
+        FSTATUS AS status,
+        FPROCESS_ID AS processId,
+        FNODE_ID AS nodeId,
+        FPARENT_ID AS parentId,
+        FASSIGN_TYPE AS assignType,
+        FASSIGN_ENTITY_ID AS assignEntityId,
+        FFLOW_TIME AS flowTime,
+        FCREATE_TIME AS createTime,
+        FUPDATE_TIME AS updateTime,
+        FCREATE_OPERATOR_ID AS createOperatorId,
+        FUPDATE_OPERATOR_ID AS updateOperatorId
+    </sql>
+
+    <select id = "selectNodeId" parameterType="String" resultType="String" >
+        select A.FID AS nodeId
+        from SURETY.T_WK_PVM_NODE A
+        INNER JOIN SURETY.T_WK_PVM_PROCESS B ON A.FSUB_PROCESS_ID = B.FID
+          WHERE A.FSUB_PROCESS_ID = #{id}
+    </select>
+
+    <select id = "selectItemResult" parameterType="yhao.micro.service.workflow.apilist.form.task.TaskNodeItemForm"
+            resultType="yhao.micro.service.workflow.apilist.model.task.ItemResultModel" >
+            SELECT ITEM_TEMPLATE.FITEM_CONFIG AS itemConfig,
+                   NODE_ITEM.FITEM_EXPECT AS itemExpect
+              FROM SURETY.T_WK_TASK_NODE_ITEM NODE_ITEM
+         LEFT JOIN SURETY.T_WK_PVM_ITEM_TEMPLATE ITEM_TEMPLATE ON NODE_ITEM.FITEM_CODE = ITEM_TEMPLATE.FITEM_CODE
+             WHERE NODE_ITEM.FITEM_CODE = #{itemCode}
+               AND NODE_ITEM.FTASK_ID = #{taskId}
+    </select>
+
+    <select id = "pickRefuseForm" parameterType="String" resultType="yhao.micro.service.workflow.apilist.model.task.RefuseTaskItemModel">
+            SELECT TASK.FID AS taskId,
+                   TASK.FNODE_ID AS nodeId,
+                   TASK.FPARENT_ID AS parentId,
+                   PVM_PROCESS.FBIZ_CODE AS bizCode,
+                   TASK_NODE_ITEM.FITEM_ID AS itemId,
+                   TASK_NODE_ITEM.FITEM_CODE AS itemCode
+              FROM SURETY.T_WK_TASK TASK
+         LEFT JOIN SURETY.T_WK_TASK_NODE_ITEM TASK_NODE_ITEM ON TASK.FID = TASK_NODE_ITEM.FTASK_ID
+         LEFT JOIN SURETY.T_WK_PVM_PROCESS PVM_PROCESS ON PVM_PROCESS.FID = TASK.FPROCESS_ID
+             WHERE TASK.FBIZ_ENTITY_ID = #{id}
+    </select>
+
+    <select id = "selectMainTaskStartNode" parameterType="String" resultType="String" >
+        SELECT PVM_PROCESS.FBIZ_CODE
+          FROM SURETY.T_WK_TASK TASK
+       LEFT JOIN SURETY.T_WK_PVM_PROCESS PVM_PROCESS ON PVM_PROCESS.FID = TASK.FPROCESS_ID
+         WHERE TASK.FID = #{id}
+    </select>
+    <update id = "updateTask2Cancel" parameterType="String" >
+        UPDATE SURETY.T_WK_TASK
+           SET FSTATUS = 'CANCEL'
+         WHERE FBIZ_ENTITY_ID = #{id}
+    </update>
+</mapper>

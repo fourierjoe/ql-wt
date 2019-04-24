@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="yhao.micro.service.surety.erp.auth.dao.automapper.AuthOrgDao">
+	<resultMap id="OrgModelResult" type="AuthOrgModel">
+		<id property="id" column="fid"/>
+		<result property="parentId" column="fparent_id"/>
+		<result property="parentOrgName" column="fparent_name"/>
+		<result property="name" column="fname"/>
+		<result property="number" column="fnumber"/>
+		<result property="longNumber" column="flong_number"/>
+		<result property="level" column="flevel"/>
+		<result property="status" column="fstatus"/>
+		<result property="validDate" column="fvalid_date"/>
+		<result property="createTime" column="fcreate_time"/>
+		<result property="updateTime" column="fupdate_time"/>
+		<result property="createOperatorId" column="fcreate_operator_id"/>
+		<result property="updateOperatorId" column="fupdate_operator_id"/>
+		<result property="systemKeyLink" column="fsystem_key_link"/>
+	</resultMap>
+
+	<select id="queryOrg" resultMap="OrgModelResult">
+		select * from t_erp_org t
+		where 1=1
+	</select>
+
+	<select id="queryOrgBySystemKey" parameterType="string" resultMap="OrgModelResult">
+		select t.*
+		from t_erp_org_system_link tlink
+		left join t_erp_org t on t.fid = tlink.forg_id
+		where tlink.fsystem_key=#{systemKey} and t.fstatus='ENABLED'
+		order by t.flevel asc
+	</select>
+
+	<insert id="saveOrgLink" parameterType="yhao.micro.service.surety.erp.auth.apilist.form.system.SystemOrgLinkSaveForm">
+		insert into t_erp_org_system_link(fid,forg_id,fsystem_key)
+			<foreach collection="orgIdArray" item="orgId" index="index" separator=" union all ">
+				select sys_guid(),#{orgId},#{systemKey} from dual
+			</foreach>
+	</insert>
+
+	<delete id="deleteOrgLink" parameterType="yhao.micro.service.surety.erp.auth.apilist.form.system.SystemOrgLinkSaveForm">
+		delete from t_erp_org_system_link where fsystem_key=#{systemKey}
+	</delete>
+
+	<select id="queryOrgLink" parameterType="yhao.micro.service.surety.erp.auth.apilist.form.system.SystemOrgLinkQueryForm"
+			resultMap="OrgModelResult">
+		select te.* ,
+			t.fsystem_key as fsystem_key_link
+		from t_erp_org_system_link t
+		left join t_erp_org te on te.fid=t.forg_id
+		where t.fsystem_key = #{systemKey}
+		order by te.flong_number
+	</select>
+</mapper>

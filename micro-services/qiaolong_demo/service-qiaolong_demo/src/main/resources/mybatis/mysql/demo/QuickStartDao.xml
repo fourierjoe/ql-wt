@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="yhao.micro.service.qiaolong_demo.dao.automapper.QuickStartDao">
+	<insert id="insertName" parameterType="yhao.micro.service.qiaolong_demo.apilist.form.QuickStartInsertForm">
+		insert into micro_demo.quickstart(fid,fname)
+		values(#{id},#{name})
+	</insert>
+
+	<select id="queryName" resultType="QuickStartModel">
+		select fid as id,fname as name
+		from micro_demo.quickstart
+	</select>
+</mapper>

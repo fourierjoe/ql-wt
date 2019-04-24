@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="yhao.micro.service.surety.business.dao.automapper.BusinessTypeDao">
+
+
+    <insert id="insertBusinessType" parameterType="yhao.micro.service.surety.business.apilist.form.businessType.BusinessTypeSaveForm" >
+        INSERT INTO SURETY.T_SURETY_BUSINESS_TYPE(FID,FWORKFLOW_BIZ_CODE,FORG_ID,FFUND_TYPE,FTRANSACTION_TYPE,FBUSINESS_NAME,FSTATE,
+                    FMIN_CHARGE,FMIN_EXTERNAL_RATE,FMIN_REAL_RATE,FMIN_REAL_FEE,FIS_TWICE_REPAY,FIS_REDEEMSELF_BIZ,
+                    FOVERDUE_RATE_JSON,FMATERIAL_JSON,FSATISFY_SUPERVISION,FCREATE_TIME,FUPDATE_TIME,FCREATE_OPERATOR_ID,FUPDATE_OPERATOR_ID)
+             VALUES (#{id},#{workflowBizCode}, #{orgId},#{fundType},#{transactionType},#{businessName},#{state},#{minCharge},#{minExternalRate},#{minRealRate},
+                     #{minRealFee},#{isTwiceRepay},#{isRedeemselfBiz},#{overdueRateJson},#{materialJson},#{satisfySupervision},
+                            SYSDATE,SYSDATE,#{operatorId},#{operatorId})
+    </insert>
+    <update id="updateBusinessType" parameterType="yhao.micro.service.surety.business.apilist.form.businessType.BusinessTypeSaveForm">
+        UPDATE SURETY.T_SURETY_BUSINESS_TYPE
+           <set>
+               <if test="orgId != null and orgId != ''" >FORG_ID = #{orgId},</if>
+               <if test="workflowBizCode != null and workflowBizCode != ''" >FWORKFLOW_BIZ_CODE = #{workflowBizCode},</if>
+               <if test="fundType != null" >FFUND_TYPE = #{fundType},</if>
+               <if test="transactionType != null" >FTRANSACTION_TYPE = #{transactionType},</if>
+               <if test="businessName != null and businessName != ''" >FBUSINESS_NAME = #{businessName},</if>
+               <if test="minCharge != null" >FMIN_CHARGE = #{minCharge},</if>
+               <if test="minExternalRate != null " >FMIN_EXTERNAL_RATE = #{minExternalRate},</if>
+               <if test="minRealRate != null" >FMIN_REAL_RATE = #{minRealRate},</if>
+               <if test="minRealFee != null" >FMIN_REAL_FEE = #{minRealFee},</if>
+               <if test="isTwiceRepay != null" >FIS_TWICE_REPAY = #{isTwiceRepay},</if>
+               <if test="isRedeemselfBiz != null" >FIS_REDEEMSELF_BIZ = #{isRedeemselfBiz},</if>
+               <if test="overdueRateJson != null and overdueRateJson != ''" >FOVERDUE_RATE_JSON = #{overdueRateJson},</if>
+               <if test="satisfySupervision != null" >FSATISFY_SUPERVISION = #{satisfySupervision},</if>
+               <if test="materialJson != null and materialJson != ''" >FMATERIAL_JSON = #{materialJson},</if>
+               <if test="state != null" >FSTATE = #{state},</if>
+               FUPDATE_TIME = SYSDATE,
+               <if test="operatorId != null and operatorId != ''" >FUPDATE_OPERATOR_ID = #{operatorId}</if>
+           </set>
+         WHERE FID = #{id}
+    </update>
+    <select id="queryBusinessTypePage" parameterType="yhao.micro.service.surety.business.apilist.form.businessType.BusinessTypeQueryForm"
+            resultType="yhao.micro.service.surety.business.apilist.model.businessType.BusinessTypeModel">
+            SELECT
+                  <include refid="BusinessTypeBaseInfoColumns"/>
+              <where>
+                  <if test="bizName != null and bizName != ''">
+                      AND FBUSINESS_NAME LIKE CONCAT(CONCAT('%',#{bizName}),'%')
+                  </if>
+                  <if test="transactionType != null" >
+                      AND FTRANSACTION_TYPE = #{transactionType}
+                  </if>
+                  <if test="fundType != null" >
+                      AND FFUND_TYPE = #{fundType}
+                  </if>
+                  and FORG_ID = #{orgId}
+              </where>
+    </select>
+    <select id="queryBusinessTypeAllName" parameterType="yhao.micro.service.surety.business.apilist.form.businessType.OrgIdForm"
+            resultType="yhao.micro.service.surety.business.apilist.model.businessType.BusinessTypeNameModel">
+        SELECT FID AS id,
+               FBUSINESS_NAME AS businessName,
+               FFUND_TYPE AS fundType,
+               FTRANSACTION_TYPE AS transactionType
+          FROM SURETY.T_SURETY_BUSINESS_TYPE
+         WHERE FORG_ID = #{orgId}
+           AND FSTATE = #{state}
+    </select>
+
+    <select id="pickBusinessTypeById" resultType="yhao.micro.service.surety.business.apilist.model.businessType.BusinessTypeModel" parameterType="String">
+        SELECT
+              <include refid="BusinessTypeBaseInfoColumns"/>
+        WHERE FID = #{id}
+    </select>
+
+    <sql id="BusinessTypeBaseInfoColumns">
+        FID AS id,
+        FWORKFLOW_BIZ_CODE AS workflowBizCode,
+        FORG_ID AS orgId,
+        FFUND_TYPE AS fundType,
+        FTRANSACTION_TYPE AS transactionType,
+        FBUSINESS_NAME AS businessName,
+        FMIN_CHARGE AS minCharge,
+        FMIN_EXTERNAL_RATE AS minExternalRate,
+        FMIN_REAL_RATE AS minRealRate,
+        FMIN_REAL_FEE AS minRealFee,
+        FIS_TWICE_REPAY AS isTwiceRepay ,
+        FIS_REDEEMSELF_BIZ AS isRedeemselfBiz,
+        FOVERDUE_RATE_JSON AS overdueRateJson,
+        FSATISFY_SUPERVISION AS satisfySupervision,
+        FMATERIAL_JSON AS materialJson,
+        FSTATE AS state,
+        FCREATE_TIME AS createTime
+        FROM SURETY.T_SURETY_BUSINESS_TYPE
+    </sql>
+
+    <select id = "pickBusinessType" parameterType="String" resultType="yhao.micro.service.surety.business.apilist.model.guarantee.BizFundTypeAndTransactionTypeModel" >
+        SELECT FFUND_TYPE AS fundType,
+               FTRANSACTION_TYPE AS transactionType
+          FROM SURETY.T_SURETY_BUSINESS_TYPE
+         WHERE FID = #{id}
+    </select>
+</mapper>

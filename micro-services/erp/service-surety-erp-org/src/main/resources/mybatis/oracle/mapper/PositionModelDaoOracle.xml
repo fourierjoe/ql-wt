@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="yhao.micro.service.surety.erp.org.dao.automapper.PositionDao">
+	<resultMap id="PositionModelResult" type="PositionModel">
+		<id property="id" column="fid"/>
+		<result property="orgId" column="forg_id"/>
+		<result property="name" column="fname"/>
+		<result property="number" column="fnumber"/>
+		<result property="createTime" column="fcreate_time"/>
+		<result property="updateTime" column="fupdate_time"/>
+		<result property="createOperatorId" column="fcreate_operator_id"/>
+		<result property="updateOperatorId" column="fupdate_operator_id"/>
+	</resultMap>
+
+	<insert id="insertPosition" parameterType="PositionModel">
+		insert into t_erp_org_position(fid,forg_id,fname,fnumber,fcreate_time,fupdate_time,fcreate_operator_id,fupdate_operator_id)
+		values(#{id},#{orgId},#{name},#{number},#{createTime},#{updateTime},#{createOperatorId},#{updateOperatorId})
+	</insert>
+
+	<update id="updatePosition" parameterType="PositionModel">
+		update t_erp_org_position
+		<set>
+			<if test="orgId!=null">forg_id=#{orgId},</if>
+			<if test="name!=null and name!=''">fname=#{name},</if>
+			<if test="number!=null and number!=''">fnumber=#{number},</if>
+			<if test="createTime!=null">fcreate_time=#{createTime},</if>
+			<if test="updateTime!=null">fupdate_time=#{updateTime},</if>
+			<if test="createOperatorId!=null">fcreate_operator_id=#{createOperatorId},</if>
+			<if test="updateOperatorId!=null">fupdate_operator_id=#{updateOperatorId},</if>
+		</set>
+		where fid=#{id}
+	</update>
+
+	<delete id="deleteById" parameterType="String">
+		delete from t_erp_org_position where fid=#{id}
+	</delete>
+
+	<delete id="deleteAllBySystem" parameterType="list">
+		delete from t_erp_org_position
+		where fcreate_operator_id='system'
+		<if test="list!=null">
+			and fid in
+			<foreach collection="list" separator="," open="(" close=")" item="id">#{id}</foreach>
+		</if>
+	</delete>
+
+	<select id="queryPosition" parameterType="yhao.micro.service.surety.erp.org.apilist.form.position.PositionQueryForm" resultMap="PositionModelResult">
+		select * from t_erp_org_position t
+		where 1=1
+		<include refid="normalQuery"/>
+	</select>
+
+	<select id="selectById" parameterType="string" resultMap="PositionModelResult">
+		select * from t_erp_org_position t
+		where t.fid=#{id}
+	</select>
+
+	<sql id="normalQuery">
+		<if test="positionKey!=null and positionKey!=''">
+			and (t.fnumber like concat(#{positionKey},'%') or t.fname like '%' || #{positionKey} || '%')
+		</if>
+		<if test="orgId!=null and orgId!=''">
+			and t.forg_id=#{orgId}
+		</if>
+	</sql>
+</mapper>

@@ -1,0 +1,285 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="yhao.micro.service.surety.business.dao.automapper.ExaminerReviewDao">
+
+    <resultMap id="followUpRecording" type="yhao.micro.service.surety.business.apilist.model.FollowUpListQueryModel">
+        <id property="id" column="FID"/>
+        <result property="operator" column="OPERTOR_NAME"/>
+        <result property="operatingTime" column="CREATE_Time"/>
+        <result property="position" column="POSITION_NAME"/>
+        <result property="nodeName" column="FNODE"/>
+        <result property="matterName" column="FMATTER_NAME"/>
+        <result property="followUpContent" column="FCONTENT"/>
+    </resultMap>
+
+    <insert id="warrantyFollowUpRecordingSave" parameterType="yhao.micro.service.surety.business.apilist.form.complex.FollowUpSaveForm">
+          insert into SURETY.T_SUERTY_FOLLOW_UP(FID,FNODE,FMATTER_NAME,FCONTENT,FCREATE_TIME,FCREATE_OPERATOR_ID,FMATTER_ID)
+        values (#{id},#{nodeName},#{matterName},#{followUpContent},TO_DATE(#{createTime}, 'yyyy-MM-dd'),#{userId},#{matterId})
+    </insert>
+
+    <select id="pageQueryFollowUpRecordingById" parameterType="yhao.micro.service.surety.business.apilist.form.complex.FollowUpListForm" resultMap="followUpRecording">
+        SELECT
+            fu.FID,
+            fu.FNODE,
+            fu.FMATTER_NAME,
+            fu.FCONTENT,
+            to_char( fu.FCREATE_TIME, 'yyyy-MM-dd' ) AS CREATE_Time,
+            pe.FNAME AS OPERTOR_NAME,
+	        po.FNAME AS POSITION_NAME
+        FROM
+            SURETY.T_SUERTY_FOLLOW_UP fu
+            INNER JOIN SURETY.T_ERP_PERSON pe ON fu.FCREATE_OPERATOR_ID = pe.FID
+            INNER JOIN SURETY.T_ERP_ORG_POSITION_LINK li ON pe.FPOSITION_LINK_ID = li.FID
+            INNER JOIN SURETY.T_ERP_ORG_POSITION po ON li.FPOSITION_ID = po.FID
+        WHERE
+            fu.FMATTER_ID = #{matterId}
+    </select>
+
+    <insert id="reviewReceive" parameterType="yhao.micro.service.surety.business.apilist.form.complex.ReviewTransferForm">
+          insert into SURETY.T_SURETY_REVIEW(FID,FEXAMINER_ID,FK_FGUARANTEE_ID,FRECEIVE_TIME)
+        values (#{id},#{receiveId},#{guaranteeId},TO_DATE(#{receiveTime}, 'yyyy-MM-dd'))
+    </insert>
+
+    <select id="selectReviewById" parameterType="String" resultType="yhao.micro.service.surety.business.apilist.form.complex.ReviewTransferForm">
+        select FID AS id,FEXAMINER_ID  AS receiveId ,FK_FGUARANTEE_ID AS guaranteeId from SURETY.T_SURETY_REVIEW where FK_FGUARANTEE_ID = #{id}
+    </select>
+
+    <select id="selectReviewByGuaranteeId" parameterType="String" resultType="yhao.micro.service.surety.business.apilist.form.complex.ReviewTransferForm">
+        select FID AS id,FEXAMINER_ID  AS receiveId ,FK_FGUARANTEE_ID AS guaranteeId from SURETY.T_SURETY_REVIEW where FK_FGUARANTEE_ID = #{id}
+    </select>
+
+    <update id="reviewTransfer" parameterType="yhao.micro.service.surety.business.apilist.form.complex.ReviewTransferForm">
+        update SURETY.T_SURETY_REVIEW set FEXAMINER_ID = #{receiveId} where FID = #{id}
+    </update>
+
+    <select id="queryReveiceNameById" parameterType="String" resultType="yhao.micro.service.surety.business.apilist.model.ReveiceNameModel">
+        SELECT
+            pe.FNAME AS reveiceName
+        FROM
+            SURETY.T_SURETY_REVIEW re
+            INNER JOIN SURETY.T_ERP_PERSON pe ON re.FEXAMINER_ID = pe.FID
+        WHERE
+            re.FK_FGUARANTEE_ID = #{id}
+    </select>
+
+    <update id="updateReviewInfoByGuaranteeId" parameterType="yhao.micro.service.surety.business.apilist.form.complex.ReviewInfoSaveForm">
+        UPDATE SURETY.T_SURETY_REVIEW
+        SET FOLD_LOAN_SITUATION = #{ oldLoanSituation },
+        FCREDIT_SITUATION =#{ creditSituation },
+        FFINAL_PRICE_INSPECT =#{ finalPriceInspect },
+        FREDEMPTION_RATIO =#{ redemptionRatio },
+        FDEBT_RATIO =#{ debtRatio },
+        FFOLK_INQUIRY =#{ folkInquiry },
+        FLAWSUIT =#{ lawsuit },
+        FGUARANTOR_SITUATION =#{ guarantorSituation },
+        FPURCHASE_QUALIFICATION =#{ purchaseQualification },
+        FRETURN_SOURCE = #{ returnSource },
+        FACCEPTANCE_OF_OPINIONS =#{ acceptanceOfOpinions },
+        FPROPERTY_VALUE_DETERMINATION =#{ propertyValueDetermination },
+        FPAYMENT_RATIO =#{ paymentRatio },
+        FTHIS_LOAN_AMOUNT =#{ thisLoanAmount },
+        FTHIS_LOAN_DAYS =#{ thisLoanDays },
+        FCONSOLIDATED_LOAN_AMOUNT =#{ consolidatedLoanAmount },
+        FAUCTION_PRICE =#{ auctionPrice },
+        FPAID_DEPOSIT =#{ paidDeposit },
+        FFIRST_INSTALLMENT = #{ firstInstallment },
+        FLOAN_AMOUNT =#{ loanAmount },
+        FLOAN_RATIO =#{ loanRatio },
+        FTHE_CERTIFICATE_BEGINS = TO_DATE( #{ theCertificateBegins }, 'yyyy-MM-dd' ),
+        FTHE_CERTIFICATE_ENDS = TO_DATE( #{ theCertificateEnds }, 'yyyy-MM-dd' ),
+        FREVIEW_BUSINESS_TYPE =#{ reviewBusinessType },
+        APPROVAL_REVIEW =#{ approvalReview }
+        WHERE
+            FK_FGUARANTEE_ID = #{ guaranteeId}
+    </update>
+
+    <select id="selectReviewInfoByGuaranteeId" parameterType="String"
+            resultType="yhao.micro.service.surety.business.apilist.form.complex.ReviewInfoSaveForm">
+        SELECT
+            FOLD_LOAN_SITUATION as oldLoanSituation,
+            FCREDIT_SITUATION as creditSituation,
+            FFINAL_PRICE_INSPECT as finalPriceInspect,
+            FREDEMPTION_RATIO as redemptionRatio,
+            FDEBT_RATIO as debtRatio,
+            FFOLK_INQUIRY as folkInquiry,
+            FLAWSUIT as lawsuit,
+            FGUARANTOR_SITUATION as guarantorSituation,
+            FPURCHASE_QUALIFICATION as purchaseQualification,
+            FRETURN_SOURCE as returnSource,
+            FACCEPTANCE_OF_OPINIONS as acceptanceOfOpinions,
+            FPROPERTY_VALUE_DETERMINATION as propertyValueDetermination,
+            FPAYMENT_RATIO as paymentRatio ,
+            FTHIS_LOAN_AMOUNT as thisLoanAmount,
+            FTHIS_LOAN_DAYS as thisLoanDays,
+            FCONSOLIDATED_LOAN_AMOUNT as consolidatedLoanAmount,
+            FAUCTION_PRICE as auctionPrice,
+            FPAID_DEPOSIT as paidDeposit,
+            FFIRST_INSTALLMENT as firstInstallment,
+            FLOAN_AMOUNT as loanAmount,
+            FLOAN_RATIO as loanRatio,
+            to_char( FTHE_CERTIFICATE_BEGINS, 'yyyy-MM-dd' ) as theCertificateBegins,
+            to_char( FTHE_CERTIFICATE_ENDS, 'yyyy-MM-dd' ) as theCertificateEnds,
+            FREVIEW_BUSINESS_TYPE as reviewBusinessType,
+            APPROVAL_REVIEW as approvalReview,
+			FK_FGUARANTEE_ID as guaranteeId
+        FROM
+            SURETY.T_SURETY_REVIEW
+        WHERE
+            FK_FGUARANTEE_ID = #{id}
+    </select>
+
+    <resultMap id="reviewList" type="yhao.micro.service.surety.business.apilist.model.WindControllerGuaranteeModel">
+        <id property="guaranteeId" column="FID"/>
+        <result property="guaranteeNum" column="FGUARANTEE_NUM"/>
+        <result property="reviewId" column="REFID"/>
+        <result property="businessType" column="FBUSINESS_NAME"/>
+        <result property="accountManager" column="FMANAGER_NAME"/>
+        <result property="accountManagerId" column="FMANAGER_ID"/>
+        <result property="guaranteeMoney" column="FGUARANTEE_AMOUNT"/>
+        <result property="reveiceDate" column="FRECEIVE_TIME"/>
+        <result property="policyDate" column="FDECLARATION_DATE"/>
+        <result property="isReveice" column="FIS_RECEIVEED"/>
+        <result property="taskId" column="FTASK_ID"/>
+        <result property="nodeOrder" column="FNODE_SCHEDULE_ORDER"/>
+        <collection property="sellers" ofType="yhao.micro.service.surety.business.apilist.model.OwnerModel">
+            <id property="id" column="BSSFID"></id>
+            <result property="owner" column="SELLER"></result>
+        </collection>
+        <collection property="buyers" ofType="yhao.micro.service.surety.business.apilist.model.BuyModel">
+            <id property="id" column="BSFID"></id>
+            <result property="buyer" column="BUYER"></result>
+        </collection>
+        <collection property="propertyCertificateNames" ofType="yhao.micro.service.surety.business.apilist.model.PropertyModel">
+            <id property="id" column="LSFID"></id>
+            <result property="roomName" column="FESTATE_NAME"></result>
+        </collection>
+    </resultMap>
+
+    <select id="pageQueryWarrantyReview" parameterType="yhao.micro.service.surety.business.apilist.form.complex.WindControllerGuaranteeQueryForm" resultMap="reviewList">
+        SELECT DISTINCT
+            gu.FID AS FID,
+            gu.FGUARANTEE_NUM AS FGUARANTEE_NUM,
+            re.FID AS REFID,
+            gu.FIS_RECEIVEED AS FIS_RECEIVEED,
+            to_char(gu.FDECLARATION_DATE,'yyyy-MM-dd') AS FDECLARATION_DATE,
+            ty.FBUSINESS_NAME AS FBUSINESS_NAME,
+            me.FMANAGER_NAME AS FMANAGER_NAME,
+            me.FMANAGER_ID AS FMANAGER_ID,
+            si.FGUARANTEE_AMOUNT AS FGUARANTEE_AMOUNT,
+            to_char(re.FRECEIVE_TIME,'yyyy-MM-dd') AS FRECEIVE_TIME,
+            it.FTASK_ID AS FTASK_ID,
+            it.FNODE_SCHEDULE_ORDER AS FNODE_SCHEDULE_ORDER,
+            bs.FCLT_NAME AS BUYER,
+            bs.FID AS BSFID,
+            bss.FID AS BSSFID,
+            bss.FCLT_NAME AS SELLER,
+            ls.FESTATE_NAME AS FESTATE_NAME,
+            ls.FID AS LSFID
+        FROM
+            T_SURETY_GUARANTEE gu
+            LEFT JOIN T_SURETY_REVIEW re on re.FK_FGUARANTEE_ID = gu.FID
+            LEFT JOIN T_SURETY_BUSINESS_TYPE ty ON gu.FBIZ_ID = ty.FID
+            LEFT JOIN T_SURETY_G_GUARANTEE_SITUATION si ON si.FGUARANTEE_ID = gu.FID
+            LEFT JOIN T_SURETY_G_PARTNER me ON me.FGUARANTEE_ID = gu.FID
+            AND me.FIS_MAJOR_MANAGER = 'YES'
+            LEFT JOIN T_SURETY_G_ESTATE_SELLER ls ON ls.FGUARANTEE_ID = gu.FID
+            LEFT JOIN T_SURETY_G_PERSONINFO_TRADES bs ON bs.FGUARANTEE_ID = gu.FID AND bs.FCLT_TYP='BUYER'
+            LEFT JOIN T_SURETY_G_PERSONINFO_TRADES bss ON bss.FGUARANTEE_ID = gu.FID AND bss.FCLT_TYP='SELLER'
+            LEFT JOIN T_WK_TASK ta ON ta.FBIZ_ENTITY_ID = gu.FID
+            LEFT JOIN T_WK_TASK_NODE_ITEM it ON it.FTASK_ID = ta.FID
+            LEFT JOIN T_WK_PVM_NODE_ITEM noit ON noit.FID = it.FITEM_ID
+            LEFT JOIN T_ERP_ORG o ON me.FORG_ID = o.FID
+        <include refid="yhao.infra.service.base.DataAuthRef.tableSql"/>
+        WHERE
+            1 = 1 AND it.FITEM_CODE = #{thingCode}
+            <if test="orgId != null and orgId !='' ">
+                AND o.FLONG_NUMBER LIKE CONCAT(( SELECT s.FLONG_NUMBER FROM T_ERP_ORG s WHERE s.FID = #{orgId} ), '%' )
+            </if>
+            <!--<if test="orgId != null and orgId !='' ">-->
+            <!--AND o.FLONG_NUMBER LIKE CONCAT(( SELECT s.FLONG_NUMBER FROM T_ERP_ORG s WHERE s.FID = #{orgId} ), '%' )-->
+            <!--</if>-->
+            <if test="isReview !=null">
+                <choose>
+                    <when test="isReview == 1">
+                        AND it.FITEM_RESULT IS NULL
+                    </when>
+                    <otherwise>
+                        AND it.FITEM_RESULT IS NOT NULL
+                    </otherwise>
+                </choose>
+            </if>
+            <!--<if test="thingCode != null and thingCode !='' ">-->
+            <!--AND it.FITEM_CODE = #{thingCode}-->
+            <!--</if>-->
+            <if test="cityId != null and cityId !='' ">
+                AND noit.FORG_ID = #{cityId}
+            </if>
+            <if test="businessTypeIds != null and businessTypeIds.size()>0 ">
+                AND ty.FID IN
+                <foreach item="item" index="index" collection="businessTypeIds"
+                         open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="reviewPeopleId != null and reviewPeopleId !='' ">
+                AND re.FEXAMINER_ID = #{reviewPeopleId}
+            </if>
+            <if test="otherConditions != null and otherConditions !='' ">
+                AND (
+                gu.FGUARANTEE_NUM LIKE concat(concat('%',#{otherConditions}),'%') OR ls.FPROPERTY_NAME LIKE concat(concat('%',#{otherConditions}),'%') OR bs.FCLT_NAME LIKE concat(concat('%',#{otherConditions}),'%')OR bss.FCLT_NAME LIKE concat( concat( '%', #{otherConditions}), '%' ))
+            </if>
+            <if test="isReveice !=null">
+                <choose>
+                    <when test="isReveice == 1">
+                        AND gu.FIS_RECEIVEED = 1
+                    </when>
+                    <otherwise>
+                        AND gu.FIS_RECEIVEED = 2
+                        AND re.FRECEIVE_TIME BETWEEN TO_DATE(#{reveiceStartTime}, 'yyyy-MM-dd') AND TO_DATE(#{reveiceEndTime}, 'yyyy-MM-dd')
+                    </otherwise>
+                </choose>
+            </if>
+        <include refid="yhao.infra.service.base.DataAuthRef.conditionSql"/>
+        ORDER BY FRECEIVE_TIME DESC
+    </select>
+
+    <!--查询客户经理所属部门-->
+    <select id="queryManageName" parameterType="string" resultType="string">
+        SELECT
+            eo.FNAME AS manageName
+        FROM
+            T_SURETY_G_PARTNER pa
+            LEFT JOIN T_ERP_PERSON pe ON pa.FMANAGER_ID = pe.FID
+            LEFT JOIN T_ERP_ORG eo ON pe.FORG_ID = eo.FID
+        WHERE
+            pa.FMANAGER_ID = #{id}
+    </select>
+
+    <update id="updateReviewStatus" parameterType="string">
+        update T_SURETY_GUARANTEE gu set gu.FIS_RECEIVEED = 2 where gu.FID = #{id}
+    </update>
+
+    <resultMap id="refuseWarrantyReviewMap" type="yhao.micro.service.surety.business.apilist.model.RefuseWarrantyReviewModel">
+        <id property="id" column="FID"/>
+        <result property="itemId" column="FITEM_ID"/>
+        <result property="nodeId" column="FTASK_NODE_ID"/>
+        <result property="itemResultCode" column="FITEM_RESULT_CODE"/>
+        <result property="itemNecessary" column="FITEM_NECESSARY"/>
+        <result property="itemCore" column="FITEM_CORE"/>
+    </resultMap>
+
+    <select id="refuseWarrantyReview" parameterType="yhao.micro.service.surety.business.apilist.form.complex.RefuseWarrantyReviewForm" resultMap="refuseWarrantyReviewMap">
+    select
+        it.FID as FID,
+        it.FITEM_ID as FITEM_ID,
+        it.FTASK_NODE_ID as FTASK_NODE_ID,
+        it.FITEM_RESULT_CODE as FITEM_RESULT_CODE,
+        it.FITEM_NECESSARY as FITEM_NECESSARY,
+        it.FITEM_CORE as FITEM_CORE
+	from T_WK_TASK_NODE_ITEM it where it.FTASK_ID = 'P201903072043154760' and it.FITEM_CODE = 'f3785c77-7484-48e7-b5e2-d84432043087'
+    </select>
+
+
+</mapper>

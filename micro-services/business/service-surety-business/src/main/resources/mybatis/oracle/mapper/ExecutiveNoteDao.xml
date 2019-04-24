@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="yhao.micro.service.surety.business.dao.automapper.ExecutiveNoteDao">
+
+    <resultMap id="executiveNoteList" type="yhao.micro.service.surety.business.apilist.model.WindControllerGuaranteeModel">
+        <id property="guaranteeId" column="FID"/>
+        <result property="guaranteeNum" column="FGUARANTEE_NUM"/>
+        <result property="businessType" column="FBUSINESS_NAME"/>
+        <result property="accountManager" column="FMANAGER_NAME"/>
+        <result property="accountManagerId" column="FMANAGER_ID"/>
+        <result property="guaranteeMoney" column="FGUARANTEE_AMOUNT"/>
+        <result property="examinerReviewTime" column="REVIEW_TIME"/>
+        <result property="discountStstus" column="IS_DISCOUNT"/>
+        <result property="taskId" column="FTASK_ID"/>
+        <result property="nodeOrder" column="FNODE_SCHEDULE_ORDER"/>
+        <collection property="sellers" ofType="yhao.micro.service.surety.business.apilist.model.OwnerModel">
+            <id property="id" column="BSSFID"></id>
+            <result property="owner" column="SELLER"></result>
+        </collection>
+        <collection property="buyers" ofType="yhao.micro.service.surety.business.apilist.model.BuyModel">
+            <id property="id" column="BSFID"></id>
+            <result property="buyer" column="BUYER"></result>
+        </collection>
+        <collection property="propertyCertificateNames" ofType="yhao.micro.service.surety.business.apilist.model.PropertyModel">
+            <id property="id" column="LSFID"></id>
+            <result property="roomName" column="FESTATE_NAME"></result>
+        </collection>
+    </resultMap>
+
+    <resultMap id="executiveNote" type="yhao.micro.service.surety.business.apilist.model.ExecutiveNoteListModel">
+        <id property="remarkId" column="FID"/>
+        <result property="informationSituation" column="FINFORMATION_SITUATION"/>
+        <result property="remarks" column="FREMARK"/>
+        <result property="remarkTime" column="remarkTime"/>
+    </resultMap>
+
+    <select id="pageQueryExecutiveNote" parameterType="yhao.micro.service.surety.business.apilist.form.complex.WindControllerGuaranteeQueryForm" resultMap="executiveNoteList">
+        SELECT
+        gu.FID AS FID,
+        gu.FGUARANTEE_NUM AS FGUARANTEE_NUM,
+        gu.FIS_DISCOUNTED AS IS_DISCOUNT,
+        ty.FBUSINESS_NAME AS FBUSINESS_NAME,
+        me.FMANAGER_NAME AS FMANAGER_NAME,
+        me.FMANAGER_ID AS FMANAGER_ID,
+        si.FGUARANTEE_AMOUNT AS FGUARANTEE_AMOUNT,
+        to_char(it.FITEM_FINISH_TIME,'yyyy-MM-dd HH:mm') AS REVIEW_TIME,
+        it.FTASK_ID AS FTASK_ID,
+        it.FNODE_SCHEDULE_ORDER AS FNODE_SCHEDULE_ORDER,
+        bs.FCLT_NAME AS BUYER,
+        bs.FID AS BSFID,
+        bss.FID AS BSSFID,
+        bss.FCLT_NAME AS SELLER,
+        ls.FESTATE_NAME AS FESTATE_NAME,
+        ls.FID AS LSFID
+        FROM
+        T_SURETY_GUARANTEE gu
+        LEFT JOIN T_SURETY_BUSINESS_TYPE ty ON gu.FBIZ_ID = ty.FID
+        LEFT JOIN T_SURETY_G_GUARANTEE_SITUATION si ON si.FGUARANTEE_ID = gu.FID
+        LEFT JOIN T_SURETY_G_PARTNER me ON me.FGUARANTEE_ID = gu.FID
+        AND me.FIS_MAJOR_MANAGER = 'YES'
+        LEFT JOIN T_SURETY_G_ESTATE_SELLER ls ON ls.FGUARANTEE_ID = gu.FID
+        LEFT JOIN T_SURETY_G_PERSONINFO_TRADES bs ON bs.FGUARANTEE_ID = gu.FID AND bs.FCLT_TYP='BUYER'
+        LEFT JOIN T_SURETY_G_PERSONINFO_TRADES bss ON bss.FGUARANTEE_ID = gu.FID AND bss.FCLT_TYP='SELLER'
+        LEFT JOIN T_WK_TASK ta ON ta.FBIZ_ENTITY_ID = gu.FID
+        LEFT JOIN T_WK_TASK_NODE_ITEM it ON it.FTASK_ID = ta.FID
+        LEFT JOIN T_WK_PVM_NODE_ITEM noit ON noit.FID = it.FITEM_ID
+        LEFT JOIN T_ERP_ORG o ON me.FORG_ID = o.FID
+        <include refid="yhao.infra.service.base.DataAuthRef.tableSql"/>
+        WHERE
+        1 = 1 AND it.FITEM_CODE = #{thingCode}
+        <if test="orgId != null and orgId !='' ">
+            AND o.FLONG_NUMBER LIKE CONCAT(( SELECT s.FLONG_NUMBER FROM T_ERP_ORG s WHERE s.FID = #{orgId} ), '%' )
+        </if>
+        <!--<if test="orgId != null and orgId !='' ">-->
+        <!--AND o.FLONG_NUMBER LIKE CONCAT(( SELECT s.FLONG_NUMBER FROM T_ERP_ORG s WHERE s.FID = #{orgId} ), '%' )-->
+        <!--</if>-->
+        <if test="isRemarks !=null">
+            <choose>
+                <when test="isRemarks == 1">
+                    AND it.FITEM_RESULT IS NULL
+                </when>
+                <otherwise>
+                    AND it.FITEM_RESULT IS NOT NULL
+                </otherwise>
+            </choose>
+        </if>
+        <!--<if test="thingCode != null and thingCode !='' ">-->
+        <!--AND it.FITEM_CODE = #{thingCode}-->
+        <!--</if>-->
+        <if test="cityId != null and cityId !='' ">
+            AND noit.FORG_ID = #{cityId}
+        </if>
+        <if test="businessTypeIds != null and businessTypeIds.size()>0 ">
+            AND ty.FID IN
+            <foreach item="item" index="index" collection="businessTypeIds"
+                     open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="accountManagerName != null and accountManagerName !='' ">
+            AND me.FMANAGER_NAME = #{accountManagerName}
+        </if>
+        <if test="otherConditions != null and otherConditions !='' ">
+            AND (
+            gu.FGUARANTEE_NUM LIKE concat(concat('%',#{otherConditions}),'%') OR ls.FPROPERTY_NAME LIKE concat(concat('%',#{otherConditions}),'%') OR bs.FCLT_NAME LIKE concat(concat('%',#{otherConditions}),'%')OR bss.FCLT_NAME LIKE concat( concat( '%', #{otherConditions}), '%' ))
+        </if>
+        <include refid="yhao.infra.service.base.DataAuthRef.conditionSql"/>
+        ORDER BY REVIEW_TIME DESC
+        <!--SELECT-->
+        <!--gu.FID AS FID,-->
+        <!--gu.FIS_DISCOUNTED AS IS_DISCOUNT,-->
+        <!--ty.FBUSINESS_NAME AS FBUSINESS_NAME,-->
+        <!--me.FMANAGER_NAME AS FMANAGER_NAME,-->
+        <!--gu.FGUARANTEE_AMOUNT AS FGUARANTEE_AMOUNT,-->
+        <!--to_char(it.FITEM_FINISH_TIME,'yyyy-MM-dd') AS REVIEW_TIME,-->
+        <!--it.FTASK_ID AS FTASK_ID,-->
+        <!--it.FNODE_SCHEDULE_ORDER AS FNODE_SCHEDULE_ORDER,-->
+        <!--bs.FCLT_NAME AS BUYER,-->
+        <!--bs.FID AS BSFID,-->
+        <!--bss.FID AS BSSFID,-->
+        <!--bss.FCLT_NAME AS SELLER,-->
+        <!--ls.FESTATE_NAME AS FESTATE_NAME,-->
+        <!--ls.FID AS LSFID-->
+        <!--FROM-->
+        <!--T_SURETY_GUARANTEE gu-->
+        <!--LEFT JOIN T_SURETY_BUSINESS_TYPE ty ON gu.FBIZ_ID = ty.FID-->
+        <!--LEFT JOIN T_SURETY_MANAGER me ON me.FGUARANTEE_ID = gu.FID-->
+        <!--AND me.FIS_MAJOR_MANAGER = 'YES'-->
+        <!--LEFT JOIN T_SURETY_EATATE_LINK_SELLER ls ON ls.FGUARANTEE_ID = gu.FID-->
+        <!--LEFT JOIN T_SURETY_PERSONINFO_OF_TRADES bs ON bs.FGUARANTEE_PID = gu.FID AND bs.FCLT_TYP='BUYER'-->
+        <!--LEFT JOIN T_SURETY_PERSONINFO_OF_TRADES bss ON bss.FGUARANTEE_PID = gu.FID AND bss.FCLT_TYP='SELLER'-->
+        <!--LEFT JOIN T_WK_TASK ta ON ta.FBIZ_ENTITY_ID = gu.FID-->
+        <!--LEFT JOIN T_WK_TASK_NODE_ITEM it ON it.FTASK_ID = ta.FID-->
+        <!--LEFT JOIN T_WK_PVM_NODE_ITEM noit ON noit.FID = it.FITEM_ID-->
+        <!--LEFT JOIN T_ERP_ORG o ON me.FORG_ID = o.FID-->
+        <!--WHERE-->
+        <!--1 = 1-->
+
+        <!--AND o.FLONG_NUMBER LIKE CONCAT(( SELECT s.FLONG_NUMBER FROM T_ERP_ORG s WHERE s.FID = #{orgId} ), '%' ) AND it.FITEM_CODE = #{thingCode}-->
+        <!--<if test="isRemarks !=null">-->
+        <!--<choose>-->
+        <!--<when test="isRemarks == 1">-->
+        <!--AND it.FITEM_RESULT IS NULL-->
+        <!--</when>-->
+        <!--<otherwise>-->
+        <!--AND it.FITEM_RESULT IS NOT NULL-->
+        <!--</otherwise>-->
+        <!--</choose>-->
+        <!--</if>-->
+    </select>
+
+    <insert id="executiveNoteSave" parameterType="yhao.micro.service.surety.business.apilist.form.complex.ExecutivePostSaveForm">
+          insert into SURETY.T_SURETY_REMARKS(FID,FINFORMATION_SITUATION,FREMARK,FREMARK_TIME,FK_FGUARANTEE_ID)
+        values (#{id},#{informationSituation},#{remarks},TO_DATE(#{remarkTime}, 'yyyy-MM-dd'),#{guaranteeId})
+    </insert>
+
+    <select id="pageQueryExecutiveNoteById" parameterType="yhao.micro.service.surety.business.apilist.form.complex.QuerySingleGuaranteeInfoForm" resultMap="executiveNote">
+        select FID,FINFORMATION_SITUATION,FREMARK,to_char(FREMARK_TIME,'yyyy-MM-dd') as remarkTime from SURETY.T_SURETY_REMARKS where FK_FGUARANTEE_ID = #{guaranteeId}
+    </select>
+
+
+    <resultMap id="previousNodeFinishTime" type="yhao.micro.service.surety.business.apilist.model.PreviousNodeFinishTime">
+        <id property="id" column="FID"/>
+        <result property="previousNodeFinishTime" column="FITEM_FINISH_TIME"/>
+    </resultMap>
+
+    <select id="queryPreviousNodeFinishTime" parameterType="yhao.micro.service.surety.business.apilist.form.complex.PreviousNodeFinishTimeForm" resultMap="previousNodeFinishTime">
+        SELECT
+            FID,
+            to_char( FITEM_FINISH_TIME, 'yyyy-MM-dd HH:mm:ss' ) AS FITEM_FINISH_TIME
+        FROM
+            ( SELECT FID,FITEM_FINISH_TIME FROM T_WK_TASK_NODE_ITEM WHERE FTASK_ID = #{taskId} AND FNODE_SCHEDULE_ORDER = #{nodeOrder} ORDER BY FITEM_FINISH_TIME DESC )
+        WHERE
+	        ROWNUM = 1
+    </select>
+
+</mapper>

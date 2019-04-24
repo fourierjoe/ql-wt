@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="yhao.micro.service.surety.baseconfig.dao.automapper.PartnerDao">
+    <resultMap id="PartnerResult" type="yhao.micro.service.surety.baseconfig.apilist.model.PartnerModel">
+        <id property="id" column="FID"/>
+        <result property="orgId" column="FORG_ID"/>
+        <result property="companyType" column="FCOMPANY_TYPE"/>
+        <result property="companyName" column="FCOMPANY_NAME"/>
+        <result property="rebateAccountName" column="FREBATE_ACCOUNT_NAME"/>
+        <result property="rebateAccountNumber" column="FREBATE_ACCOUNT_NUMBER"/>
+        <result property="rebateAccountBank" column="FREBATE_ACCOUNT_BANK"/>
+        <result property="agreementEndDate" column="FAGREEMENT_END_DATE"/>
+        <result property="status" column="FSTATUS"/>
+        <result property="createTime" column="FCREATE_TIME"/>
+        <result property="updateTime" column="FUPDATE_TIME"/>
+        <result property="createOperatorId" column="FCREATE_OPERATOR_ID"/>
+        <result property="updateOperatorId" column="FUPDATE_OPERATOR_ID"/>
+
+        <result property="orgName" column="FORG_NAME"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="yhao.micro.service.surety.baseconfig.apilist.form.PartnerSaveForm">
+        insert into T_BASE_PARTNER(FID,FORG_ID,FCOMPANY_TYPE,FCOMPANY_NAME,FREBATE_ACCOUNT_NAME,FREBATE_ACCOUNT_NUMBER,FREBATE_ACCOUNT_BANK,FAGREEMENT_END_DATE,FSTATUS,FCREATE_TIME,FUPDATE_TIME,FCREATE_OPERATOR_ID,FUPDATE_OPERATOR_ID)
+        values (sys_guid(),#{orgId},#{companyType},#{companyName},#{rebateAccountName},#{rebateAccountNumber},#{rebateAccountBank},#{agreementEndDate},#{status},sysdate,sysdate,#{operatorId},#{operatorId})
+    </insert>
+
+    <update id="update" parameterType="yhao.micro.service.surety.baseconfig.apilist.form.PartnerSaveForm">
+        update T_BASE_PARTNER
+        <set>
+            FUPDATE_TIME = sysdate,
+            FREBATE_ACCOUNT_NAME=#{rebateAccountName},
+            FREBATE_ACCOUNT_NUMBER=#{rebateAccountNumber},
+            FREBATE_ACCOUNT_BANK=#{rebateAccountBank},
+            FAGREEMENT_END_DATE = #{agreementEndDate},
+            <if test="orgId!=null and orgId!=''">FORG_ID=#{orgId},</if>
+            <if test="companyName!=null and companyName!=''">FCOMPANY_NAME=#{companyName},</if>
+            <if test="companyType!=null">FCOMPANY_TYPE = #{companyType},</if>
+            <if test="status!=null">FSTATUS = #{status},</if>
+            <if test="operatorId!=null and operatorId!=''">FUPDATE_OPERATOR_ID=#{operatorId},</if>
+        </set>
+        where fid = #{id}
+    </update>
+
+    <update id="statusChange" parameterType="yhao.micro.service.surety.baseconfig.apilist.form.StatusChangeForm">
+        UPDATE T_BASE_PARTNER SET FSTATUS=#{status} WHERE FID = #{id}
+    </update>
+
+    <delete id="deleteById" parameterType="yhao.infra.apilist.validate.IdForm">
+        delete from T_BASE_PARTNER WHERE FID = #{id}
+    </delete>
+
+    <select id="query" parameterType="yhao.micro.service.surety.baseconfig.apilist.form.PartnerQueryForm" resultMap="PartnerResult">
+        select P.*,O.FNAME AS FORG_NAME from T_BASE_PARTNER P
+        LEFT JOIN T_ERP_ORG O ON P.FORG_ID=O.FID
+        <where>
+            <if test="id!=null and id!=''">AND P.FID=#{id}</if>
+            <if test="orgId!=null and orgId!=''">AND P.FORG_ID=#{orgId}</if>
+            <if test="companyName!=null and companyName!=''">AND P.FCOMPANY_NAME=#{companyName}</if>
+            <if test="rebateAccountName!=null and rebateAccountName!=''">AND P.FREBATE_ACCOUNT_NAME=#{rebateAccountName}</if>
+            <if test="rebateAccountNumber!=null and rebateAccountNumber!=''">AND P.FREBATE_ACCOUNT_NUMBER=#{rebateAccountNumber}</if>
+            <if test="rebateAccountBank!=null and rebateAccountBank!=''">AND P.FREBATE_ACCOUNT_BANK=#{rebateAccountBank}</if>
+            <if test="minAgreementEndDate!=null">AND P.FAGREEMENT_END_DATE >= #{minAgreementEndDate}</if>
+            <if test="maxAgreementEndDate!=null">AND P.FAGREEMENT_END_DATE &lt;= #{maxAgreementEndDate}</if>
+            <if test="companyType!=null">AND P.FCOMPANY_TYPE = #{companyType}</if>
+            <if test="status!=null">AND P.FSTATUS = #{status}</if>
+        </where>
+        ORDER BY P.FCREATE_TIME DESC,P.FID
+    </select>
+</mapper>

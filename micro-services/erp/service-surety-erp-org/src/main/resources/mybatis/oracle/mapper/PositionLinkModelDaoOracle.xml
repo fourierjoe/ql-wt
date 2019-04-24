@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="yhao.micro.service.surety.erp.org.dao.automapper.PositionLinkDao">
+	<resultMap id="PositionLinkModelResult" type="PositionLinkModel">
+		<id property="id" column="fid"/>
+		<result property="orgId" column="forg_id"/>
+		<result property="positionId" column="fposition_id"/>
+		<result property="positionName" column="fposition_name"/>
+		<result property="positionNumber" column="fposition_number"/>
+		<result property="orgName" column="forg_name"/>
+		<result property="erpManager" column="ferp_manager"/>
+	</resultMap>
+
+	<insert id="savePositionLink" parameterType="yhao.micro.service.surety.erp.org.apilist.form.position.PositionLinkSaveForm">
+		insert into t_erp_org_position_link(fid,forg_id,fposition_id,fcreate_time,fupdate_time,fcreate_operator_id,fupdate_operator_id)
+		<foreach collection="positionIdArray" item="positionId" index="index" separator=" union all ">
+			select sys_guid(),#{orgId},#{positionId},sysdate,sysdate,#{operatorId},#{operatorId} from dual
+		</foreach>
+	</insert>
+
+	<insert id="insertPositionLink" parameterType="PositionLinkModel">
+		insert into t_erp_org_position_link(fid,forg_id,fposition_id,fcreate_time,fupdate_time,fcreate_operator_id,fupdate_operator_id,ferp_manager)
+		values (#{id},#{orgId},#{positionId},#{createTime},#{updateTime},#{createOperatorId},#{updateOperatorId},#{erpManager})
+	</insert>
+
+	<update id="updatePositionLink" parameterType="PositionLinkModel">
+		update t_erp_org_position_link
+		<set>
+			<if test="orgId!=null and orgId!=''">forg_id=#{orgId},</if>
+			<if test="positionId!=null and positionId!=''">fposition_id=#{positionId},</if>
+			<if test="updateTime!=null">fupdate_time=#{updateTime},</if>
+			<if test="updateOperatorId!=null">fupdate_operator_id=#{updateOperatorId},</if>
+		</set>
+		where fid=#{id}
+	</update>
+
+	<delete id="deleteAllBySystem" parameterType="list">
+		delete from t_erp_org_position_link
+		where fcreate_operator_id='system'
+		<if test="list!=null">
+			and fid in
+			<foreach collection="list" separator="," open="(" close=")" item="id">#{id}</foreach>
+		</if>
+	</delete>
+
+	<delete id="deleteById" parameterType="string">
+		delete from t_erp_org_position_link where fid=#{id}
+	</delete>
+
+	<delete id="deleteByPositionId" parameterType="string">
+		delete from t_erp_org_position_link where fposition_id=#{id}
+	</delete>
+
+	<select id="selectById" parameterType="string" resultMap="PositionLinkModelResult">
+		select * from t_erp_org_position_link t
+		where t.fid=#{id}
+	</select>
+
+	<select id="queryPositionLink" parameterType="yhao.micro.service.surety.erp.org.apilist.form.position.PositionLinkQueryForm" resultMap="PositionLinkModelResult">
+		select t.*,
+		tp.fname as fposition_name,
+		tp.fnumber as fposition_number,
+		teo.fname as forg_name
+		from t_erp_org_position_link t
+		left join t_erp_org_position tp on tp.fid=t.fposition_id
+		left join t_erp_org teo on teo.fid=t.forg_id
+		where 1=1
+		<include refid="normalQuery"/>
+	</select>
+
+	<sql id="normalQuery">
+		<if test="positionId!=null and positionId!=''">
+			and t.fposition_id=#{positionId}
+		</if>
+		<if test="orgId!=null and orgId!=''">
+			and t.forg_id=#{orgId}
+		</if>
+	</sql>
+</mapper>

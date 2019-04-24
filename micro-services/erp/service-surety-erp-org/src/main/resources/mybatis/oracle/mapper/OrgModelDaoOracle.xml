@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="yhao.micro.service.surety.erp.org.dao.automapper.OrgDao">
+	<resultMap id="OrgModelResult" type="OrgModel">
+		<id property="id" column="fid"/>
+		<result property="parentId" column="fparent_id"/>
+		<result property="parentOrgName" column="fparent_name"/>
+		<result property="name" column="fname"/>
+		<result property="number" column="fnumber"/>
+		<result property="longNumber" column="flong_number"/>
+		<result property="level" column="flevel"/>
+		<result property="status" column="fstatus"/>
+		<result property="validDate" column="fvalid_date"/>
+		<result property="orgType" column="forg_type"/>
+		<result property="cityOrg" column="fcity_org"/>
+		<result property="createTime" column="fcreate_time"/>
+		<result property="updateTime" column="fupdate_time"/>
+		<result property="createOperatorId" column="fcreate_operator_id"/>
+		<result property="updateOperatorId" column="fupdate_operator_id"/>
+		<result property="systemKeyLink" column="fsystem_key_link"/>
+	</resultMap>
+
+	<insert id="insertOrg" parameterType="OrgModel">
+				insert into t_erp_org(fid,fparent_id,fname,fnumber,flong_number,flevel,fstatus,fvalid_date,forg_type,fcreate_time,fupdate_time,fcreate_operator_id,fupdate_operator_id)
+			 values(#{id},#{parentId},#{name},#{number},#{longNumber},#{level},#{status},#{validDate},#{orgType},#{createTime},#{updateTime},#{createOperatorId},#{updateOperatorId})
+	</insert>
+
+	<update id="updateOrg" parameterType="OrgModel">
+		update t_erp_org
+		<set>
+			<if test="parentId!=null and parentId!=''">fparent_id=#{parentId},</if>
+			<if test="name!=null and name!=''">fname=#{name},</if>
+			<if test="number!=null and number!=''">fnumber=#{number},</if>
+			<if test="longNumber!=null and longNumber!=''">flong_number=#{longNumber},</if>
+			<if test="level!=null">flevel=#{level},</if>
+			<if test="status!=null">fstatus=#{status},</if>
+			<if test="validDate!=null">fvalid_date=#{validDate},</if>
+			<if test="orgType!=null">forg_type=#{orgType},</if>
+			<if test="updateTime!=null">fupdate_time=#{updateTime},</if>
+			<if test="updateOperatorId!=null">fupdate_operator_id=#{updateOperatorId},</if>
+		</set>
+		where fid=#{id}
+	</update>
+
+	<select id="queryOrg" parameterType="yhao.micro.service.surety.erp.org.apilist.form.org.OrgQueryForm" resultMap="OrgModelResult">
+		select t.*
+		from t_erp_org t
+		where 1=1
+		<include refid="normalQuery"/>
+		order by t.flevel asc
+	</select>
+
+	<select id="selectById" parameterType="string" resultMap="OrgModelResult">
+		select
+			t.*,
+			tp.fname as fparent_name,
+			NVL(tpro.fcity_org,0) as fcity_org
+		from t_erp_org t
+		left join t_erp_org tp on t.fparent_id = tp.fid
+		LEFT join t_erp_org_property tpro on t.fid = tpro.forg_id
+		where t.fid=#{id}
+	</select>
+
+	<sql id="normalQuery">
+		<if test="rootLongNumber!=null and rootLongNumber!=''">
+			and t.flong_number like #{rootLongNumber} || '%'
+		</if>
+		<if test="orgTypeList!=null">
+			and t.FORG_TYPE in
+			<foreach collection="orgTypeList" separator="," index="index" item="item" open="(" close=")">
+				#{item}
+			</foreach>
+		</if>
+		<if test="idList!=null">
+			and t.FID in
+			<foreach collection="idList" separator="," index="index" item="item" open="(" close=")">
+				#{item}
+			</foreach>
+		</if>
+		<if test="parentId!=null and parentId!=''">
+			and t.FPARENT_ID= #{parentId}
+		</if>
+	</sql>
+
+	<select id="selectTopOrgByChildId" parameterType="string" resultMap="OrgModelResult">
+		select teo.*
+		from t_erp_org teo
+		where flong_number=(
+			select substr(flong_number,0,instr(flong_number,'#',1)-1)  from t_erp_org t
+				where t.fid = #{id})
+	</select>
+
+	<update id="changeStatusByLongNumber" parameterType="yhao.micro.service.surety.erp.org.apilist.form.StatusUpdateForm">
+		update t_erp_org set fstatus=#{status}
+		where flong_number like concat(#{longNumber},'%')
+	</update>
+
+	<select id="selectOrgPropertyByOrgId" parameterType="string" resultMap="OrgModelResult">
+		select tpro.forg_id as fid,tpro.fcity_org
+		from t_erp_org_property tpro
+		where tpro.forg_id = #{id}
+	</select>
+
+	<insert id="insertCityOrgProperty" parameterType="yhao.micro.service.surety.erp.org.apilist.form.org.OrgPropertyChangeForm">
+		insert into t_erp_org_property(fid,forg_id,fcity_org,fupdate_time,fupdate_operator_id)
+		values(sys_guid(),#{id},#{cityOrg},#{operatorTime},#{operatorId})
+	</insert>
+
+	<update id="updateOrgProperty" parameterType="yhao.micro.service.surety.erp.org.apilist.form.org.OrgPropertyChangeForm">
+		update t_erp_org_property
+		<set>
+			<if test="operatorTime!=null">fupdate_time=#{operatorTime},</if>
+			<if test="operatorId!=null">fupdate_operator_id=#{operatorId},</if>
+			<if test="cityOrg!=-1">fcity_org=#{cityOrg},</if>
+		</set>
+		where forg_id=#{id}
+	</update>
+
+	<select id="queryCityOrgByParentId" parameterType="string" resultMap="OrgModelResult">
+		select t.*
+		from t_erp_org t
+		LEFT join t_erp_org_property tpro on t.fid = tpro.forg_id
+		where t.flong_number like concat(
+			(select flong_number from t_erp_org where fid=#{id}),'%'
+		) and t.fid!=#{id} and tpro.fcity_org=1
+	</select>
+
+	<select id="queryCityOrgByChildId" parameterType="string" resultMap="OrgModelResult">
+		select t.*
+		from t_erp_org t
+		LEFT join t_erp_org_property tpro on t.fid = tpro.forg_id
+		where (select flong_number from t_erp_org where fid=#{id}) like concat(
+			t.flong_number,'%'
+		) and t.fid!=#{id} and tpro.fcity_org=1
+	</select>
+
+	<delete id="deleteAllBySystem" parameterType="list">
+		delete from t_erp_org where fcreate_operator_id='system'
+		<if test="list!=null">
+			and fid in
+			<foreach collection="list" open="(" close=")" item="id" separator=",">#{id}</foreach>
+		</if>
+	</delete>
+
+	<select id="queryChildOrgByLongNumber" parameterType="string" resultMap="OrgModelResult">
+		select t.*
+		from t_erp_org t
+		where t.flong_number like concat(#{longNumber},'%')
+	</select>
+
+	<delete id="deletePositionByOrgIds" parameterType="list">
+		delete from t_erp_org_position where forg_id in
+		<foreach collection="list" separator="," item="id" open="(" close=")">#{id}</foreach>
+	</delete>
+
+	<delete id="deletePositionLinkByOrgIds" parameterType="list">
+		delete from t_erp_org_position_link where forg_id in
+		<foreach collection="list" separator="," item="id" open="(" close=")">#{id}</foreach>
+	</delete>
+
+	<delete id="deletePersonByOrgIds" parameterType="list">
+		delete from t_erp_person where forg_id in
+		<foreach collection="list" separator="," item="id" open="(" close=")">#{id}</foreach>
+	</delete>
+
+	<delete id="deleteSystemLinkByOrgIds" parameterType="list">
+		delete from t_erp_org_system_link where forg_id in
+		<foreach collection="list" separator="," item="id" open="(" close=")">#{id}</foreach>
+	</delete>
+
+	<select id="queryCityOrgLongNumber" parameterType="string" resultType="string">
+		select org_city.flong_number
+		from t_erp_org org_city
+		left join t_erp_org_property org_city_pro on org_city_pro.forg_id = org_city.fid
+		where
+		(org_city.flong_number like concat(#{orgLongNumber},'%')  or
+			#{orgLongNumber} like concat(org_city.flong_number,'%') )
+		and org_city_pro.fcity_org=1
+	</select>
+	<select id="queryCityOrgByPositionLinkId" parameterType="string" resultMap="OrgModelResult">
+		select o.* from T_ERP_ORG o
+			where o.FORG_TYPE='CITY'
+			and (select o1.FLONG_NUMBER from T_ERP_ORG_POSITION_LINK p
+			left join T_ERP_ORG o1 on p.FORG_ID=o1.FID
+			where p.FID=#{positionLinkId}) like o.FLONG_NUMBER || '%'
+			order by o.FLEVEL desc
+	</select>
+
+	<select id="queryCityOrgByChildOrgId" parameterType="yhao.infra.apilist.validate.IdForm" resultMap="OrgModelResult">
+		select *
+		from (
+			select o.*
+			from T_ERP_ORG o
+			where o.FORG_TYPE = 'CITY'
+				  and exists(select 1
+							 from t_erp_org child
+							 where child.FID = #{id} and child.FLONG_NUMBER like o.FLONG_NUMBER || '%')
+			order by o.FLEVEL desc
+		) where ROWNUM=1
+	</select>
+</mapper>

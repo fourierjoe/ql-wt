@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="yhao.micro.service.surety.business.dao.automapper.FinanceFundPlanDao">
+
+    <resultMap id="fundPlanMap" type="FundPlanModel">
+        <id property="id" column="FID"/>
+        <result property="guaranteeId" column="FGUARANTEE_ID" />
+        <result property="fundType" column="FFUND_TYPE" />
+        <result property="platformId" column="FPLATFORM_ID" />
+        <result property="isPlan" column="FIS_PLAN" />
+        <result property="planStatus" column="FPLAN_STATUS" />
+        <result property="productType" column="FPRODUCT_TYPE" />
+        <result property="createTime" column="FCREATE_TIME" />
+        <result property="createOperatorId" column="FCREATE_OPERATOR_ID" />
+        <result property="updateTime" column="FUPDATE_TIME" />
+        <result property="updateOperatorId" column="FUPDATE_OPERATOR_ID" />
+    </resultMap>
+
+    <insert id="insertFundPlan" parameterType="FundPlanModel">
+      insert into T_SURETY_FN_FUND_PLAN(FID,FGUARANTEE_ID,FFUND_TYPE,FPLATFORM_ID,
+      FIS_PLAN,FPLAN_STATUS,FPRODUCT_TYPE,FCREATE_TIME,FCREATE_OPERATOR_ID,FUPDATE_TIME,FUPDATE_OPERATOR_ID)
+      values (#{id},#{guaranteeId},#{fundType},#{platformId},#{isPlan},#{planStatus},#{productType},
+       #{createTime},#{createOperatorId},#{updateTime},#{updateOperatorId})
+    </insert>
+    <insert id="insertFundPlanRecord" parameterType="FundPlanRecordModel">
+        insert into T_SURETY_FN_FUND_PLAN_RECORD(FID,FFUND_PLAN_ID,FPOSITION_TYPE,FPOSITION_CONTENT,
+        FCREATE_TIME,FCREATE_OPERATOR_ID,FUPDATE_TIME,FUPDATE_OPERATOR_ID)
+        values (#{id},#{fundPlanId},#{positionType},#{positionContent},
+        #{createTime},#{createOperatorId},#{updateTime},#{updateOperatorId})
+    </insert>
+
+     <select id="queryFundPlan" parameterType="yhao.micro.service.surety.business.apilist.form.finance.FundPlanQueryForm"
+     resultMap="queryFundPlanPage">
+        SELECT GUARANTEE.FID,
+        GUARANTEE.FGUARANTEE_NUM,
+        ESTATE_SELLER.FESTATE_NAME,
+        ESTATE_SELLER.FID AS ESTATE_ID,
+        PERSONINFO_TRADES.FCLT_NAME,
+        BUSINESS_TYPE.FBUSINESS_NAME,
+        BUSINESS_TYPE.FWORKFLOW_BIZ_CODE,
+        GUARANTEE_SITUATION.FGUARANTEE_APPLICANT_IDS,
+        LOAN_GENERAL.FLOAN_TOTAL_AMOUNT,
+        LOAN_GENERAL.FPLAN_USE_DATE,
+        LOAN_GENERAL.FTOTAL_DAYS,
+        LOAN_GENERAL.FCHARGES,
+        LOAN_GENERAL.FCHARGE_LITTLE,
+        LOAN_GENERAL.FCHARGE_TOTAL,
+        LOAN_DETAILS.FLOAN_DAYS,
+        FUND_PLAN.FPLAN_STATUS,
+        FUND_PROVIDER.FNAME as BANK_NAME,
+        concat(concat(ref_org.FNAME,'-'),ERP_PERSON.FNAME) as MANAGER_NAME,
+        GUARANTEE.FDECLARATION_DATE
+        FROM  T_SURETY_GUARANTEE GUARANTEE
+        LEFT JOIN SURETY.T_SURETY_BUSINESS_TYPE BUSINESS_TYPE ON BUSINESS_TYPE.FID = GUARANTEE.FBIZ_ID
+        LEFT JOIN SURETY.T_SURETY_G_PERSONINFO_TRADES PERSONINFO_TRADES ON PERSONINFO_TRADES.FGUARANTEE_ID = GUARANTEE.FID
+        LEFT JOIN SURETY.T_SURETY_G_ESTATE_SELLER ESTATE_SELLER ON ESTATE_SELLER.FGUARANTEE_ID = GUARANTEE.FID
+        LEFT JOIN SURETY.T_ERP_PERSON ERP_PERSON ON    ERP_PERSON.FID = GUARANTEE.FCREATE_OPERATOR_ID
+        LEFT JOIN SURETY.T_SURETY_G_GUARANTEE_SITUATION GUARANTEE_SITUATION ON GUARANTEE_SITUATION.FGUARANTEE_ID = GUARANTEE.FID
+        LEFT JOIN SURETY.T_SURETY_G_LOAN_GENERAL LOAN_GENERAL ON LOAN_GENERAL.FGUARANTEE_ID = GUARANTEE.FID
+        LEFT JOIN SURETY.T_SURETY_FN_FUND_PLAN FUND_PLAN ON FUND_PLAN.FGUARANTEE_ID = GUARANTEE.FID
+        LEFT JOIN SURETY.T_SURETY_G_LOAN_GENERAL LOAN_GENERAL ON LOAN_GENERAL.FGUARANTEE_ID = GUARANTEE.FID
+        LEFT JOIN SURETY.T_SURETY_G_LOAN_DETAILS LOAN_DETAILS ON LOAN_DETAILS.FGUARANTEE_ID = GUARANTEE.FID
+        LEFT JOIN SURETY.T_SURETY_G_LOAN_SELLER LOAN_SELLER ON LOAN_SELLER.FGUARANTEE_ID = GUARANTEE.FID
+        LEFT JOIN SURETY.T_BASE_FUND_ACCOUNT FUND_ACCOUNT ON  FUND_ACCOUNT.FID = LOAN_SELLER.FLOAN_MB_ID
+        LEFT JOIN SURETY.T_BASE_FUND_PROVIDER  FUND_PROVIDER  ON  FUND_PROVIDER.FID = FUND_ACCOUNT.FFUND_PROVIDER_ID
+        <include refid="yhao.infra.service.base.DataAuthRef.tableSql"/>
+        <where>
+            PERSONINFO_TRADES.FCLT_TYP ='SELLER'
+            and BUSINESS_TYPE.FFUND_TYPE ='CASH'
+            <if test="orgId != null and orgId != ''">
+                and GUARANTEE.FORG_ID = #{orgId}
+            </if>
+            <if test="personId != null and personId != ''">
+                and GUARANTEE.FCREATE_OPERATOR_ID = #{personId}
+            </if>
+            <if test="keyWord != null and keyWord != ''">
+                and (GUARANTEE.FGUARANTEE_NUM = #{keyWord}
+                or ESTATE_SELLER.FPROPERTY_NAME = #{keyWord}
+                or PERSONINFO_TRADES.FCLT_NAME = #{keyWord}
+                or (ESTATE_SELLER.FDEED_NUM = #{keyWord} and ESTATE_SELLER.FDEED_TYPE = 'FCZ'))
+            </if>
+            <if test="status != null ">
+                and T_SURETY_FN_FUND_PLAN.FPLAN_STATUS = #{status}
+            </if>
+            <if test="fundType != null ">
+                and T_SURETY_FN_FUND_PLAN.FFUND_TYPE = #{fundType}
+            </if>
+            <if test="platformId != null  and platformId != ''  ">
+                and T_SURETY_FN_FUND_PLAN.FPLATFORM_ID = #{platformId}
+            </if>
+
+            <if test="planFundStartDate != null  and planFundStartDate != ''  ">
+                and LOAN_GENERAL.FPLAN_USE_DATE between #{planFundStartDate} and NVL(#{planFundEndDate},sysdate)
+            </if>
+
+        </where>
+        <include refid="yhao.infra.service.base.DataAuthRef.conditionSql"/>
+
+     </select>
+     <resultMap id="queryFundPlanPage" type="yhao.micro.service.surety.business.apilist.form.finance.FundPlanQueryResultForm">
+         <id property="guaranteeId" column="FID" />
+         <result property="guaranteeNum" column="FGUARANTEE_NUM"/>
+         <result property="managerName" column="MANAGER_NAME"/>
+         <result property="loanTotalAmount" column="FLOAN_TOTAL_AMOUNT"/>
+         <result property="planUseDate" column="FPLAN_USE_DATE"/>
+         <result property="loanDays" column="FTOTAL_DAYS"/>
+         <result property="status" column="FPLAN_STATUS"/>
+         <result property="bankName" column="BANK_NAME"/>
+         <result property="declarationDate" column="FDECLARATION_DATE"/>
+         <result property="sellerName" column="FCLT_NAME"/>
+         <result property="businessName" column="FBUSINESS_NAME"/>
+         <result property="workflowBizCode" column="FWORKFLOW_BIZ_CODE"/>
+         <result property="guaranteeApplicantIds" column="FGUARANTEE_APPLICANT_IDS"/>
+         <result property="charges" column="FCHARGES"/>
+         <result property="chargeLittle" column="FCHARGE_LITTLE"/>
+         <result property="chargeTotal" column="FCHARGE_TOTAL"/>
+         <collection property = "estatePageModelList" ofType="yhao.micro.service.surety.business.apilist.model.guarantee.page.EstatePageModel" >
+             <id property="id" column="ESTATE_ID" />
+             <result property="estateName" column="FESTATE_NAME"/>
+         </collection>
+     </resultMap>
+
+
+
+
+    <select id="queryFundPlanRecord" parameterType="yhao.infra.apilist.validate.IdForm"
+            resultType="FundPlanRecordModel">
+        select FPOSITION_TYPE as positionType,FPOSITION_CONTENT as positionContent,FCREATE_TIME as createTime
+        from T_SURETY_FN_FUND_PLAN_RECORD
+        where FFUND_PLAN_ID =#{id}
+    </select>
+
+    <update id="fundPick" parameterType="yhao.micro.service.surety.business.apilist.form.finance.FinancePickFundForm">
+        update T_SURETY_FN_FUND_PLAN
+        <set>
+            <if test="fundType !=null">FFUND_TYPE=#{fundType},</if>
+            <if test="platformId !=null">FPLATFORM_ID=#{platformId},</if>
+            <if test="createOperatorId =!null">FUPDATE_OPERATOR_ID=#{createOperatorId},</if>
+            FUPDATE_TIME =sysdate,
+            FIS_PLAN='YES',
+            FPLAN_STATUS='CHOOSE_FUNDS'
+        </set>
+        where FID=#{id}
+    </update>
+    <update id="fundPlanUpdRate"
+            parameterType="yhao.micro.service.surety.business.apilist.form.finance.FinanceFundPlanForm">
+        update T_SURETY_FN_FUND_PLAN
+        <set>
+            <if test="planStatus !=null">FPLAN_STATUS=#{planStatus},</if>
+            <if test="productType !=null">FPRODUCT_TYPE=#{productType},</if>
+            <if test="operatorId !=null">FUPDATE_OPERATOR_ID=#{operatorId},</if>
+            FUPDATE_TIME =sysdate
+        </set>
+        where FID=#{id}
+    </update>
+
+    <select id="pickIsConfirmArrival" parameterType="string" resultType="Integer">
+         select count(FID) from T_SURETY_FN_ARRIVAL_GENERAL
+         where FIS_CONFIRM='YES'  and FGUARANTEE_ID=#{guaranteeId}
+    </select>
+    <select id="pickFundPlan" resultMap="fundPlanMap">
+        select FID,FGUARANTEE_ID,FFUND_TYPE,FPLATFORM_ID,
+        FIS_PLAN,FPLAN_STATUS,FPRODUCT_TYPE,FCREATE_TIME,FCREATE_OPERATOR_ID,FUPDATE_TIME,FUPDATE_OPERATOR_ID
+        from T_SURETY_FN_FUND_PLAN
+        where FGUARANTEE_ID=#{guaranteeId}
+    </select>
+
+
+</mapper>

@@ -1,0 +1,530 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="yhao.micro.service.surety.business.dao.automapper.IntentionDao">
+    <delete id = "deleteIntention" parameterType="String" >
+        DELETE FROM SURETY.T_SURETY_GUARANTEE WHERE FID = #{id}
+    </delete>
+    <delete id = "deleteAttachment" parameterType="String" >
+        DELETE FROM SURETY.T_SURETY_G_ATTACHMENT WHERE FGUARANTEE_ID = #{id}
+    </delete>
+    <delete id = "deletePerson" parameterType="String" >
+        DELETE FROM SURETY.T_SURETY_G_PERSONINFO_TRADES WHERE FGUARANTEE_ID = #{id}
+    </delete>
+
+    <update id = "updateTransferState" parameterType="yhao.micro.service.surety.business.apilist.form.intention.FollowerTransferForm" >
+        UPDATE SURETY.T_SURETY_GUARANTEE
+           SET FTRANSFER_STATE = #{transferState}
+         WHERE FID = #{id}
+    </update>
+
+    <select id = "queryIntentionPage" parameterType="yhao.micro.service.surety.business.apilist.form.intention.IntentionQueryForm"
+            resultMap="PageResultIntention" >
+        SELECT GUARANTEE.FID,
+               GUARANTEE.FORG_ID,
+               GUARANTEE.FGUARANTEE_NUM,
+               GUARANTEE.FGUARANTEE_TYPE,
+               GUARANTEE.FCREDIT_STATE,
+               GUARANTEE.FREPAY_STATE,
+               GUARANTEE.FRECEIVE_STATE,
+               GUARANTEE.FTRANSFER_STATE,
+               GUARANTEE.FIS_SUBMIT,
+               GUARANTEE.FCREATE_TIME,
+               TRADES.FID AS cltId,
+               TRADES.FCLT_TYP,
+               TRADES.FCLT_NAME,
+               TYPE.FBUSINESS_NAME,
+               PERSON.FNAME,
+               PERSON1.FNAME AS followerName,
+               PERSON2.FNAME AS creditName,
+               PERSON3.FNAME AS repayName
+        FROM SURETY.T_SURETY_GUARANTEE GUARANTEE
+        LEFT JOIN SURETY.T_SURETY_G_PERSONINFO_TRADES TRADES ON GUARANTEE.FID = TRADES.FGUARANTEE_ID
+        LEFT JOIN SURETY.T_SURETY_BUSINESS_TYPE TYPE ON TYPE.FID = GUARANTEE.FBIZ_ID
+        LEFT JOIN SURETY.T_ERP_PERSON PERSON ON PERSON.FID = GUARANTEE.FCREATE_OPERATOR_ID
+        LEFT JOIN SURETY.T_ERP_PERSON PERSON1 ON PERSON1.FID = GUARANTEE.FFOLLOWER_ID
+        LEFT JOIN SURETY.T_ERP_PERSON PERSON2 ON PERSON2.FID = GUARANTEE.FCREDIT_CLERK_ID
+        LEFT JOIN SURETY.T_ERP_PERSON PERSON3 ON PERSON3.FID = GUARANTEE.FREDEEM_ID
+        <where>
+            <include refid = "queryCondition"/>
+        </where>
+    </select>
+    <resultMap id = "PageResultIntention" type = "yhao.micro.service.surety.business.apilist.model.intention.intention.IntentionPageModel" >
+        <id property="id" column="fid"/>
+        <result property="orgId" column="FORG_ID"/>
+        <result property="guaranteeNum" column="FGUARANTEE_NUM"/>
+        <result property="guaranteeType" column="FGUARANTEE_TYPE"/>
+        <result property="isSubmit" column="FIS_SUBMIT"/>
+        <result property="creditState" column="FCREDIT_STATE"/>
+        <result property="repayState" column="FREPAY_STATE"/>
+        <result property="createTime" column="FCREATE_TIME"/>
+        <result property="businessName" column="FBUSINESS_NAME"/>
+        <result property="managerName" column="fname"/>
+        <result property="followerName" column="followerName"/>
+        <result property="creditName" column="creditName"/>
+        <result property="repayName" column="repayName"/>
+        <collection property = "followerCreditModelList" ofType="yhao.micro.service.surety.business.apilist.model.intention.follower.FollowerCreditModel" >
+            <id property="id" column="cltId"/>
+            <result property="cltTyp" column="FCLT_TYP"/>
+            <result property="cltName" column="FCLT_NAME"/>
+        </collection>
+    </resultMap>
+
+    <select id = "selectIntention" parameterType="String" resultMap="ResultPickIntention" >
+        SELECT GUARANTEE.FID,
+               TRADES.FCLT_TYP,
+               TRADES.FCLT_NAME,
+               TRADES.FCREDIT_TYPE,
+               TRADES.FCREDIT_EXPECTED_DATE,
+               TYPE.FID AS businessId,
+               TYPE.FBUSINESS_NAME,
+               TYPE.FFUND_TYPE,
+               TYPE.FTRANSACTION_TYPE,
+               ATTACHMENT.FID AS attachmentId,
+               ATTACHMENT.FDATA_NAME AS dataName,
+               ATTACHMENT.FDATA_URL AS dataUrl
+          FROM SURETY.T_SURETY_GUARANTEE GUARANTEE
+        LEFT JOIN SURETY.T_SURETY_G_PERSONINFO_TRADES TRADES ON GUARANTEE.FID = TRADES.FGUARANTEE_ID
+        LEFT JOIN SURETY.T_SURETY_BUSINESS_TYPE TYPE ON TYPE.FID = GUARANTEE.FBIZ_ID
+        LEFT JOIN SURETY.T_SURETY_G_ATTACHMENT ATTACHMENT ON GUARANTEE.FID = ATTACHMENT.FGUARANTEE_ID
+            WHERE GUARANTEE.FID = #{id}
+    </select>
+    <resultMap id = "ResultPickIntention" type = "yhao.micro.service.surety.business.apilist.model.intention.intention.IntentionModel" >
+        <id property="id" column="fid"/>
+        <result property="createTime" column="FCREATE_TIME"/>
+        <result property="businessId" column="businessId"/>
+        <result property="businessName" column="FBUSINESS_NAME"/>
+        <result property="fundType" column="FFUND_TYPE"/>
+        <result property="transactionType" column="FTRANSACTION_TYPE"/>
+        <collection property = "creditList" ofType="yhao.micro.service.surety.business.apilist.model.intention.credit.CreditOfBuyerAndSellerModel" >
+            <result property="cltTyp" column="FCLT_TYP"/>
+            <result property="cltName" column="FCLT_NAME"/>
+            <result property="creditExpectedDate" column="FCREDIT_EXPECTED_DATE"/>
+        </collection>
+        <collection property = "intentionAttachmentModelList" ofType="yhao.micro.service.surety.business.apilist.model.intention.IntentionAttachmentModel" >
+            <id property="id" column="attachmentId"/>
+            <result property="dataName" column="dataName"/>
+            <result property="dataUrl" column="dataUrl"/>
+        </collection>
+    </resultMap>
+
+    <select id = "queryFollowerIntention" parameterType="String" resultMap="FollowerIntentionResult" >
+        SELECT A.FID AS aid,
+               A.FORG_ID AS orgId,
+               A.FGUARANTEE_NUM AS guaranteeNum,
+               A.FGUARANTEE_TYPE AS guaranteeType,
+               A.FCREATE_TIME AS createTime,
+               A.FREDEEM_ID AS redeemId,
+               A.FDATA_TRANSFER_DATE AS dataTransferDate,
+               A.FDEALMAN_REMARK AS dealmanRemark,
+               B.FID AS bid,
+               B.FCLT_TYP AS cltTyp,
+               B.FCLT_NAME AS cltName,
+               B.FCONTACT_TELE AS contactTele,
+               B.FCREDIT_TYPE AS creditType,
+               B.FCREDIT_EXPECTED_DATE AS creditExpectedDate,
+               B.FCREDIT_ARRANGE_DATE AS creditArrangeDate,
+               C.FID AS cid,
+               C.FDATA_NAME AS dataName,
+               C.FIS_RECEIVE AS isReceive,
+               C.FRECEIVE_NUMS AS receiveNums,
+               D.FBUSINESS_NAME AS businessName,
+               E.FPHONE AS phone,
+               E.FNAME AS managerName,
+               REPAY.FID AS repayid,
+               REPAY.FREPAY_TYPE AS repayType,
+               REPAY.FREPAY_EXPECTED_DATE AS repayExpectedDate
+          FROM SURETY.T_SURETY_GUARANTEE A
+         LEFT JOIN SURETY.T_SURETY_BUSINESS_TYPE D ON D.FID = A.FBIZ_ID
+         LEFT JOIN SURETY.T_SURETY_G_PERSONINFO_TRADES B ON A.FID = B.FGUARANTEE_ID
+         LEFT JOIN SURETY.T_SURETY_G_REPAY REPAY ON A.FID = REPAY.FGUARANTEE_ID
+         LEFT JOIN SURETY.T_ERP_PERSON E ON E.FID = A.FCREATE_OPERATOR_ID
+         LEFT JOIN SURETY.T_SURETY_G_ATTACHMENT C ON A.FID = C.FGUARANTEE_ID
+        WHERE A.FID = #{id}
+          AND A.FIS_SUBMIT = 'YES'
+    </select>
+    <resultMap id = "FollowerIntentionResult" type = "yhao.micro.service.surety.business.apilist.model.intention.follower.FollowerModel" >
+        <id property="id" column="aid"/>
+        <result property="orgId" column="orgId"/>
+        <result property="guaranteeNum" column="guaranteeNum"/>
+        <result property="guaranteeType" column="guaranteeType"/>
+        <result property="createTime" column="createTime"/>
+        <result property="businessName" column="businessName"/>
+        <result property="phone" column="phone"/>
+        <result property="managerName" column="managerName"/>
+        <result property="dataTransferDate" column="dataTransferDate"/>
+        <association property = "followerRedeemModel" javaType="yhao.micro.service.surety.business.apilist.model.intention.repay.FollowerRedeemModel" >
+            <id property="id" column="repayid"/>
+            <result property="repayType" column="repayType"/>
+            <result property="repayExpectedDate" column="repayExpectedDate"/>
+            <result property="redeemId" column="redeemId"/>
+        </association>
+        <collection property = "followerCreditModelList" ofType="yhao.micro.service.surety.business.apilist.model.intention.follower.FollowerCreditModel" >
+            <id property="id" column="bid"/>
+            <result property="cltTyp" column="cltTyp"/>
+            <result property="cltName" column="cltName"/>
+            <result property="contactTele" column="contactTele"/>
+            <result property="creditType" column="creditType"/>
+            <result property="creditExpectedDate" column="creditExpectedDate"/>
+            <result property="creditArrangeDate" column="creditArrangeDate"/>
+        </collection>
+        <collection property = "followerAttachmentModelList" ofType="yhao.micro.service.surety.business.apilist.model.intention.follower.FollowerAttachmentModel" >
+            <id property="id" column="cid"/>
+            <result property="dataName" column="dataName"/>
+            <result property="isReceive" column="isReceive"/>
+            <result property="receiveNums" column="receiveNums"/>
+        </collection>
+    </resultMap>
+
+    <select id = "queryFollowerPage" parameterType="yhao.micro.service.surety.business.apilist.form.intention.IntentionQueryForm"
+            resultMap="ResultFollowerPage" >
+        SELECT GUARANTEE.FID,
+               GUARANTEE.FGUARANTEE_NUM,
+               GUARANTEE.FGUARANTEE_TYPE,
+               GUARANTEE.FCREDIT_STATE,
+               GUARANTEE.FREPAY_STATE,
+               GUARANTEE.FRECEIVE_STATE,
+               GUARANTEE.FTRANSFER_STATE,
+               GUARANTEE.FCREATE_TIME,
+               TRADES.FCLT_TYP,
+               TRADES.FCLT_NAME,
+               TYPE.FBUSINESS_NAME,
+               PERSON.FNAME
+          FROM SURETY.T_SURETY_GUARANTEE GUARANTEE
+        LEFT JOIN SURETY.T_SURETY_G_PERSONINFO_TRADES TRADES ON GUARANTEE.FID = TRADES.FGUARANTEE_ID
+        LEFT JOIN SURETY.T_SURETY_BUSINESS_TYPE TYPE ON TYPE.FID = GUARANTEE.FBIZ_ID
+        LEFT JOIN SURETY.T_ERP_PERSON PERSON ON PERSON.FID = GUARANTEE.FCREATE_OPERATOR_ID
+        <where>
+            <include refid = "queryCondition"/>
+            AND GUARANTEE.FFOLLOWER_ID = #{followerId}
+            AND GUARANTEE.FIS_SUBMIT = 'YES'
+        </where>
+
+    </select>
+    <sql id = "queryCondition" >
+            <if test = "orgId!=null and orgId!=''" >
+                and GUARANTEE.FORG_ID = #{orgId}
+            </if>
+            <if test = "managerId!=null and managerId!=''" >
+                and GUARANTEE.FCREATE_OPERATOR_ID = #{managerId}
+            </if>
+            <if test = "bizId!=null and bizId!=''" >
+                and GUARANTEE.FBIZ_ID = #{bizId}
+            </if>
+            <if test = "receiveState!=null and receiveState!=''" >
+                and GUARANTEE.FRECEIVE_STATE = #{receiveState}
+            </if>
+            <if test = "creditState!=null and creditState!=''" >
+                and GUARANTEE.FCREDIT_STATE = #{creditState}
+            </if>
+            <if test = "repayState!=null and repayState!=''" >
+                and GUARANTEE.FREPAY_STATE = #{repayState}
+            </if>
+            <if test = "createTime!=null" >
+                and TO_CHAR(GUARANTEE.FCREATE_TIME,'yyyy-MM-dd') = TO_CHAR(#{createTime},'yyyy-MM-dd')
+            </if>
+            <if test = "cltName!=null and cltName!=''" >
+                and TRADES.FCLT_NAME = #{cltName}
+            </if>
+            <if test = "guaranteeNum!=null and guaranteeNum!=''" >
+                and GUARANTEE.FGUARANTEE_NUM = #{guaranteeNum}
+            </if>
+            <if test = "redeemId!=null and redeemId!=''" >
+                and GUARANTEE.FREDEEM_ID = #{redeemId}
+            </if>
+    </sql>
+    <resultMap id = "ResultFollowerPage" type = "yhao.micro.service.surety.business.apilist.model.intention.follower.FollowerPageModel" >
+        <id property="id" column="fid"/>
+        <result property="guaranteeNum" column="FGUARANTEE_NUM"/>
+        <result property="guaranteeType" column="FGUARANTEE_TYPE"/>
+        <result property="creditState" column="FCREDIT_STATE"/>
+        <result property="repayState" column="FREPAY_STATE"/>
+        <result property="receiveState" column="FRECEIVE_STATE"/>
+        <result property="transferState" column="FTRANSFER_STATE"/>
+        <result property="createTime" column="FCREATE_TIME"/>
+        <result property="businessName" column="FBUSINESS_NAME"/>
+        <result property="managerName" column="FNAME"/>
+        <collection property = "followerCreditModelList" ofType="yhao.micro.service.surety.business.apilist.model.intention.follower.FollowerCreditModel" >
+            <result property="cltTyp" column="FCLT_TYP"/>
+            <result property="cltName" column="FCLT_NAME"/>
+        </collection>
+    </resultMap>
+
+    <insert id = "saveCreditResult" parameterType="java.util.List" >
+        INSERT INTO SURETY.T_SURETY_G_CREDIT_RECORD
+                   (
+                    FID,
+                    FGUARANTEE_ID,
+                    FTRADES_ID,
+                    FCLT_NAM,
+                    FCLT_TYP,
+                    FCREDIT_REAL_DATE,
+                    FCREDIT_RESULT,
+                    FCREDIT_REMARK,
+                    FATTACH_URL
+                    )
+            SELECT FID,
+                   FGUARANTEE_ID,
+                   FTRADES_ID,
+                   FCLT_NAM,
+                   FCLT_TYP,
+                   FCREDIT_REAL_DATE,
+                   FCREDIT_RESULT,
+                   FCREDIT_REMARK,
+                   FATTACH_URL
+            FROM (
+                    <foreach collection = "list" item="item" separator="UNION ALL" >
+                        SELECT #{item.id} FID,
+                               #{item.guaranteeId} FGUARANTEE_ID,
+                               #{item.tradesId} FTRADES_ID,
+                               #{item.cltName} FCLT_NAM,
+                               #{item.cltTyp} FCLT_TYP,
+                               #{item.creditRealDate} FCREDIT_REAL_DATE,
+                               #{item.creditResult} FCREDIT_RESULT,
+                               #{item.creditRemark} FCREDIT_REMARK,
+                               #{item.attachUrl} FATTACH_URL
+                        FROM DUAL
+                    </foreach>
+                    )
+    </insert>
+
+    <select id = "pickCredit" parameterType="String" resultMap="ResultCredit" >
+            SELECT A.FID AS aid,
+                   A.FGUARANTEE_NUM,
+                   A.FGUARANTEE_TYPE,
+                   A.FCREATE_TIME,
+                   A.FIS_CREDIT_REPORT,
+                   A.FCREDIT_STATE,
+                   A.FCREDIT_END_DATE,
+                   B.FID AS bid,
+                   B.FCLT_TYP,
+                   B.FCLT_NAME,
+                   B.FCONTACT_TELE,
+                   B.FCREDIT_EXPECTED_DATE,
+                   B.FCREDIT_ARRANGE_DATE,
+                   E.FID AS eid,
+                   E.FCLT_NAM,
+                   E.FCREDIT_REAL_DATE,
+                   E.FCREDIT_RESULT,
+                   E.FCREDIT_REMARK,
+                   E.FATTACH_URL,
+                   C.FBUSINESS_NAME,
+                   D.FNAME,
+                   D.FPHONE
+              FROM SURETY.T_SURETY_GUARANTEE A
+         LEFT JOIN SURETY.T_SURETY_G_PERSONINFO_TRADES B ON A.FID = B.FGUARANTEE_ID
+         LEFT JOIN SURETY.T_SURETY_BUSINESS_TYPE C ON C.FID = A.FBIZ_ID
+         LEFT JOIN SURETY.T_ERP_PERSON D ON D.FID = A.FCREATE_OPERATOR_ID
+         LEFT JOIN SURETY.T_SURETY_G_CREDIT_RECORD E ON E.FGUARANTEE_ID = A.FID
+            WHERE A.FID = #{id}
+    </select>
+    <resultMap id = "ResultCredit" type = "yhao.micro.service.surety.business.apilist.model.intention.credit.CreditModel" >
+        <id property="id" column="aid"/>
+        <result property="guaranteeNum" column="FGUARANTEE_NUM"/>
+        <result property="businessName" column="FBUSINESS_NAME" />
+        <result property="guaranteeType" column="FGUARANTEE_TYPE"/>
+        <result property="createTime" column="FCREATE_TIME"/>
+        <result property="isCreditReport" column="FIS_CREDIT_REPORT"/>
+        <result property="managerName" column="FNAME"/>
+        <result property="phone" column="FPHONE"/>
+        <result property="creditState" column="FCREDIT_STATE"/>
+        <result property="creditEndDate" column="FCREDIT_END_DATE"/>
+        <collection property = "creditOfBuyerAndSellerModelList" ofType="yhao.micro.service.surety.business.apilist.model.intention.credit.CreditOfBuyerAndSellerModel" >
+            <id property="id" column="bid"/>
+            <result property="cltTyp" column="FCLT_TYP"/>
+            <result property="cltName" column="FCLT_NAME"/>
+            <result property="contactTele" column="FCONTACT_TELE"/>
+            <result property="creditExpectedDate" column="FCREDIT_EXPECTED_DATE"/>
+            <result property="creditArrangeDate" column="FCREDIT_ARRANGE_DATE"/>
+        </collection>
+        <collection property = "creditResultModelList" ofType="yhao.micro.service.surety.business.apilist.model.intention.credit.CreditResultModel" >
+            <id property="id" column="eid"/>
+            <result property="cltName" column="FCLT_NAM"/>
+            <result property="creditRealDate" column="FCREDIT_REAL_DATE"/>
+            <result property="creditResult" column="FCREDIT_RESULT"/>
+            <result property="creditRemark" column="FCREDIT_REMARK"/>
+            <result property="attachUrl" column="FATTACH_URL"/>
+        </collection>
+    </resultMap>
+
+    <select id = "queryCreditPage" parameterType="yhao.micro.service.surety.business.apilist.form.intention.IntentionQueryForm"
+            resultMap="ResultCredit" >
+        SELECT GUARANTEE.FID AS aid,
+               GUARANTEE.FGUARANTEE_NUM,
+               GUARANTEE.FGUARANTEE_TYPE,
+               GUARANTEE.FCREATE_TIME,
+               GUARANTEE.FIS_CREDIT_REPORT,
+               GUARANTEE.FCREDIT_STATE,
+               GUARANTEE.FCREDIT_END_DATE,
+               TRADES.FID AS bid,
+               TRADES.FCLT_TYP,
+               TRADES.FCLT_NAME,
+               TRADES.FCONTACT_TELE,
+               TRADES.FCREDIT_EXPECTED_DATE,
+               TRADES.FCREDIT_ARRANGE_DATE,
+               RECORD.FID AS eid,
+               RECORD.FCREDIT_REAL_DATE,
+               RECORD.FCREDIT_RESULT,
+               RECORD.FCREDIT_REMARK,
+               RECORD.FATTACH_URL,
+               TYPE.FBUSINESS_NAME,
+               PERSON.FNAME,
+               PERSON.FPHONE
+          FROM SURETY.T_SURETY_GUARANTEE GUARANTEE
+     LEFT JOIN SURETY.T_SURETY_G_PERSONINFO_TRADES TRADES ON GUARANTEE.FID = TRADES.FGUARANTEE_ID
+     LEFT JOIN SURETY.T_SURETY_BUSINESS_TYPE TYPE ON TYPE.FID = GUARANTEE.FBIZ_ID
+     LEFT JOIN SURETY.T_ERP_PERSON PERSON ON PERSON.FID = GUARANTEE.FCREATE_OPERATOR_ID
+     LEFT JOIN SURETY.T_SURETY_G_CREDIT_RECORD RECORD ON RECORD.FGUARANTEE_ID = GUARANTEE.FID
+        <where>
+            <include refid = "queryCondition"/>
+            AND GUARANTEE.FCREDIT_CLERK_ID = #{creditClerkId}
+            AND GUARANTEE.FIS_SUBMIT = 'YES'
+        </where>
+    </select>
+
+    <insert id = "saveRepay" parameterType="yhao.micro.service.surety.business.apilist.form.intention.IntentionRepaySaveForm" >
+        INSERT INTO SURETY.T_SURETY_G_REPAY
+                (
+                        FID,
+                        FGUARANTEE_ID,
+                        FREPAY_EXPECTED_DATE,
+                        FREPAY_REAL_DATE,
+                        FREDEM_DATE,
+                        FIS_LOAN,
+                        FIS_PENALTY,
+                        FIS_PRESTORE,
+                        FPRESTORE_DAYS,
+                        FFLOOR_LIST_URLS,
+                        FAPPLICATION_RECEIPT_URLS,
+                        FLOAN_AGREEMENT_URLS,
+                        FREMARKS
+                        )
+        VALUES(
+                      #{id},
+                      #{guaranteeId},
+                      #{repayExpectedDate},
+                      #{repayRealDate},
+                      #{redemDate},
+                      #{isLoan},
+                      #{isPenalty},
+                      #{isPrestore},
+                      #{prestoreDays},
+                      #{floorListUrls},
+                      #{applicationReceiptUrls},
+                      #{loanAgreementUrls},
+                      #{remarks}
+                      )
+    </insert>
+
+    <update id = "updateRepayState" parameterType="yhao.micro.service.surety.business.apilist.form.intention.IntentionRepaySaveForm" >
+        UPDATE SURETY.T_SURETY_GUARANTEE
+           SET FREPAY_STATE = #{repayState},
+               FUPDATE_TIME = SYSDATE,
+               FUPDATE_OPERATOR_ID = #{operatorId}
+         WHERE FID = #{guaranteeId}
+    </update>
+    <update id = "updateRepay" parameterType="yhao.micro.service.surety.business.apilist.form.intention.IntentionRepaySaveForm" >
+        UPDATE SURETY.T_SURETY_G_REPAY
+           SET FREPAY_REAL_DATE = #{repayRealDate},
+               FREDEM_DATE = #{redemDate},
+               FIS_LOAN = #{isLoan},
+               FIS_PENALTY = #{isPenalty},
+               FIS_PRESTORE = #{isPrestore},
+               FFLOOR_LIST_URLS = #{floorListUrls},
+               FAPPLICATION_RECEIPT_URLS = #{applicationReceiptUrls},
+               FLOAN_AGREEMENT_URLS = #{loanAgreementUrls},
+               FREMARKS = #{remarks}
+         WHERE FID = #{id}
+    </update>
+
+    <select id = "selectRepay" parameterType="String" resultMap="ResultSelectRepay" >
+        SELECT GUARANTEE.FID,
+               GUARANTEE.FGUARANTEE_NUM,
+               GUARANTEE.FGUARANTEE_TYPE,
+               GUARANTEE.FCREATE_TIME,
+               REPAY.FREPAY_EXPECTED_DATE,
+               REPAY.FREPAY_REAL_DATE,
+               REPAY.FREDEM_DATE,
+               REPAY.FIS_LOAN,
+               REPAY.FIS_PENALTY,
+               REPAY.FIS_PRESTORE,
+               REPAY.FPRESTORE_DAYS,
+               REPAY.FFLOOR_LIST_URLS,
+               REPAY.FAPPLICATION_RECEIPT_URLS,
+               REPAY.FLOAN_AGREEMENT_URLS,
+               REPAY.FREMARKS,
+               TYPE.FBUSINESS_NAME,
+               PERSON.FNAME,
+               PERSON.FPHONE
+          FROM SURETY.T_SURETY_GUARANTEE GUARANTEE
+                 LEFT JOIN SURETY.T_SURETY_BUSINESS_TYPE TYPE ON TYPE.FID = GUARANTEE.FBIZ_ID
+                 LEFT JOIN SURETY.T_ERP_PERSON PERSON ON PERSON.FID = GUARANTEE.FCREATE_OPERATOR_ID
+                 LEFT JOIN SURETY.T_SURETY_G_REPAY REPAY ON REPAY.FGUARANTEE_ID = GUARANTEE.FID
+           WHERE REPAY.FID = #{id}
+    </select>
+    <resultMap id = "ResultSelectRepay" type = "yhao.micro.service.surety.business.apilist.model.intention.repay.RepayModel" >
+        <id property="id" column="FID"/>
+        <result property="guaranteeNum" column="FGUARANTEE_NUM" />
+        <result property="guaranteeType" column="FGUARANTEE_TYPE" />
+        <result property="createTime" column="FCREATE_TIME" />
+        <result property="repayExpectedDate" column="FREPAY_EXPECTED_DATE" />
+        <result property="repayRealDate" column="FREPAY_REAL_DATE" />
+        <result property="redemDate" column="FREDEM_DATE" />
+        <result property="isLoan" column="FIS_LOAN" />
+        <result property="isPenalty" column="FIS_PENALTY" />
+        <result property="isPrestore" column="FIS_PRESTORE" />
+        <result property="prestoreDays" column="FPRESTORE_DAYS" />
+        <result property="floorListUrls" column="FFLOOR_LIST_URLS" />
+        <result property="applicationReceiptUrls" column="FAPPLICATION_RECEIPT_URLS" />
+        <result property="loanAgreementUrls" column="FLOAN_AGREEMENT_URLS" />
+        <result property="remarks" column="FREMARKS" />
+        <result property="businessName" column="FBUSINESS_NAME" />
+        <result property="managerName" column="FNAME" />
+        <result property="phone" column="FPHONE" />
+    </resultMap>
+
+    <select id = "queryRepay" parameterType="yhao.micro.service.surety.business.apilist.form.intention.IntentionQueryForm"
+            resultMap="PageResultRepay" >
+        SELECT GUARANTEE.FID AS aid,
+               GUARANTEE.FGUARANTEE_NUM,
+               GUARANTEE.FGUARANTEE_TYPE,
+               GUARANTEE.FREPAY_STATE,
+               GUARANTEE.FDATA_TRANSFER_DATE,
+               REPAY.FID AS repayId,
+               REPAY.FREPAY_EXPECTED_DATE,
+               REPAY.FREPAY_REAL_DATE,
+               TYPE.FBUSINESS_NAME,
+               TRADES.FCLT_TYP,
+               TRADES.FCLT_NAME,
+               PERSON.FNAME
+          FROM SURETY.T_SURETY_GUARANTEE GUARANTEE
+          LEFT JOIN SURETY.T_SURETY_BUSINESS_TYPE TYPE ON TYPE.FID = GUARANTEE.FBIZ_ID
+          LEFT JOIN SURETY.T_ERP_PERSON PERSON ON PERSON.FID = GUARANTEE.FCREATE_OPERATOR_ID
+          LEFT JOIN SURETY.T_SURETY_G_REPAY REPAY ON REPAY.FGUARANTEE_ID = GUARANTEE.FID
+          LEFT JOIN SURETY.T_SURETY_G_PERSONINFO_TRADES TRADES ON GUARANTEE.FID = TRADES.FGUARANTEE_ID
+        <where>
+            <include refid = "queryCondition"/>
+            AND GUARANTEE.FREDEEM_ID = #{redeemId}
+            AND GUARANTEE.FIS_SUBMIT = 'YES'
+            AND GUARANTEE.FTRANSFER_STATE = 'YES'
+        </where>
+    </select>
+    <resultMap id = "PageResultRepay" type = "yhao.micro.service.surety.business.apilist.model.intention.repay.RepayPageModel" >
+        <id property="id" column="repayId" />
+        <result property="guaranteeNum" column="FGUARANTEE_NUM" />
+        <result property="guaranteeType" column="FGUARANTEE_TYPE" />
+        <result property="repayState" column="FREPAY_STATE" />
+        <result property="dataTransferDate" column="FDATA_TRANSFER_DATE" />
+        <result property="repayExpectedDate" column="FREPAY_EXPECTED_DATE" />
+        <result property="guaranteeId" column="aid" />
+        <result property="repayRealDate" column="FREPAY_REAL_DATE" />
+        <result property="businessName" column="FBUSINESS_NAME" />
+        <result property="managerName" column="FNAME" />
+        <collection property = "followerCreditModelList" ofType="yhao.micro.service.surety.business.apilist.model.intention.follower.FollowerCreditModel" >
+            <result property="cltTyp" column="FCLT_TYP"/>
+            <result property="cltName" column="FCLT_NAME"/>
+        </collection>
+    </resultMap>
+</mapper>

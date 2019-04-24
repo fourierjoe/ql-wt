@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="yhao.micro.service.surety.erp.org.dao.automapper.PersonDao">
+	<resultMap id="PersonModelResult" type="PersonModel">
+		<id property="id" column="fid"/>
+		<result property="name" column="fname"/>
+		<result property="number" column="fnumber"/>
+		<result property="cardId" column="fcard_id"/>
+		<result property="status" column="fstatus"/>
+		<result property="suretyStatus" column="FSURETY_STATUS"/>
+		<result property="wxOpenId" column="FWX_OPEN_ID"/>
+		<result property="sex" column="fsex"/>
+		<result property="orgId" column="forg_id"/>
+		<result property="positionLinkId" column="fposition_link_id"/>
+		<result property="phone" column="fphone"/>
+		<result property="password" column="fpassword"/>
+		<result property="orgName" column="forg_name"/>
+		<result property="positionName" column="fposition_name"/>
+		<result property="manager" column="fis_manager"/>
+		<result property="joinDate" column="fjoin_date"/>
+		<result property="createTime" column="fcreate_time"/>
+		<result property="updateTime" column="fupdate_time"/>
+		<result property="createOperatorId" column="fcreate_operator_id"/>
+		<result property="updateOperatorId" column="fupdate_operator_id"/>
+	</resultMap>
+
+	<resultMap id="PositionLinkModelResult" type="PositionLinkModel">
+		<id property="id" column="fid"/>
+		<result property="orgId" column="forg_id"/>
+		<result property="positionId" column="fposition_id"/>
+		<result property="positionName" column="fposition_name"/>
+		<result property="orgName" column="forg_name"/>
+	</resultMap>
+
+	<insert id="insertPerson" parameterType="PersonModel">
+		insert into t_erp_person(fid,fname,fnumber,fcard_id,fstatus,fsex,
+			forg_id,fposition_link_id,fphone,fpassword,
+			fis_manager,fjoin_date,fcreate_time,fupdate_time,
+			fcreate_operator_id,fupdate_operator_id,fphoto_url)
+			 values(#{id},#{name},#{number},#{cardId},#{status},#{sex},
+			 	#{orgId},#{positionLinkId},#{phone},#{password},
+			 	#{manager},#{joinDate},#{createTime},#{updateTime},
+			 	#{createOperatorId},#{updateOperatorId},#{photoUrl})
+	</insert>
+
+	<update id="updatePerson" parameterType="PersonModel">
+		update t_erp_person
+		<set>
+			<if test="name!=null and name!=''">fname=#{name},</if>
+			<if test="phone!=null and phone!=''">fphone=#{phone},</if>
+			<if test="cardId!=null and cardId!=''">fcard_id=#{cardId},</if>
+			<if test="status!=null">fstatus=#{status},</if>
+			<if test="sex!=null">fsex=#{sex},</if>
+			<if test="orgId!=null and orgId!=''">forg_id=#{orgId},</if>
+			<if test="positionLinkId!=null and positionLinkId!=''">fposition_link_id=#{positionLinkId},</if>
+			<if test="password!=null and password!=''">fpassword=#{password},</if>
+			<if test="manager!=null">fis_manager=#{manager},</if>
+			<if test="joinDate!=null">fjoin_date=#{joinDate},</if>
+			<if test="updateTime!=null">fupdate_time=#{updateTime},</if>
+			<if test="updateOperatorId!=null">fupdate_operator_id=#{updateOperatorId},</if>
+			<if test="photoUrl!=null">fphoto_url=#{photoUrl},</if>
+			<if test="personIntro!=null">fperson_intro=#{personIntro},</if>
+		</set>
+		where fid=#{id}
+	</update>
+
+	<update id="updatePassword" parameterType="PersonModel">
+		update t_erp_person
+		set fpassword=#{password}
+		where fid=#{id}
+	</update>
+
+	<select id="queryPerson" parameterType="yhao.micro.service.surety.erp.org.apilist.form.person.PersonQueryForm" resultMap="PersonModelResult">
+		select
+			t.fid,t.fname,t.fnumber,t.fcard_id,t.fstatus,t.fsex,t.fphone,t.fpassword,
+			t.fis_manager,
+			tp.fid as forg_id,
+			tlink.fid as fposition_link_id,
+			tp.fname as forg_name,
+			tposition.fname as fposition_name,
+		    NVL(pp.FSTATUS,'ENABLED') as FSURETY_STATUS,
+		    pp.FWX_OPEN_ID AS FWX_OPEN_ID
+		from t_erp_person t
+		left join t_erp_person_addpositionlink tadd on t.fid=tadd.fperson_id
+		left join t_erp_org_position_link tlink on tadd.fposition_link_id = tlink.fid
+		left join t_erp_org_position tposition on tlink.fposition_id = tposition.fid
+		left join t_erp_org tp on tlink.forg_id = tp.fid
+		left join T_ERP_PERSON_PROPERTY pp on pp.FPERSON_ID=t.fid
+		<where>
+			<if test="positionType!=null">
+				and tadd.ftype = #{positionType}
+			</if>
+			<if test="personKey!=null and personKey!=''">
+				and (t.fnumber like concat(#{personKey},'%') or t.fname like '%' || #{personKey} || '%'
+				or t.fcard_id like concat(#{personKey},'%'))
+			</if>
+			<if test="rootLongNumber!=null and rootLongNumber!=''">
+				and tp.FLONG_NUMBER like #{rootLongNumber} || '%'
+			</if>
+			<if test="positionCodeList!=null">
+				and tposition.FNUMBER in
+				<foreach collection="positionCodeList" separator="," index="index" item="item" open="(" close=")">
+					#{item}
+				</foreach>
+			</if>
+			<if test="orgId!=null and orgId!=''">
+				and tp.fid in (select fid from t_erp_org where flong_number like CONCAT((select flong_number from t_erp_org where fid = #{orgId}),'%'))
+			</if>
+			<if test="name!=null and name!=''">
+				and t.fname like concat(#{name},'%')
+			</if>
+			<if test="phone!=null and phone!=''">
+				and t.fphone like concat(#{phone},'%')
+			</if>
+			<choose>
+				<when test="suretyStatus!=null and suretyStatus.name()=='ENABLED'">
+					and (pp.FSTATUS IS NULL OR  pp.FSTATUS= 'ENABLED')
+				</when>
+				<when test="suretyStatus!=null and suretyStatus.name()=='DISABLED'">
+					and pp.FSTATUS= 'DISABLED'
+				</when>
+			</choose>
+		</where>
+		order by LENGTH(tp.FLONG_NUMBER),t.FID
+	</select>
+
+	<select id="pickPersonById" parameterType="string" resultMap="PersonModelResult">
+		select
+		t.*,
+		tp.fname as forg_name,
+		tposition.fname as fposition_name,
+		NVL(pp.FSTATUS,'ENABLED') as FSURETY_STATUS,
+		pp.FWX_OPEN_ID AS FWX_OPEN_ID
+		from t_erp_person t
+		left join t_erp_org tp on t.forg_id = tp.fid
+		left join t_erp_org_position_link tlink on t.fposition_link_id = tlink.fid
+		left join t_erp_org_position tposition on tlink.fposition_id = tposition.fid
+		left join T_ERP_PERSON_PROPERTY pp on pp.FPERSON_ID=t.fid
+		where t.fid=#{id}
+	</select>
+
+	<select id="pickPersonByPhone" parameterType="string" resultMap="PersonModelResult">
+		select
+		t.*,
+		tp.fname as forg_name,
+		tposition.fname as fposition_name
+		from t_erp_person t
+		left join t_erp_org tp on t.forg_id = tp.fid
+		left join t_erp_org_position_link tlink on t.fposition_link_id = tlink.fid
+		left join t_erp_org_position tposition on tlink.fposition_id = tposition.fid
+		where t.fphone=#{phone} limit 1
+	</select>
+
+	<select id="selectMaxNumber" resultType="int">
+		select NVL(max(fnumber+0),1) from t_erp_person
+	</select>
+
+	<insert id="saveAddPosition" parameterType="yhao.micro.service.surety.erp.org.apilist.form.position.AddPositionLinkSaveForm">
+		insert into t_erp_person_addpositionlink(fid,fposition_link_id,fperson_id,ftype)
+		values(sys_guid(),#{positionLinkId},#{personId},#{type})
+	</insert>
+
+	<insert id="insertAddPosition" parameterType="AddPositionLinkModel">
+		insert into t_erp_person_addpositionlink(fid,fposition_link_id,fperson_id,ftype,fcreate_time,fcreate_operator_id)
+		values(#{id},#{positionLinkId},#{personId},#{type},#{createTime},#{createOperatorId})
+	</insert>
+
+	<update id="updateAddPosition" parameterType="AddPositionLinkModel">
+		update t_erp_person_addpositionlink
+		<set>
+			<if test="positionLinkId!=null and positionLinkId!=''">fposition_link_id=#{positionLinkId},</if>
+			<if test="personId!=null and personId!=''">fperson_id=#{personId},</if>
+			<if test="type!=null">ftype=#{type},</if>
+			<if test="createTime!=null">fcreate_time=#{createTime},</if>
+			<if test="createOperatorId!=null">fcreate_operator_id=#{createOperatorId},</if>
+		</set>
+		where fid=#{id}
+	</update>
+
+	<delete id="deleteAllPersonPositionBySystem" parameterType="yhao.micro.service.surety.erp.org.apilist.form.position.PositionLinkDeleteForm">
+		delete from t_erp_person_addpositionlink where fcreate_operator_id = 'system'
+		<if test="personId!=null">
+			and fperson_id=#{personId}
+		</if>
+		<if test="positionLinkIds!=null">
+			and fposition_link_id in
+			<foreach collection="positionLinkIds" open="(" close=")" separator="," item="positionLinkId">#{positionLinkId}</foreach>
+		</if>
+	</delete>
+
+	<delete id="deleteAddPosition" parameterType="yhao.micro.service.surety.erp.org.apilist.form.position.AddPositionLinkSaveForm">
+		delete from t_erp_person_addpositionlink where fposition_link_id=#{positionLinkId} and fperson_id=#{personId}
+	</delete>
+
+	<select id="queryAddPosition" parameterType="string" resultMap="PositionLinkModelResult">
+		select t.*,
+			tp.fname as fposition_name,
+			teo.fname as forg_name
+		from t_erp_person_addpositionlink tadd
+		left join t_erp_org_position_link t on t.fid=tadd.fposition_link_id
+		left join t_erp_org_position tp on tp.fid=t.fposition_id
+		left join t_erp_org teo on teo.fid=t.forg_id
+		where tadd.fperson_id=#{personId} and (ftype='PART' or ftype is null)
+	</select>
+
+	<resultMap id="PositionListModelResult" type="PositionListModel">
+		<id property="id" column="fid"/>
+		<result property="orgId" column="forg_id"/>
+		<result property="personId" column="fperson_id"/>
+		<result property="positionId" column="fposition_id"/>
+		<result property="startTime" column="fstart_time"/>
+		<result property="endTime" column="fend_time"/>
+		<result property="positionName" column="fposition_name"/>
+		<result property="orgName" column="forg_name"/>
+		<result property="type" column="ftype"/>
+	</resultMap>
+
+	<insert id="insertPositionListModel" parameterType="PositionListModel">
+		insert into t_erp_person_position_list(fid,fperson_id,fposition_link_id,fstart_time,ftype)
+		values(sys_guid(),#{personId},#{positionLinkId},#{startTime},#{type})
+	</insert>
+
+	<update id="addEndTimeToPositionList" parameterType="yhao.micro.service.surety.erp.org.apilist.form.position.AddPositionLinkSaveForm">
+		update t_erp_person_position_list
+			set fend_time = sysdate, fstatus='DISABLED'
+		where fposition_link_id=#{positionLinkId} and fperson_id=#{personId}
+	</update>
+
+	<select id="queryPersonPositionListModel" parameterType="string" resultMap="PositionListModelResult">
+		select
+			list.*,
+			org.fname as forg_name,
+			pos.fname as fposition_name
+		from t_erp_person_position_list list
+		LEFT join t_erp_org_position_link link on link.fid=list.fposition_link_id
+		LEFT join t_erp_org org on link.forg_id=org.fid
+		LEFT join t_erp_org_position pos on link.fposition_id=pos.fid
+		where list.fperson_id=#{personId}
+		order by list.fstart_time desc
+	</select>
+</mapper>

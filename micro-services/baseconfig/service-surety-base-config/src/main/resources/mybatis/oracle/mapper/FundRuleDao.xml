@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="yhao.micro.service.surety.baseconfig.dao.automapper.FundRuleDao">
+	<resultMap id="FundRuleResult" type="yhao.micro.service.surety.baseconfig.apilist.model.FundRuleModel">
+		<id property="id" column="FID"/>
+		<result property="ruleName" column="FRULE_NAME"/>
+		<result property="fundProviderId" column="FFUND_PROVIDER_ID"/>
+		<result property="effectiveDate" column="FEFFECTIVE_DATE"/>
+		<result property="expirationDate" column="FEXPIRATION_DATE"/>
+		<result property="rate" column="FRATE"/>
+		<result property="channelRate" column="FCHANNEL_RATE"/>
+		<result property="insuranceType" column="FINSURANCE_TYPE"/>
+		<result property="fixInsuranceRate" column="FFIXD_INSURANCE_RATE"/>
+		<result property="sectionInsuranceRateJson" column="FSECTION_INSURANCE_RATE_JSON"/>
+		<result property="remark" column="FREMARK"/>
+		<result property="status" column="FSTATUS"/>
+		<result property="createTime" column="FCREATE_TIME"/>
+		<result property="updateTime" column="FUPDATE_TIME"/>
+		<result property="createOperatorId" column="FCREATE_OPERATOR_ID"/>
+		<result property="updateOperatorId" column="FUPDATE_OPERATOR_ID"/>
+
+		<result property="fundProviderName" column="FFUND_PROVIDER_NAME"/>
+	</resultMap>
+
+	<insert id="insert" parameterType="yhao.micro.service.surety.baseconfig.apilist.form.FundRuleSaveForm">
+		insert into T_BASE_FUND_RULE(FID,FRULE_NAME,FFUND_PROVIDER_ID,FEFFECTIVE_DATE,FEXPIRATION_DATE,FRATE,FCHANNEL_RATE,FINSURANCE_TYPE,FFIXD_INSURANCE_RATE,FSECTION_INSURANCE_RATE_JSON,FREMARK,FSTATUS,FCREATE_TIME,FUPDATE_TIME,FCREATE_OPERATOR_ID,FUPDATE_OPERATOR_ID)
+			 values(sys_guid(),#{ruleName},#{fundProviderId},#{effectiveDate},#{expirationDate},#{rate},#{channelRate},#{insuranceType},#{fixInsuranceRate},#{sectionInsuranceRateJson},#{remark},#{status},sysdate,sysdate,#{operatorId},#{operatorId})
+	</insert>
+
+	<update id="update" parameterType="yhao.micro.service.surety.baseconfig.apilist.form.FundRuleSaveForm">
+		update T_BASE_FUND_RULE
+		<set>
+			FUPDATE_TIME = sysdate,
+			FFUND_PROVIDER_ID=#{fundProviderId},
+			FSECTION_INSURANCE_RATE_JSON=#{sectionInsuranceRateJson},
+			FREMARK=#{remark},
+			FEFFECTIVE_DATE=#{effectiveDate},
+			FEXPIRATION_DATE=#{expirationDate},
+			FRATE=#{rate},
+			FCHANNEL_RATE=#{channelRate},
+			FINSURANCE_TYPE=#{insuranceType},
+			FFIXD_INSURANCE_RATE=#{fixInsuranceRate},
+			<if test="ruleName!=null and ruleName!=''">FRULE_NAME=#{ruleName},</if>
+			<if test="status!=null">FSTATUS=#{status},</if>
+			<if test="operatorId!=null and operatorId!=''">FUPDATE_OPERATOR_ID=#{operatorId},</if>
+		</set>
+		where fid=#{id}
+	</update>
+
+	<update id="statusChange" parameterType="yhao.micro.service.surety.baseconfig.apilist.form.StatusChangeForm">
+		UPDATE T_BASE_FUND_RULE SET FSTATUS=#{status} WHERE FID = #{id}
+	</update>
+
+	<delete id="deleteById" parameterType="yhao.infra.apilist.validate.IdForm">
+		delete from T_BASE_FUND_RULE where FID=#{id}
+	</delete>
+
+	<select id="query" parameterType="yhao.micro.service.surety.baseconfig.apilist.form.FundRuleQueryForm" resultMap="FundRuleResult">
+		SELECT R.*,P.FNAME AS FFUND_PROVIDER_NAME FROM T_BASE_FUND_RULE R
+		LEFT JOIN T_BASE_FUND_PROVIDER P ON R.FFUND_PROVIDER_ID=P.FID
+		<where>
+			<if test="id!=null and id!=''">AND R.FID=#{id}</if>
+			<if test="ruleName!=null and ruleName!=''">AND R.FRULE_NAME LIKE '%' || #{ruleName} || '%'</if>
+			<if test="fundProviderName!=null and fundProviderName!=''">AND P.FNAME LIKE '%' || #{fundProviderName} || '%'</if>
+			<if test="minEffectiveDate!=null">AND R.FEFFECTIVE_DATE >= #{minEffectiveDate}</if>
+			<if test="maxEffectiveDate!=null">AND R.FEFFECTIVE_DATE &lt;= #{maxEffectiveDate}</if>
+			<if test="minExpirationDate!=null">AND R.FEXPIRATION_DATE >= #{minExpirationDate}</if>
+			<if test="maxExpirationDate!=null">AND R.FEXPIRATION_DATE &lt;= #{maxExpirationDate}</if>
+			<if test="minRate!=null">AND R.FRATE >= #{minRate}</if>
+			<if test="maxRate!=null">AND R.FRATE &lt;= #{maxRate}</if>
+			<if test="status!=null">AND R.FSTATUS = #{status}</if>
+			<if test="hasChannelRate!=null and hasChannelRate==true">AND R.FCHANNEL_RATE IS NOT NULL</if>
+			<if test="hasChannelRate!=null and hasChannelRate==false">AND R.FCHANNEL_RATE IS NULL</if>
+			<if test="insuranceType!=null">AND R.FINSURANCE_TYPE = #{insuranceType}</if>
+		</where>
+		ORDER BY P.FCREATE_TIME DESC,P.FID
+	</select>
+</mapper>

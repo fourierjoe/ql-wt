@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="yhao.micro.service.surety.erp.auth.dao.automapper.AuthPersonDao">
+	<resultMap id="PersonModelResult" type="AuthPersonModel">
+		<id property="id" column="fid"/>
+		<result property="name" column="fname"/>
+		<result property="number" column="fnumber"/>
+		<result property="cardId" column="fcard_id"/>
+		<result property="status" column="fstatus"/>
+		<result property="suretyStatus" column="FSURETY_STATUS"/>
+		<result property="sex" column="fsex"/>
+		<result property="orgId" column="forg_id"/>
+		<result property="positionLinkId" column="fposition_link_id"/>
+		<result property="positionType" column="FPOSITION_TYPE"/>
+		<result property="phone" column="fphone"/>
+		<result property="photoUrl" column="fphoto_url"/>
+		<result property="password" column="fpassword"/>
+		<result property="manager" column="fis_manager"/>
+		<result property="orgName" column="forg_name"/>
+		<result property="orgLongNumber" column="forg_long_number"/>
+		<result property="positionName" column="fposition_name"/>
+		<result property="createTime" column="fcreate_time"/>
+		<result property="updateTime" column="fupdate_time"/>
+		<result property="createOperatorId" column="fcreate_operator_id"/>
+		<result property="updateOperatorId" column="fupdate_operator_id"/>
+	</resultMap>
+	<resultMap id="LoginPersonModelResult" type="LoginPersonModel" extends="PersonModelResult"></resultMap>
+	<resultMap id="LoginPositionLinkModelResult" type="LoginPositionLinkModel">
+		<id property="id" column="fid"/>
+		<result property="orgId" column="forg_id"/>
+		<result property="positionId" column="fposition_id"/>
+		<result property="positionName" column="fposition_name"/>
+		<result property="positionNumber" column="fposition_number"/>
+		<result property="orgName" column="forg_name"/>
+		<result property="manager" column="fmanager"/>
+		<result property="orgLongNumber" column="forg_long_number"/>
+	</resultMap>
+
+	<select id="pickLoginPositionLink" parameterType="string" resultMap="LoginPositionLinkModelResult">
+		select
+			t.fid as fid,
+			tp.fid as fposition_id,
+			tp.fname as fposition_name,
+			tp.fnumber as fposition_number,
+			teo.fid as forg_id,
+			teo.fname as forg_name,
+			t.ferp_manager as fmanager,
+			teo.flong_number as forg_long_number
+		from t_erp_org_position_link t
+		left join t_erp_org_position tp on tp.fid = t.fposition_id
+		left join t_erp_org teo on teo.fid = t.forg_id
+		where t.fid=#{positionLinkId}
+	</select>
+
+	<select id="queryPerson" parameterType="yhao.micro.service.surety.erp.auth.apilist.form.auth.PersonAuthQueryForm" resultMap="PersonModelResult">
+		select
+		    t.fid,t.fname,t.fnumber,t.fcard_id,t.fstatus,
+		    t.fsex,t.fphone,t.fpassword,t.fis_manager,
+			tp.fid as forg_id,
+			tlink.fid as fposition_link_id,
+			tp.fname as forg_name,
+			tposition.fname as fposition_name,
+		    tadd.FTYPE as FPOSITION_TYPE,
+		    NVL(pp.FSTATUS,'ENABLED') AS FSURETY_STATUS
+		from t_erp_person t
+		left join t_erp_person_addpositionlink tadd on t.fid=tadd.fperson_id
+		left join t_erp_org_position_link tlink on tadd.fposition_link_id = tlink.fid
+		left join t_erp_org_position tposition on tlink.fposition_id = tposition.fid
+		left join t_erp_org tp on tlink.forg_id = tp.fid
+		left join T_ERP_PERSON_PROPERTY pp on pp.FPERSON_ID=t.FID
+		where 1=1
+		<include refid="normalQuery"/>
+		order by LENGTH(tp.FLONG_NUMBER),t.FID
+	</select>
+
+	<sql id="normalQuery">
+		<if test="orgId!=null and orgId!=''">
+			and tp.fid in (
+				select fid from t_erp_org
+				where flong_number like CONCAT((select flong_number from t_erp_org where fid = #{orgId}),'%')
+			)
+		</if>
+		<if test="searchName!=null and searchName!=''">
+			and (t.fname like '%' || #{searchName} || '%' or t.fphone like '%' || #{searchName} || '%')
+		</if>
+	</sql>
+
+	<select id="authenticatePerson" parameterType="yhao.micro.service.surety.erp.auth.login.apilist.form.AuthLoginForm" resultMap="LoginPersonModelResult">
+		select
+		t.*,
+		tposition.fname as fposition_name,
+		tp.fname as forg_name,
+		tp.flong_number as forg_long_number,
+		NVL(pp.FSTATUS,'ENABLED') AS FSURETY_STATUS
+		from t_erp_person t
+		left join t_erp_org tp on t.forg_id = tp.fid
+		left join t_erp_org_position_link tlink on t.fposition_link_id = tlink.fid
+		left join t_erp_org_position tposition on tlink.fposition_id = tposition.fid
+		left join T_ERP_PERSON_PROPERTY pp on pp.FPERSON_ID=t.FID
+		where t.fphone=#{userName} and NVL(pp.FSTATUS,'ENABLED')='ENABLED'
+	</select>
+
+	<select id="queryAllAddPositionLinkId" parameterType="string" resultType="string">
+		select
+		t.fposition_link_id
+		from t_erp_person_addpositionlink t
+		where t.fperson_id=#{personId} and (t.ftype='PART' or t.ftype is null)
+	</select>
+
+	<select id="queryAllPositionLinkId" parameterType="string" resultType="string">
+		select
+		t.fposition_link_id
+		from t_erp_person_addpositionlink t
+		where t.fperson_id=#{personId}
+	</select>
+
+	<select id="queryCityOrgIdAndLongNumberByChildOrgId" parameterType="string" resultType="string">
+		select o.FID || ',' || o.FLONG_NUMBER || ',' || o.FNAME
+		from (
+			select *
+			from T_ERP_ORG o
+			where o.FORG_TYPE = 'CITY'
+				  and exists(select 1
+							 from t_erp_org child
+							 where child.FID = #{id} and child.FLONG_NUMBER like o.FLONG_NUMBER || '%')
+			order by o.FLEVEL desc
+		) o where ROWNUM=1
+	</select>
+</mapper>

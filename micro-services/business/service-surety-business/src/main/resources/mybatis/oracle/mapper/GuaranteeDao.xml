@@ -1,0 +1,1920 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="yhao.micro.service.surety.business.dao.automapper.GuaranteeDao">
+
+    <insert id = "saveGuarantee" parameterType="yhao.micro.service.surety.business.apilist.form.guarantee.GuaranteeSaveForm">
+        INSERT INTO SURETY.T_SURETY_GUARANTEE
+                (FID,
+                 FGUARANTEE_NUM,
+                 FORG_ID,
+                 FINTERNAL_ID,
+                 FKGUARANTEE_ID,
+                 FBIZ_ID,
+                 FGUARANTEE_STATE,
+                 FGUARANTEE_TYPE,
+                 FBANK_CONTRACT_NUM,
+                 FGUARANTEET_SOURCE,
+                 FAGENCY_NAME,
+                 FFOLLOWER_ID,
+                 FCREDIT_CLERK_ID,
+                 FDECLARER_ID,
+                 FREDEEM_ID,
+                 FDATA_TRANSFER_DATE,
+                 FIS_DECLARE,
+                 FRECEIVE_STATE,
+                 FCREDIT_STATE,
+                 FREPAY_STATE,
+                 FIS_CREDIT_REPORT,
+                 FDEALMAN_REMARK,
+                 FIS_SUBMIT,
+                 FCREATE_TIME,
+                 FUPDATE_TIME,
+                 FCREATE_OPERATOR_ID,
+                 FUPDATE_OPERATOR_ID
+                )
+        VALUES
+               (
+                #{id},
+                #{guaranteeNum},
+                #{orgId},
+                #{internalId},
+                #{guaranteeId},
+                #{bizId},
+                #{guaranteeState},
+                #{guaranteeType},
+                #{bankContractNum},
+                #{guaranteetSource},
+                #{agencyName},
+                #{followerId},
+                #{creditClerkId},
+                #{declarerId},
+                #{redeemId},
+                #{dataTransferDate},
+                #{isDeclare},
+                #{receiveState},
+                #{creditState},
+                #{repayState},
+                #{isCreditReport},
+                #{dealmanRemark},
+                #{isSubmit},
+                SYSDATE,
+                SYSDATE,
+                #{operatorId},
+                #{operatorId}
+                )
+    </insert>
+
+    <insert id = "saveAntiGuarantor" parameterType="yhao.micro.service.surety.business.apilist.form.guarantee.AntiGuarantorSaveForm" >
+        INSERT INTO SURETY.T_SURETY_G_ANTI_GUARANTOR
+                (
+                 FID,
+                 FGUARANTEE_ID,
+                 FCONTACT_NAME,
+                 FCONTACT_TELE,
+                 FCTF_TYP,
+                 FCTF_IDC,
+                 FADDRESS
+                        )
+        VALUES
+               (
+               #{id},
+               #{guaranteeId},
+               #{contactName},
+               #{contactTele},
+               #{ctfTyp},
+               #{ctfIdc},
+               #{address}
+                       )
+    </insert>
+
+    <insert id = "batchSaveAntiGuarantorEstate" parameterType="java.util.List" >
+        INSERT INTO SURETY.T_SURETY_G_ANTI_ESTATE
+                (
+                 FID,
+                 FGUARANTEE_ID,
+                 FANTI_GUARANTOR_ID,
+                 FESTATE_NAME,
+                 FDEED_TYPE,
+                 FDEED_NUM,
+                 FPROPERTY_PORTION
+                        )
+        SELECT FID,
+               FGUARANTEE_ID,
+               FANTI_GUARANTOR_ID,
+               FESTATE_NAME,
+               FDEED_TYPE,
+               FDEED_NUM,
+               FPROPERTY_PORTION
+        FROM (
+                <foreach collection = "list" item="antiEstate" separator="UNION ALL" >
+                    SELECT #{antiEstate.id} FID,
+                           #{antiEstate.guaranteeId} FGUARANTEE_ID,
+                           #{antiEstate.antiGuarantorId} FANTI_GUARANTOR_ID,
+                           #{antiEstate.estateName} FESTATE_NAME,
+                           #{antiEstate.deedType} FDEED_TYPE,
+                           #{antiEstate.deedNum} FDEED_NUM,
+                           #{antiEstate.propertyPortion} FPROPERTY_PORTION
+                    FROM DUAL
+                </foreach>
+                     )
+    </insert>
+
+    <insert id = "saveAttachment" parameterType="yhao.micro.service.surety.business.apilist.form.guarantee.AttachmentSaveForm" >
+        INSERT INTO SURETY.T_SURETY_G_ATTACHMENT
+                (
+                FID,
+                FGUARANTEE_ID,
+                FDATA_ID,
+                FDATA_NAME,
+                FDATA_URL,
+                FNODE_UPLOAD,
+                FIS_RECEIVE,
+                FRECEIVE_NUMS,
+                FCRERTE_TIME,
+                FUPDATE_TIME,
+                FCREATE_OPERATOR_ID,
+                FUPDATE_OPERATOR_ID
+                        )
+        VALUES (
+                #{id},
+                #{guaranteeId},
+                #{dataId},
+                #{dataName},
+                #{dataUrl},
+                #{nodeUpload},
+                #{isReceive},
+                #{receiveNums},
+                SYSDATE,
+                SYSDATE,
+                #{operatorId},
+                #{operatorId}
+                       )
+    </insert>
+    <insert id = "batchSaveAttachment" parameterType="java.util.List" >
+        INSERT INTO SURETY.T_SURETY_G_ATTACHMENT
+                (
+                        FID,
+                        FGUARANTEE_ID,
+                        FDATA_ID,
+                        FDATA_NAME,
+                        FDATA_URL,
+                        FNODE_UPLOAD,
+                        FIS_RECEIVE,
+                        FRECEIVE_NUMS,
+                        FCRERTE_TIME,
+                        FUPDATE_TIME,
+                        FCREATE_OPERATOR_ID,
+                        FUPDATE_OPERATOR_ID
+                        )
+        SELECT FID,
+               FGUARANTEE_ID,
+               FDATA_ID,
+               FDATA_NAME,
+               FDATA_URL,
+               FNODE_UPLOAD,
+               FIS_RECEIVE,
+               FRECEIVE_NUMS,
+               FCRERTE_TIME,
+               FUPDATE_TIME,
+               FCREATE_OPERATOR_ID,
+               FUPDATE_OPERATOR_ID
+          FROM (
+                  <foreach collection = "list" item="item" separator="UNION ALL" >
+                      SELECT #{item.id} FID,
+                             #{item.guaranteeId} FGUARANTEE_ID,
+                             #{item.dataId} FDATA_ID,
+                             #{item.dataName} FDATA_NAME,
+                             #{item.dataUrl} FDATA_URL,
+                             #{item.nodeUpload} FNODE_UPLOAD,
+                             #{item.isReceive} FIS_RECEIVE,
+                             #{item.receiveNums} FRECEIVE_NUMS,
+                             SYSDATE FCRERTE_TIME,
+                             SYSDATE FUPDATE_TIME,
+                             #{item.operatorId} FCREATE_OPERATOR_ID,
+                             #{item.operatorId} FUPDATE_OPERATOR_ID
+                      FROM DUAL
+                  </foreach>
+                       )
+    </insert>
+    <update id = "batchUpdateAttachment" parameterType="java.util.List" >
+        <foreach collection = "list" item="item" index="index" open="begin" close=";end;" separator=";">
+            UPDATE SURETY.T_SURETY_G_ATTACHMENT
+            <set>
+                <if test="item.dataId != null and  item.dataId != ''" >FDATA_ID = #{item.dataId},</if>
+                <if test="item.dataName != null and item.dataName != ''" >FDATA_NAME = #{item.dataName},</if>
+                <if test="item.dataUrl != null and item.dataUrl != ''" >FDATA_URL = #{item.dataUrl},</if>
+                <if test="item.nodeUpload != null and item.nodeUpload != ''" >FNODE_UPLOAD = #{item.nodeUpload},</if>
+                FUPDATE_TIME = SYSDATE,
+                <if test="item.operatorId != null and item.operatorId != ''" >FUPDATE_OPERATOR_ID = #{item.operatorId}</if>
+            </set>
+             WHERE FID = #{item.id}
+        </foreach>
+    </update>
+    <delete id = "batchDeleteAttachment" parameterType="java.util.List" >
+        DELETE FROM SURETY.T_SURETY_G_ATTACHMENT WHERE FID IN
+        <foreach collection = "list" item="item" open="(" close=")" separator="," >
+            #{item}
+        </foreach>
+    </delete>
+    <select id = "queryAttachment" parameterType="String" resultType="String" >
+        SELECT FID AS id
+        FROM SURETY.T_SURETY_G_ATTACHMENT
+        WHERE FGUARANTEE_ID = #{id}
+    </select>
+    <insert id = "saveCreditRecord" parameterType="yhao.micro.service.surety.business.apilist.form.guarantee.CreditRecordSaveForm" >
+        INSERT INTO SURETY.T_SURETY_G_CREDIT_RECORD
+                (
+                FID,
+                FGUARANTEE_ID,
+                FTRADES_ID,
+                FCLT_NAM,
+                FCLT_TYP,
+                FCREDIT_REAL_DATE,
+                FCREDIT_RESULT,
+                FCREDIT_REMARK
+                        )
+        VALUES (
+                #{Id},
+                #{guaranteeId},
+                #{tradesId},
+                #{cltNam},
+                #{cltTyp},
+                #{creditRealDate},
+                #{creditResult},
+                #{creditRemark}
+                       )
+    </insert>
+    <insert id = "saveEstateSeller" parameterType="yhao.micro.service.surety.business.apilist.form.guarantee.EstateSellerSaveForm" >
+        INSERT INTO SURETY.T_SURETY_G_ESTATE_SELLER
+                (
+                FID,
+                FGUARANTEE_ID,
+                FPROPERTY_NAME,
+                FPROPERTY_LOCATION,
+                FPROPERTY_ROOM_NO,
+                FIS_MODELING,
+                FESTATE_USE,
+                FESTATE_AREA,
+                FESTATE_NAME,
+                FDEED_TYPE,
+                FDEED_NUM,
+                FEVALUATE_PRICE,
+                FSOURCE_CONTACT_NAME,
+                FSOURCE_CONTACT_TELE
+                        )
+        VALUES (
+                #{id},
+                #{guaranteeId},
+                #{propertyName},
+                #{propertyLocation},
+                #{propertyRoomNo},
+                #{isModeling},
+                #{estateUse},
+                #{estateArea},
+                #{estateName},
+                #{deedType},
+                #{deedNum},
+                #{evaluatePrice},
+                #{sourceContactName},
+                #{sourceContactTele}
+                       )
+    </insert>
+    <insert id = "saveGuaranteeSituation" parameterType="yhao.micro.service.surety.business.apilist.form.guarantee.GuaranteeSituationSaveForm" >
+        INSERT INTO SURETY.T_SURETY_G_GUARANTEE_SITUATION
+                (
+                 FID,
+                 FGUARANTEE_ID,
+                 FGUARANTEE_APPLICANT_IDS,
+                 FREDEEM_BANK_ID,
+                 FREDEEM_BANK_RATE,
+                 FREDEEM_BANK_CONTACT,
+                 FREDEEM_BANK_CONTACT_TELE,
+                 FGUARANTEE_AMOUNT,
+                 FREDEEM_HOUSE_AMOUNT,
+                 FGUARANTEE_DAYS,
+                 FIS_ANTI_GUARANTOR,
+                 FSITUATION_REMARK
+                        )
+        VALUES (
+                #{id},
+                #{guaranteeId},
+                #{guaranteeApplicantIds},
+                #{redeemBankId},
+                #{redeemBankRate},
+                #{redeemBankContact},
+                #{redeemBankContactTele},
+                #{guaranteeAmount},
+                #{redeemHouseAmount},
+                #{guaranteeDays},
+                #{isAntiGuarantor},
+                #{situationRemark}
+                       )
+    </insert>
+    <insert id = "saveTransactionGuaranteeInfo" parameterType="yhao.micro.service.surety.business.apilist.form.guarantee.TransactionGuaranteeInfoSaveForm" >
+        INSERT INTO SURETY.T_SURETY_G_INFO_OF_TRANSACTION
+                (
+                 FID,
+                 FGUARANTEE_ID,
+                 FTRANSACTION_PRICE,
+                 FPAY_TYPE,
+                 FDEPOSIT,
+                 FNOTARIZATION_DATA
+                        )
+        VALUES (
+                #{id},
+                #{guaranteeId},
+                #{transactionPrice},
+                #{payType},
+                #{deposit},
+                #{notarizationData}
+                       )
+    </insert>
+    <insert id = "saveLoanBuyer" parameterType="yhao.micro.service.surety.business.apilist.form.guarantee.LoanBuyerSaveForm" >
+        INSERT INTO SURETY.T_SURETY_G_LOAN_BUYER
+                (
+                 FID,
+                 FGUARANTEE_ID,
+                 FSUPERVISION_BANK_1_ID,
+                 FSUPERVISION_AMOUNT_1,
+                 FSUPERVISION_CONTACT_1,
+                 FSUPERVISION_CONTACT_TELE_1,
+                 FSUPERVISION_BANK_2_ID,
+                 FSUPERVISION_AMOUNT_2,
+                 FSUPERVISION_CONTACT_2,
+                 FSUPERVISION_CONTACT_TELE_2,
+                 FLOAN_MB_ID,
+                 FLOAN_MB_AMOUNT,
+                 FLOAN_MB_CONTACT_NAME,
+                 FLOAN_MB_CONTACT_TELE,
+                 FREFUND_ACCOUNT_NAM,
+                 FREFUND_ACCOUNT_NUM,
+                 FREFUND_ACCOUNT_BANK,
+                 FSUPERVISION_ACCOUNT_NAM,
+                 FSUPERVISION_ACCOUNT_NUM,
+                 FSUPERVISION_ACCOUNT_BANK,
+                 FLOANER_NAME,
+                 FLOAN_PAYMENT_TYPE,
+                 FLOAN_REMARK
+                        )
+        VALUES (
+                 #{id},
+                 #{guaranteeId},
+                 #{supervisionBankOneId},
+                 #{supervisionAmountOne},
+                 #{supervisionContactOne},
+                 #{supervisionContactTeleOne},
+                 #{supervisionBankTwoId},
+                 #{supervisionAmountTwo},
+                 #{supervisionContactTwo},
+                 #{supervisionContactTeleTwo},
+                 #{loanMbId},
+                 #{loanMbAmount},
+                 #{loanMbContactName},
+                 #{loanMbContactTele},
+                 #{refundAccountNam},
+                 #{refundAccountNum},
+                 #{refundAccountBank},
+                 #{supervisionAccountNam},
+                 #{supervisionAccountNum},
+                 #{supervisionAccountBank},
+                 #{loanerName},
+                 #{loanPaymentType},
+                 #{loanRemark}
+                       )
+    </insert>
+    <insert id = "batchSaveLoanDetails" parameterType="java.util.List" >
+        INSERT INTO SURETY.T_SURETY_G_LOAN_DETAILS
+                (
+                 FID,
+                 FGUARANTEE_ID,
+                 FLOAN_AMOUNT,
+                 FLOAN_DAYS,
+                 FLOAN_REMAIN,
+                 FARRANGED_REPAY,
+                 FMARKET_FEE_RATE,
+                 FCHARGE_GUARANTEE_FEE,
+                 FREAL_FEE_RATE,
+                 FCHARGE_REAL_GUARANTEE_FEE,
+                 FREBATE,
+                 FREBATE_NAME,
+                 FREBATE_BANK_NAME
+                        )
+        SELECT FID,
+               FGUARANTEE_ID,
+               FLOAN_AMOUNT,
+               FLOAN_DAYS,
+               FLOAN_REMAIN,
+               FARRANGED_REPAY,
+               FMARKET_FEE_RATE,
+               FCHARGE_GUARANTEE_FEE,
+               FREAL_FEE_RATE,
+               FCHARGE_REAL_GUARANTEE_FEE,
+               FREBATE,
+               FREBATE_NAME,
+               FREBATE_BANK_NAME
+        FROM (
+                <foreach collection = "list" item="loanDetails" separator="UNION ALL" >
+                    SELECT #{loanDetails.id} FID,
+                           #{loanDetails.guaranteeId} FGUARANTEE_ID,
+                           #{loanDetails.loanAmount} FLOAN_AMOUNT,
+                           #{loanDetails.loanDays} FLOAN_DAYS,
+                           #{loanDetails.loanRemain} FLOAN_REMAIN,
+                           #{loanDetails.arrangedRepay} FARRANGED_REPAY,
+                           #{loanDetails.marketFeeRate} FMARKET_FEE_RATE,
+                           #{loanDetails.chargeGuaranteeFee} FCHARGE_GUARANTEE_FEE,
+                           #{loanDetails.realFeeRate} FREAL_FEE_RATE,
+                           #{loanDetails.chargeRealGuaranteeFee} FCHARGE_REAL_GUARANTEE_FEE,
+                           #{loanDetails.rebate} FREBATE,
+                           #{loanDetails.rebateName} FREBATE_NAME,
+                           #{loanDetails.rebateBankName} FREBATE_BANK_NAME
+                    FROM DUAL
+                </foreach>
+                     )
+    </insert>
+    <insert id = "saveLoanGeneral" parameterType="yhao.micro.service.surety.business.apilist.form.guarantee.LoanGeneralSaveForm" >
+        INSERT INTO SURETY.T_SURETY_G_LOAN_GENERAL
+                (
+                  FID,
+                  FGUARANTEE_ID,
+                  FLOAN_TOTAL_AMOUNT,
+                  FTOTAL_DAYS,
+                  FMARKET_FEE_RATE,
+                  FCHARGES,
+                  FDISCOUNT_EXPLAIN,
+                  FPLAN_USE_DATE,
+                  FIS_BILLING,
+                  FBILLING_ID,
+                  FCHARGE_TOTAL,
+                  FCHARGE_REAL_TOTAL,
+                  FADVICE_FEE,
+                  FCHARGE_LITTLE
+                        )
+        VALUES (
+                #{id},
+                #{guaranteeId},
+                #{loanTotalAmount},
+                #{totalDays},
+                #{totalMarketFeeRate},
+                #{charges},
+                #{discountExplain},
+                #{planUseDate},
+                #{isBilling},
+                #{billingId},
+                #{chargeTotal},
+                #{chargeRealTotal},
+                #{adviceFee},
+                #{chargeLittle}
+                       )
+    </insert>
+    <insert id = "saveLoanSeller" parameterType="yhao.micro.service.surety.business.apilist.form.guarantee.LoanSellerSaveForm" >
+          INSERT INTO SURETY.T_SURETY_G_LOAN_SELLER
+                  (
+                   FID,
+                   FGUARANTEE_ID,
+                   FLOAN_TYPE,
+                   FLOAN_AMOUNT,
+                   FLOAN_BALANCE,
+                   FLOAN_MB_ID,
+                   FLOAN_MB_AMOUNT,
+                   FLOAN_MB_CONTACT_NAME,
+                   FLOAN_MB_CONTACT_TELE,
+                   FLOAN_PB_ID,
+                   FLOAN_PB_AMOUNT,
+                   FLOAN_PB_CONTACT_NAME,
+                   FLOAN_PB_CONTACT_TELE,
+                   FLOAN_MAJOR_PERSON,
+                   FLOAN_OTHER_PERSON,
+                   FLOAN_REMARK
+                          )
+          VALUES (
+                   #{id},
+                   #{guaranteeId},
+                   #{loanType},
+                   #{loanAmount},
+                   #{loanBalance},
+                   #{loanMbId},
+                   #{loanMbAmount},
+                   #{loanMbContactName},
+                   #{loanMbContactTele},
+                   #{loanPbId},
+                   #{loanPbAmount},
+                   #{loanPbContactName},
+                   #{loanPbContactTele},
+                   #{loanMajorPerson},
+                   #{loanOtherPerson},
+                   #{loanRemark}
+                         )
+    </insert>
+    <insert id = "batchSavePartner" parameterType="java.util.List" >
+        INSERT INTO SURETY.T_SURETY_G_PARTNER
+                (
+                 FID,
+                 FGUARANTEE_ID,
+                 FMANAGER_ID,
+                 FORG_ID,
+                 FMANAGER_NAME,
+                 FIS_MAJOR_MANAGER,
+                 FMANAGER_RATE
+                        )
+        SELECT FID,
+               FGUARANTEE_ID,
+               FMANAGER_ID,
+               FORG_ID,
+               FMANAGER_NAME,
+               FIS_MAJOR_MANAGER,
+               FMANAGER_RATE
+        FROM (
+                <foreach collection = "list" item="partner" separator="UNION ALL" >
+                    SELECT #{partner.id} FID,
+                           #{partner.guaranteeId} FGUARANTEE_ID,
+                           #{partner.managerId} FMANAGER_ID,
+                           #{partner.orgId} FORG_ID,
+                           #{partner.managerName} FMANAGER_NAME,
+                           #{partner.isMajorManager} FIS_MAJOR_MANAGER,
+                           #{partner.managerRate} FMANAGER_RATE
+                    FROM DUAL
+                </foreach>
+                     )
+    </insert>
+
+    <insert id = "batchSaveLoanPayment" parameterType="java.util.List" >
+        INSERT INTO SURETY.T_SURETY_G_LOAN_PAYMENT
+                (
+                   FID,
+                   FGUARANTEE_ID,
+                   FLOAN_PAYMENT_ACCOUNT_NAM,
+                   FLOAN_PAYMENT_ACCOUNT_BANK,
+                   FLOAN_PAYMENT_ACCOUNT_NUM,
+                   FIS_RECEIVE_PAYMENT
+                )
+        SELECT FID,
+               FGUARANTEE_ID,
+               FLOAN_PAYMENT_ACCOUNT_NAM,
+               FLOAN_PAYMENT_ACCOUNT_BANK,
+               FLOAN_PAYMENT_ACCOUNT_NUM,
+               FIS_RECEIVE_PAYMENT
+        FROM (
+        <foreach collection = "list" item="item" separator="UNION ALL" >
+            SELECT #{item.id} FID,
+                   #{item.guaranteeId} FGUARANTEE_ID,
+                   #{item.loanPaymentAccountNam} FLOAN_PAYMENT_ACCOUNT_NAM,
+                   #{item.loanPaymentAccountBank} FLOAN_PAYMENT_ACCOUNT_BANK,
+                   #{item.loanPaymentAccountNum} FLOAN_PAYMENT_ACCOUNT_NUM,
+                   #{item.isReceivePayment} FIS_RECEIVE_PAYMENT
+              FROM DUAL
+        </foreach>
+        )
+    </insert>
+
+    <select id = "queryLoanPayment" parameterType="String" resultType="String" >
+        SELECT FID AS id
+        FROM SURETY.T_SURETY_G_LOAN_PAYMENT
+        WHERE FGUARANTEE_ID = #{id}
+    </select>
+    <update id = "batchUpdateLoanPayment" parameterType="java.util.List" >
+        <foreach collection = "list" item="item" index="index" open="begin" close=";end;" separator=";">
+            UPDATE SURETY.T_SURETY_G_LOAN_PAYMENT
+            <set>
+                <if test="item.loanPaymentAccountNam != null and item.loanPaymentAccountNam != ''" >FloanPaymentAccountNam = #{item.loanPaymentAccountNam} ,</if>
+                <if test="item.loanPaymentAccountBank != null and item.loanPaymentAccountBank != ''" >FloanPaymentAccountBank = #{item.loanPaymentAccountBank} ,</if>
+                <if test="item.loanPaymentAccountNum != null and item.loanPaymentAccountNum != ''" >FloanPaymentAccountNum = #{item.loanPaymentAccountNum} ,</if>
+                <if test="item.isReceivePayment != null" >FisReceivePayment = #{item.isReceivePayment}</if>
+            </set>
+             WHERE FID = #{item.id}
+        </foreach>
+    </update>
+    <delete id = "batchDeleteLoanPayment" parameterType="java.util.List" >
+        DELETE FROM SURETY.T_SURETY_G_LOAN_PAYMENT WHERE FID IN
+        <foreach collection = "list" item="item" open="(" close=")" separator="," >
+            #{item}
+        </foreach>
+    </delete>
+
+    <insert id = "batchSavePersonInfoTrades" parameterType="yhao.micro.service.surety.business.apilist.form.guarantee.PersonInfoTradesSaveForm" >
+        INSERT INTO SURETY.T_SURETY_G_PERSONINFO_TRADES
+                (
+                 FID,
+                 FGUARANTEE_ID,
+                 FESTATE_ID,
+                 FCLT_TYP,
+                 FCLT_NAME,
+                 FCTF_ISS_CNT_COD,
+                 FCTF_TYP,
+                 FCTF_IDC,
+                 FCONTACT_TELE,
+                 FPROPERTY_PORTION,
+                 FADDRESS,
+                 FCREDIT_TYPE,
+                 FCREDIT_EXPECTED_DATE,
+                 FCREDIT_ARRANGE_DATE,
+                 FCRERTE_TIME,
+                 FUPDATE_TIME,
+                 FCREATE_OPERATOR_ID,
+                 FUPDATE_OPERATOR_ID
+                        )
+        SELECT FID, FGUARANTEE_ID, FESTATE_ID, FCLT_TYP,  FCLT_NAME, FCTF_ISS_CNT_COD, FCTF_TYP,
+               FCTF_IDC, FCONTACT_TELE, FPROPERTY_PORTION, FADDRESS, FCREDIT_TYPE, FCREDIT_EXPECTED_DATE, FCREDIT_ARRANGE_DATE,
+               FCRERTE_TIME, FUPDATE_TIME, FCREATE_OPERATOR_ID, FUPDATE_OPERATOR_ID
+        FROM(<foreach collection = "list" item="person" separator="UNION ALL" >
+              SELECT #{person.id} FID,
+                     #{person.guaranteeId} FGUARANTEE_ID,
+                     #{person.estateId} FESTATE_ID,
+                     #{person.cltTyp} FCLT_TYP,
+                     #{person.cltName} FCLT_NAME,
+                     #{person.ctfIssCntCod} FCTF_ISS_CNT_COD,
+                     #{person.ctfTyp} FCTF_TYP,
+                     #{person.ctfIdc} FCTF_IDC,
+                     #{person.contactTele} FCONTACT_TELE,
+                     #{person.propertyPortion} FPROPERTY_PORTION,
+                     #{person.address} FADDRESS,
+                     #{person.creditType} FCREDIT_TYPE,
+                     #{person.creditExpectedDate} FCREDIT_EXPECTED_DATE,
+                     #{person.creditArrangeDate} FCREDIT_ARRANGE_DATE,
+                     SYSDATE FCRERTE_TIME,
+                     SYSDATE FUPDATE_TIME,
+                     #{person.operatorId} FCREATE_OPERATOR_ID,
+                     #{person.operatorId} FUPDATE_OPERATOR_ID
+                FROM DUAL
+             </foreach>
+            )
+    </insert>
+    <select id = "queryPerson" parameterType="String" resultType="String" >
+        SELECT FID AS id
+          FROM SURETY.T_SURETY_G_PERSONINFO_TRADES
+         WHERE FGUARANTEE_ID = #{id}
+    </select>
+    <insert id = "saveRepay" parameterType="yhao.micro.service.surety.business.apilist.form.guarantee.RepaySaveForm" >
+        INSERT INTO SURETY.T_SURETY_G_REPAY
+                (
+                 FID,
+                 FGUARANTEE_ID,
+                 FREPAY_TYPE,
+                 FREPAY_EXPECTED_DATE,
+                 FREPAY_REAL_DATE,
+                 FREDEM_DATE,
+                 FIS_LOAN,
+                 FIS_PENALTY,
+                 FIS_PRESTORE,
+                 FPRESTORE_DAYS,
+                 FFLOOR_LIST_URLS,
+                 FAPPLICATION_RECEIPT_URLS,
+                 FLOAN_AGREEMENT_URLS,
+                 FREMARKS
+                        )
+        VALUES (
+                 #{id},
+                 #{guaranteeId},
+                 #{repayType},
+                 #{repayExpectedDate},
+                 #{repayRealDate},
+                 #{redemDate},
+                 #{isLoan},
+                 #{isPenalty},
+                 #{isPrestore},
+                 #{prestoreDays},
+                 #{floorListUrls},
+                 #{applicationReceiptUrls},
+                 #{loanAgreementUrls},
+                 #{remarks}
+                       )
+    </insert>
+    <update id = "updateRepay" parameterType="yhao.micro.service.surety.business.apilist.form.guarantee.RepaySaveForm" >
+        UPDATE SURETY.T_SURETY_G_REPAY
+           SET FREPAY_TYPE = #{repayType},
+               FREPAY_EXPECTED_DATE = #{repayExpectedDate}
+         WHERE FID = #{id}
+    </update>
+    <insert id = "saveTransactionTypeReceivePaymentPlanSaveFormList" parameterType="yhao.micro.service.surety.business.apilist.form.guarantee.TransactionTypeReceivePaymentPlanSaveForm" >
+        INSERT INTO SURETY.T_SURETY_G_TRANS_RECEPAY_PLAN
+                (
+                 FID,
+                 FGUARANTEE_ID,
+                 FLOAN_DETAIL_ID,
+                 FRECEIVE_PAYMENT_SOURCE,
+                 FRECEIVE_PAYMENT_EXPECT_AMOUNT,
+                 FRECEIVE_PAYMENT_ACCOUNT,
+                 FRECEIVE_PAYMENT_ACCOUNT_NUM,
+                 FRECEIVE_PAYMENT_BANK
+                        )
+        SELECT
+                       FID,
+                       FGUARANTEE_ID,
+                       FLOAN_DETAIL_ID,
+                       FRECEIVE_PAYMENT_SOURCE,
+                       FRECEIVE_PAYMENT_EXPECT_AMOUNT,
+                       FRECEIVE_PAYMENT_ACCOUNT,
+                       FRECEIVE_PAYMENT_ACCOUNT_NUM,
+                       FRECEIVE_PAYMENT_BANK
+        FROM (<foreach collection = "list" item="plan" separator="UNION ALL" >
+                SELECT #{plan.id} FID,
+                       #{plan.guaranteeId} FGUARANTEE_ID,
+                       #{plan.loanDetailId} FLOAN_DETAIL_ID,
+                       #{plan.receivePaymentSource} FRECEIVE_PAYMENT_SOURCE,
+                       #{plan.receivePaymentExpectAmount} FRECEIVE_PAYMENT_EXPECT_AMOUNT,
+                       #{plan.receivePaymentAccount} FRECEIVE_PAYMENT_ACCOUNT,
+                       #{plan.receivePaymentAccountNum} FRECEIVE_PAYMENT_ACCOUNT_NUM,
+                       #{plan.receivePaymentBank} FRECEIVE_PAYMENT_BANK
+                FROM DUAL
+                </foreach>
+                     )
+    </insert>
+
+    <update id = "batchUpdateEstateSeller" parameterType="java.util.List" >
+        <foreach collection = "list" item="item" index="index" open="begin" close=";end;" separator=";">
+            UPDATE SURETY.T_SURETY_G_ESTATE_SELLER
+            <set>
+                <if test="item.propertyName != null and item.propertyName != ''" >FPROPERTY_NAME = #{item.propertyName},</if>
+                <if test="item.propertyLocation != null and item.propertyLocation != ''" >FPROPERTY_LOCATION = #{item.propertyLocation},</if>
+                <if test="item.propertyRoomNo != null and item.propertyRoomNo != ''" >FPROPERTY_ROOM_NO = #{item.propertyRoomNo},</if>
+                <if test="item.isModeling != null " >FIS_MODELING = #{item.isModeling},</if>
+                <if test="item.estateUse != null and item.estateUse != ''" >FESTATE_USE = #{item.estateUse},</if>
+                <if test="item.estateArea != null " >FESTATE_AREA = #{item.estateArea},</if>
+                <if test="item.estateName != null and item.estateName != ''" >FESTATE_NAME = #{item.estateName},</if>
+                <if test="item.deedType != null " >FDEED_TYPE = #{item.deedType},</if>
+                <if test="item.deedNum != null and item.deedNum != ''" >FDEED_NUM = #{item.deedNum},</if>
+                <if test="item.evaluatePrice != null " >FEVALUATE_PRICE = #{item.evaluatePrice},</if>
+                <if test="item.sourceContactName != null and item.sourceContactName != ''" >FSOURCE_CONTACT_NAME = #{item.sourceContactName},</if>
+                <if test="item.sourceContactTele != null and item.sourceContactTele != ''" >FSOURCE_CONTACT_TELE = #{item.sourceContactTele}</if>
+            </set>
+             WHERE FID = #{item.id}
+        </foreach>
+    </update>
+    <delete id = "batchDeleteEstateSeller" parameterType="java.util.List">
+        DELETE FROM SURETY.T_SURETY_G_ESTATE_SELLER WHERE FID IN
+                <foreach collection = "list" item="item" open="(" close=")" separator="," >
+                    #{item}
+                </foreach>
+    </delete>
+    <delete id = "batchDeletePersonInfoTradesByEstateId" parameterType="java.util.List" >
+        DELETE FROM SURETY.T_SURETY_G_PERSONINFO_TRADES WHERE FESTATE_ID IN
+        <foreach collection = "list" item="item" open="(" close=")" separator="," >
+            #{item}
+        </foreach>
+    </delete>
+    <delete id = "batchDeletePartner" parameterType="java.util.List">
+        DELETE FROM SURETY.T_SURETY_G_PARTNER WHERE FID IN
+        <foreach collection = "list" item="item" open="(" close=")" separator="," >
+            #{item}
+        </foreach>
+    </delete>
+
+    <update id = "batchUpdatePartner" parameterType="java.util.List">
+        <foreach collection = "list" item="item" index="index" open="begin" close=";end;" separator=";">
+            UPDATE SURETY.T_SURETY_G_PARTNER
+            <set>
+                <if test="item.guaranteeId != null and item.guaranteeId != ''" >FGUARANTEE_ID = #{item.guaranteeId},</if>
+                <if test="item.managerId != null and item.managerId != ''" >FMANAGER_ID = #{item.managerId},</if>
+                <if test="item.orgId != null and item.orgId != ''" >FORG_ID = #{item.orgId},</if>
+                <if test="item.managerName != null and item.managerName != ''" >FMANAGER_NAME = #{item.managerName},</if>
+                <if test="item.isMajorManager != null " >FIS_MAJOR_MANAGER = #{item.isMajorManager},</if>
+                <if test="item.managerRate != null " >FMANAGER_RATE = #{item.managerRate}</if>
+            </set>
+             WHERE FID = #{item.id}
+        </foreach>
+    </update>
+    <select id = "queryPartner" parameterType="String" resultType="String">
+        SELECT FID AS id
+          FROM SURETY.T_SURETY_G_PARTNER
+         WHERE FGUARANTEE_ID = #{id}
+    </select>
+    <select id = "queryEstateSellerPersonInfo" parameterType="String" resultType="yhao.micro.service.surety.business.apilist.model.guarantee.EstateSellerModel" >
+        SELECT FID AS personId,
+               FESTATE_ID as id
+          FROM SURETY.T_SURETY_G_PERSONINFO_TRADES
+        WHERE FGUARANTEE_ID = #{id}
+    </select>
+
+    <update id = "batchUpdatePersonInfoTrades" parameterType="java.util.List" >
+        <foreach collection = "list" item="item" index="index" open="begin" close=";end;" separator=";">
+            UPDATE SURETY.T_SURETY_G_PERSONINFO_TRADES
+            <set>
+                <if test="item.cltTyp != null and item.cltTyp != ''" >FCLT_TYP = #{item.cltTyp},</if>
+                <if test="item.cltName != null and item.cltName != ''" >FCLT_NAME = #{item.cltName},</if>
+                <if test="item.ctfIssCntCod != null and item.ctfIssCntCod != ''" >FCTF_ISS_CNT_COD = #{item.ctfIssCntCod},</if>
+                <if test="item.ctfTyp != null and item.ctfTyp != ''" >FCTF_TYP = #{item.ctfTyp},</if>
+                <if test="item.ctfIdc != null and item.ctfIdc != ''" >FCTF_IDC = #{item.ctfIdc},</if>
+                <if test="item.contactTele != null and item.contactTele != ''" >FCONTACT_TELE = #{item.contactTele},</if>
+                <if test="item.propertyPortion != null and item.propertyPortion != ''" >FPROPERTY_PORTION = #{item.propertyPortion},</if>
+                <if test="item.address != null and item.address != ''" >FADDRESS = #{item.address},</if>
+                <if test="item.creditType != null and item.creditType != ''" >FCREDIT_TYPE = #{item.creditType},</if>
+                <if test="item.creditExpectedDate != null and item.creditExpectedDate != ''" >FCREDIT_EXPECTED_DATE = #{item.creditExpectedDate},</if>
+                <if test="item.creditArrangeDate != null and item.creditArrangeDate != ''" >FCREDIT_ARRANGE_DATE = #{item.creditArrangeDate},</if>
+                FUPDATE_TIME = SYSDATE,
+                <if test="item.operatorId != null and item.operatorId != ''" >FUPDATE_OPERATOR_ID = #{item.operatorId}</if>
+            </set>
+             WHERE FID = #{item.id}
+        </foreach>
+    </update>
+    <delete id = "batchDeletePersonInfoTrades" parameterType="java.util.List">
+        DELETE FROM SURETY.T_SURETY_G_PERSONINFO_TRADES WHERE FID IN
+        <foreach collection = "list" item="item" open="(" close=")" separator="," >
+            #{item}
+        </foreach>
+    </delete>
+
+    <insert id = "batchSaveEstateSeller" parameterType="java.util.List">
+        INSERT INTO SURETY.T_SURETY_G_ESTATE_SELLER
+                (
+                 FID,
+                 FGUARANTEE_ID,
+                 FPROPERTY_NAME,
+                 FPROPERTY_LOCATION,
+                 FPROPERTY_ROOM_NO,
+                 FIS_MODELING,
+                 FESTATE_USE,
+                 FESTATE_AREA,
+                 FESTATE_NAME,
+                 FDEED_TYPE,
+                 FDEED_NUM,
+                 FEVALUATE_PRICE,
+                 FSOURCE_CONTACT_NAME,
+                 FSOURCE_CONTACT_TELE
+                        )
+        SELECT  FID,
+                FGUARANTEE_ID,
+                FPROPERTY_NAME,
+                FPROPERTY_LOCATION,
+                FPROPERTY_ROOM_NO,
+                FIS_MODELING,
+                FESTATE_USE,
+                FESTATE_AREA,
+                FESTATE_NAME,
+                FDEED_TYPE,
+                FDEED_NUM,
+                FEVALUATE_PRICE,
+                FSOURCE_CONTACT_NAME,
+                FSOURCE_CONTACT_TELE
+        FROM (
+                <foreach collection = "list" item="item" separator="UNION ALL">
+                    SELECT #{item.id} FID,
+                           #{item.guaranteeId} FGUARANTEE_ID,
+                           #{item.propertyName} FPROPERTY_NAME,
+                           #{item.propertyLocation} FPROPERTY_LOCATION,
+                           #{item.propertyRoomNo} FPROPERTY_ROOM_NO,
+                           #{item.isModeling} FIS_MODELING,
+                           #{item.estateUse} FESTATE_USE,
+                           #{item.estateArea} FESTATE_AREA,
+                           #{item.estateName} FESTATE_NAME,
+                           #{item.deedType} FDEED_TYPE,
+                           #{item.deedNum} FDEED_NUM,
+                           #{item.evaluatePrice} FEVALUATE_PRICE,
+                           #{item.sourceContactName} FSOURCE_CONTACT_NAME,
+                           #{item.sourceContactTele} FSOURCE_CONTACT_TELE
+                      FROM DUAL
+                </foreach>
+                    )
+    </insert>
+    <update id = "updateLoanSeller" parameterType="yhao.micro.service.surety.business.apilist.form.guarantee.LoanSellerSaveForm">
+        UPDATE SURETY.T_SURETY_G_LOAN_SELLER
+        <set>
+            <if test="loanType != null " >FLOAN_TYPE = #{loanType},</if>
+            <if test="loanAmount != null and loanAmount > 0" >FLOAN_AMOUNT = #{loanAmount},</if>
+            <if test="loanBalance != null and loanBalance > 0 " >FLOAN_BALANCE = #{loanBalance},</if>
+            <if test="loanMbId != null and loanMbId != ''" >FLOAN_MB_ID = #{loanMbId},</if>
+            <if test="loanMbAmount != null and loanMbAmount > 0" >FLOAN_MB_AMOUNT = #{loanMbAmount},</if>
+            <if test="loanMbContactName != null and loanMbContactName != ''" >FLOAN_MB_CONTACT_NAME = #{loanMbContactName},</if>
+            <if test="loanMbContactTele != null and loanMbContactTele != ''" >FLOAN_MB_CONTACT_TELE = #{loanMbContactTele},</if>
+            <if test="loanPbId != null and loanPbId != ''" >FLOAN_PB_ID = #{loanPbId},</if>
+            <if test="loanPbAmount != null and loanPbAmount > 0" >FLOAN_PB_AMOUNT = #{loanPbAmount},</if>
+            <if test="loanPbContactName != null and loanPbContactName != ''" >FLOAN_PB_CONTACT_NAME = #{loanPbContactName},</if>
+            <if test="loanPbContactTele != null and loanPbContactTele != ''" >FLOAN_PB_CONTACT_TELE = #{loanPbContactTele},</if>
+            <if test="loanMajorPerson != null and loanMajorPerson != ''" >FLOAN_MAJOR_PERSON = #{loanMajorPerson},</if>
+            <if test="loanOtherPerson != null and loanOtherPerson != ''" >FLOAN_OTHER_PERSON = #{loanOtherPerson},</if>
+             FLOAN_REMARK = #{loanRemark}
+        </set>
+         WHERE FID = #{id}
+    </update>
+    <update id = "updateTransactionGuaranteeInfo" parameterType="yhao.micro.service.surety.business.apilist.form.guarantee.TransactionGuaranteeInfoSaveForm">
+        UPDATE  SURETY.T_SURETY_G_INFO_OF_TRANSACTION
+        <set>
+            <if test="transactionPrice != null and transactionPrice >0" >FTRANSACTION_PRICE = #{transactionPrice},</if>
+            <if test="payType != null " >FPAY_TYPE = #{payType},</if>
+            <if test="deposit != null and deposit >0" >FDEPOSIT = #{deposit},</if>
+            <if test="notarizationData != null " >FNOTARIZATION_DATA = #{notarizationData}</if>
+        </set>
+          WHERE FID = #{id}
+    </update>
+    <update id = "updateLoanBuyer" parameterType="yhao.micro.service.surety.business.apilist.form.guarantee.LoanBuyerSaveForm" >
+        UPDATE SURETY.T_SURETY_G_LOAN_BUYER
+        <set>
+            <if test="supervisionBankOneId != null and supervisionBankOneId != ''" >FSUPERVISION_BANK_1_ID = #{supervisionBankOneId},</if>
+            <if test="supervisionAmountOne != null and supervisionAmountOne > 0" >FSUPERVISION_AMOUNT_1 = #{supervisionAmountOne},</if>
+            <if test="supervisionContactOne != null and supervisionContactOne != ''" >FSUPERVISION_CONTACT_1 = #{supervisionContactOne},</if>
+            <if test="supervisionContactTeleOne != null and supervisionContactTeleOne != ''" >FSUPERVISION_CONTACT_TELE_1 = #{supervisionContactTeleOne},</if>
+            <if test="supervisionBankTwoId != null and supervisionBankTwoId != ''" >FSUPERVISION_BANK_2_ID = #{supervisionBankTwoId},</if>
+            <if test="supervisionAmountTwo != null and supervisionAmountTwo > 0" >FSUPERVISION_AMOUNT_2 = #{supervisionAmountTwo},</if>
+            <if test="supervisionContactTwo != null and supervisionContactTwo != ''" >FSUPERVISION_CONTACT_2 = #{supervisionContactTwo},</if>
+            <if test="supervisionContactTeleTwo != null and supervisionContactTeleTwo != ''" >FSUPERVISION_CONTACT_TELE_2 = #{supervisionContactTeleTwo},</if>
+            <if test="loanMbId != null and loanMbId != ''" >FLOAN_MB_ID = #{loanMbId},</if>
+            <if test="loanMbAmount != null and loanMbAmount >0" >FLOAN_MB_AMOUNT = #{loanMbAmount},</if>
+            <if test="loanMbContactName != null and loanMbContactName != ''" >FLOAN_MB_CONTACT_NAME = #{loanMbContactName},</if>
+            <if test="loanMbContactTele != null and loanMbContactTele != ''" >FLOAN_MB_CONTACT_TELE = #{loanMbContactTele},</if>
+            <if test="refundAccountNam != null and refundAccountNam != ''" >FREFUND_ACCOUNT_NAM = #{refundAccountNam},</if>
+            <if test="refundAccountNum != null and refundAccountNum != ''" >FREFUND_ACCOUNT_NUM = #{refundAccountNum},</if>
+            <if test="refundAccountBank != null and refundAccountBank != ''" >FREFUND_ACCOUNT_BANK = #{refundAccountBank},</if>
+            <if test="supervisionAccountNam != null and supervisionAccountNam != ''" >FSUPERVISION_ACCOUNT_NAM = #{supervisionAccountNam},</if>
+            <if test="supervisionAccountNum != null and supervisionAccountNum != ''" >FSUPERVISION_ACCOUNT_NUM = #{supervisionAccountNum},</if>
+            <if test="supervisionAccountBank != null and supervisionAccountBank != ''" >FSUPERVISION_ACCOUNT_BANK = #{supervisionAccountBank},</if>
+            <if test="loanerName != null and loanerName != ''" >FLOANER_NAME = #{loanerName},</if>
+            <if test="loanPaymentType != null and loanPaymentType != ''" >FLOAN_PAYMENT_TYPE = #{loanPaymentType},</if>
+            FLOAN_REMARK = #{loanRemark}
+        </set>
+          WHERE FID = #{id}
+    </update>
+    <update id = "updateGuaranteeSituation" parameterType="yhao.micro.service.surety.business.apilist.form.guarantee.GuaranteeSituationSaveForm">
+        UPDATE SURETY.T_SURETY_G_GUARANTEE_SITUATION
+        <set>
+            <if test="guaranteeApplicantIds != null and guaranteeApplicantIds != ''" >FGUARANTEE_APPLICANT_IDS = #{guaranteeApplicantIds},</if>
+            <if test="redeemBankId != null and redeemBankId != ''" >FREDEEM_BANK_ID = #{redeemBankId},</if>
+            <if test="redeemBankRate != null and redeemBankRate >0" >FREDEEM_BANK_RATE = #{redeemBankRate},</if>
+            <if test="redeemBankContact != null and redeemBankContact != ''" >FREDEEM_BANK_CONTACT = #{redeemBankContact},</if>
+            <if test="redeemBankContactTele != null and redeemBankContactTele != ''" >FREDEEM_BANK_CONTACT_TELE = #{redeemBankContactTele},</if>
+            <if test="guaranteeAmount != null and guaranteeAmount >0" >FGUARANTEE_AMOUNT = #{guaranteeAmount},</if>
+            <if test="redeemHouseAmount != null and redeemHouseAmount >0" >FREDEEM_HOUSE_AMOUNT = #{redeemHouseAmount},</if>
+            <if test="guaranteeDays != null and guaranteeDays >0" >FGUARANTEE_DAYS = #{guaranteeDays},</if>
+            <if test="isAntiGuarantor != null " >FIS_ANTI_GUARANTOR = #{isAntiGuarantor},</if>
+            <if test="situationRemark != null and situationRemark != ''" >FSITUATION_REMARK = #{situationRemark}</if>
+        </set>
+         WHERE FID =  #{id}
+    </update>
+    <update id = "updateLoanGeneral" parameterType="yhao.micro.service.surety.business.apilist.form.guarantee.LoanGeneralSaveForm">
+        UPDATE  SURETY.T_SURETY_G_LOAN_GENERAL
+        <set>
+            <if test="loanTotalAmount != null and loanTotalAmount >0" >FLOAN_TOTAL_AMOUNT = #{loanTotalAmount},</if>
+            <if test="totalDays != null and totalDays >0" >FTOTAL_DAYS = #{totalDays},</if>
+            <if test="totalMarketFeeRate != null and totalMarketFeeRate >0" >FMARKET_FEE_RATE = #{totalMarketFeeRate},</if>
+            <if test="charges != null and charges >0" >FCHARGES = #{charges},</if>
+            <if test="discountExplain != null and discountExplain != ''" >FDISCOUNT_EXPLAIN = #{discountExplain},</if>
+            <if test="planUseDate != null " >FPLAN_USE_DATE = #{planUseDate},</if>
+            <if test="isBilling != null " >FIS_BILLING = #{isBilling},</if>
+            <if test="billingId != null and billingId != ''" >FBILLING_ID = #{billingId},</if>
+            <if test="chargeTotal != null and chargeTotal >0" >FCHARGE_TOTAL = #{chargeTotal},</if>
+            <if test="chargeRealTotal != null and chargeRealTotal >0" >FCHARGE_REAL_TOTAL = #{chargeRealTotal},</if>
+            <if test="chargeLittle != null and chargeLittle >0" >FCHARGE_LITTLE = #{chargeLittle}</if>
+        </set>
+          WHERE FID = #{id}
+    </update>
+    <select id = "queryloanDetails" parameterType="String" resultType="String" >
+        SELECT FID AS id
+        FROM SURETY.T_SURETY_G_LOAN_DETAILS
+        WHERE FGUARANTEE_ID = #{id}
+    </select>
+    <select id = "queryTransactionTypeReceivePaymentPlan" parameterType="String" resultType="String" >
+        SELECT FID AS id
+        FROM SURETY.T_SURETY_G_TRANS_RECEPAY_PLAN
+        WHERE FGUARANTEE_ID = #{id}
+    </select>
+    <update id = "batchUpdateLoanDetails" parameterType="java.util.List" >
+        <foreach collection = "list" item="item" index="index" open="begin" close=";end;" separator=";">
+            UPDATE SURETY.T_SURETY_G_LOAN_DETAILS
+            <set>
+                <if test="item.loanAmount != null and item.loanAmount >0" >FLOAN_AMOUNT = #{item.loanAmount},</if>
+                <if test="item.loanDays != null " >FLOAN_DAYS = #{item.loanDays},</if>
+                <if test="item.loanRemain != null and item.loanRemain >0" >FLOAN_REMAIN = #{item.loanRemain},</if>
+                <if test="item.arrangedRepay != null " >FARRANGED_REPAY = #{item.arrangedRepay},</if>
+                <if test="item.marketFeeRate != null and item.marketFeeRate >0" >FMARKET_FEE_RATE = #{item.marketFeeRate},</if>
+                <if test="item.chargeGuaranteeFee != null and item.chargeGuaranteeFee >0" >FCHARGE_GUARANTEE_FEE = #{item.chargeGuaranteeFee},</if>
+                <if test="item.realFeeRate != null and item.realFeeRate >0" >FREAL_FEE_RATE = #{item.realFeeRate},</if>
+                <if test="item.chargeRealGuaranteeFee != null and item.chargeRealGuaranteeFee >0" >FCHARGE_REAL_GUARANTEE_FEE = #{item.chargeRealGuaranteeFee},</if>
+                <if test="item.rebate != null and item.rebate >0" >FREBATE = #{item.rebate},</if>
+                <if test="item.rebateName != null and item.rebateName != ''" >FREBATE_NAME = #{item.rebateName},</if>
+                <if test="item.rebateBankName != null and item.rebateBankName != ''" >FREBATE_BANK_NAME = #{item.rebateBankName}</if>
+            </set>
+             WHERE FID = #{item.id}
+        </foreach>
+    </update>
+    <delete id = "batchDeleteLoanDetails" parameterType="java.util.List" >
+        DELETE FROM SURETY.T_SURETY_G_LOAN_DETAILS WHERE FID IN
+        <foreach collection = "list" item="item" open="(" close=")" separator="," >
+            #{item}
+        </foreach>
+    </delete>
+    <update id = "updateTransactionTypeReceivePaymentPlan" parameterType="yhao.micro.service.surety.business.apilist.form.guarantee.TransactionTypeReceivePaymentPlanSaveForm">
+        UPDATE SURETY.T_SURETY_G_TRANS_RECEPAY_PLAN
+        <set>
+            <if test="loanDetailId != null and loanDetailId != ''" >FLOAN_DETAIL_ID = #{loanDetailId},</if>
+            <if test="receivePaymentSource != null and receivePaymentSource != ''" >FRECEIVE_PAYMENT_SOURCE = #{receivePaymentSource},</if>
+            <if test="receivePaymentExpectAmount != null and receivePaymentExpectAmount != ''" >FRECEIVE_PAYMENT_EXPECT_AMOUNT = #{receivePaymentExpectAmount},</if>
+            <if test="receivePaymentAccount != null and receivePaymentAccount != ''" >FRECEIVE_PAYMENT_ACCOUNT = #{receivePaymentAccount},</if>
+            <if test="receivePaymentAccountNum != null and receivePaymentAccountNum != ''" >FRECEIVE_PAYMENT_ACCOUNT_NUM = #{receivePaymentAccountNum},</if>
+            <if test="receivePaymentBank != null and receivePaymentBank != ''" >FRECEIVE_PAYMENT_BANK = #{receivePaymentBank}</if>
+        </set>
+         WHERE FID = #{id}
+    </update>
+    <update id = "batchUpdateTransactionTypeReceivePaymentPlan" parameterType="java.util.List" >
+        <foreach collection = "list" item="item" index="index" open="begin" close=";end;" separator=";">
+            UPDATE SURETY.T_SURETY_G_TRANS_RECEPAY_PLAN
+            <set>
+                <if test="item.loanDetailId != null and item.loanDetailId != ''" >FLOAN_DETAIL_ID = #{item.loanDetailId},</if>
+                <if test="item.receivePaymentSource != null " >FRECEIVE_PAYMENT_SOURCE = #{item.receivePaymentSource},</if>
+                <if test="item.receivePaymentExpectAmount != null and item.receivePaymentExpectAmount >0" >FRECEIVE_PAYMENT_EXPECT_AMOUNT = #{item.receivePaymentExpectAmount},</if>
+                <if test="item.receivePaymentAccount != null and item.receivePaymentAccount != ''" >FRECEIVE_PAYMENT_ACCOUNT = #{item.receivePaymentAccount},</if>
+                <if test="item.receivePaymentAccountNum != null and item.receivePaymentAccountNum != ''" >FRECEIVE_PAYMENT_ACCOUNT_NUM = #{item.receivePaymentAccountNum},</if>
+                <if test="item.receivePaymentBank != null and item.receivePaymentBank != ''" >FRECEIVE_PAYMENT_BANK = #{item.receivePaymentBank}</if>
+            </set>
+             WHERE FID = #{item.id}
+        </foreach>
+    </update>
+    <delete id = "batchDeleteTransactionTypeReceivePaymentPlan" parameterType="java.util.List" >
+        DELETE FROM SURETY.T_SURETY_G_TRANS_RECEPAY_PLAN WHERE FID IN
+        <foreach collection = "list" item="item" open="(" close=")" separator="," >
+            #{item}
+        </foreach>
+    </delete>
+    <update id = "updateGuarantee" parameterType="yhao.micro.service.surety.business.apilist.form.guarantee.GuaranteeSaveForm" >
+        UPDATE SURETY.T_SURETY_GUARANTEE
+        <set>
+            <if test="internalId != null and internalId!=''" >FINTERNAL_ID = #{internalId},</if>
+            <if test="guaranteeId !=null and guaranteeId != ''" >FKGUARANTEE_ID = #{guaranteeId},</if>
+            <if test="bizId != null and bizId != ''" >FBIZ_ID = #{bizId},</if>
+            <if test="guaranteeState!=null " >FGUARANTEE_STATE = #{guaranteeState},</if>
+            <if test="guaranteeType!=null " >FGUARANTEE_TYPE = #{guaranteeType},</if>
+            <if test="bankContractNum!=null and bankContractNum != ''" >FBANK_CONTRACT_NUM = #{bankContractNum},</if>
+            <if test="guaranteetSource!=null " >FGUARANTEET_SOURCE = #{guaranteetSource},</if>
+            <if test="agencyName!=null and agencyName != ''" >FAGENCY_NAME = #{agencyName},</if>
+            <if test="followerId !=null and followerId!=''" >FFOLLOWER_ID = #{followerId},</if>
+            <if test="creditClerkId != null and creditClerkId != ''" >FCREDIT_CLERK_ID = #{creditClerkId},</if>
+            <if test="declarerId !=null and declarerId != ''" >FDECLARER_ID = #{declarerId},</if>
+            <if test="redeemId !=null and redeemId != ''" >FREDEEM_ID = #{redeemId},</if>
+            <if test="dataTransferDate != null " >FDATA_TRANSFER_DATE = #{dataTransferDate},</if>
+            <if test="isDeclare != null " >FIS_DECLARE = #{isDeclare},</if>
+            <if test="receiveState !=null " >FRECEIVE_STATE = #{receiveState},</if>
+            <if test="creditState!=null " >FCREDIT_STATE = #{creditState},</if>
+            <if test="repayState!=null " >FREPAY_STATE = #{repayState},</if>
+            <if test="isCreditReport !=null " >FIS_CREDIT_REPORT = #{isCreditReport},</if>
+            <if test="dealmanRemark !=null and dealmanRemark!=''" >FDEALMAN_REMARK = #{dealmanRemark}</if>
+        </set>
+        WHERE FID = #{id}
+    </update>
+
+    <select id = "queryAnti" parameterType="String" resultType="yhao.micro.service.surety.business.apilist.model.guarantee.AntiModel" >
+        SELECT FID AS estateId,
+               FANTI_GUARANTOR_ID as id
+        FROM SURETY.T_SURETY_G_ANTI_ESTATE
+        WHERE FGUARANTEE_ID = #{id}
+    </select>
+    <update id = "batchUpdateAntiPerson" parameterType="java.util.List" >
+        <foreach collection = "list" item="item" index="index" open="begin" close=";end;" separator=";">
+            UPDATE SURETY.T_SURETY_G_ANTI_GUARANTOR
+            <set>
+                <if test="item.contactName != null and item.contactName != ''" >FCONTACT_NAME = #{item.contactName},</if>
+                <if test="item.contactTele != null and item.contactTele != ''" >FCONTACT_TELE = #{item.contactTele},</if>
+                <if test="item.ctfTyp !=null" >FCTF_TYP = #{item.ctfTyp},</if>
+                <if test="item.ctfIdc != null and item.ctfIdc !=''" >FCTF_IDC = #{item.ctfIdc},</if>
+                <if test="item.address != null and item.address !=''" >FADDRESS = #{item.address}</if>
+            </set>
+             WHERE FID = #{item.id}
+        </foreach>
+    </update>
+    <delete id = "batchDeleteAntiPerson" parameterType="java.util.List" >
+        DELETE FROM SURETY.T_SURETY_G_ANTI_GUARANTOR WHERE FID IN
+        <foreach collection = "list" item="item" open="(" close=")" separator="," >
+            #{item}
+        </foreach>
+    </delete>
+    <delete id = "batchDeleteAntiEstateByAntiPersonId" parameterType="java.util.List" >
+        DELETE FROM SURETY.T_SURETY_G_ANTI_ESTATE WHERE FANTI_GUARANTOR_ID IN
+        <foreach collection = "list" item="item" open="(" close=")" separator="," >
+            #{item}
+        </foreach>
+    </delete>
+    <insert id = "batchSaveAntiPerson" parameterType="java.util.List" >
+        INSERT INTO SURETY.T_SURETY_G_ANTI_GUARANTOR
+                (
+                        FID,
+                        FGUARANTEE_ID,
+                        FCONTACT_NAME,
+                        FCONTACT_TELE,
+                        FCTF_TYP,
+                        FCTF_IDC,
+                        FADDRESS
+                        )
+        SELECT FID,
+               FGUARANTEE_ID,
+               FCONTACT_NAME,
+               FCONTACT_TELE,
+               FCTF_TYP,
+               FCTF_IDC,
+               FADDRESS
+        FROM(
+                <foreach collection = "list" item="item" separator="UNION ALL" >
+                    SELECT #{item.id} FID,
+                           #{item.guaranteeId} FGUARANTEE_ID,
+                           #{item.contactName} FCONTACT_NAME,
+                           #{item.contactTele} FCONTACT_TELE,
+                           #{item.ctfTyp} FCTF_TYP,
+                           #{item.ctfIdc} FCTF_IDC,
+                           #{item.address} FADDRESS
+                    FROM DUAL
+                </foreach>
+                    )
+    </insert>
+    <update id = "batchUpdateAntiEstate" parameterType="java.util.List" >
+        <foreach collection = "list" item="antiEstate" index="index" open="begin" close=";end;" separator=";">
+            UPDATE SURETY.T_SURETY_G_ANTI_ESTATE
+            <set>
+                <if test="antiEstate.estateName != null and antiEstate.estateName!=''" >FESTATE_NAME = #{antiEstate.estateName},</if>
+                <if test="antiEstate.deedType != null" >FDEED_TYPE = #{antiEstate.deedType},</if>
+                <if test="antiEstate.deedNum !=null and antiEstate.deedNum != ''" >FDEED_NUM = #{antiEstate.deedNum},</if>
+                <if test="antiEstate.propertyPortion != null" >FPROPERTY_PORTION = #{antiEstate.propertyPortion}</if>
+            </set>
+             WHERE FID = #{antiEstate.id}
+        </foreach>
+    </update>
+    <delete id = "batchDeleteAntiEstate" parameterType="java.util.List" >
+        DELETE FROM SURETY.T_SURETY_G_ANTI_ESTATE WHERE FID IN
+        <foreach collection = "list" item="item" open="(" close=")" separator="," >
+            #{item}
+        </foreach>
+    </delete>
+
+    <update id = "updateGuaranteeDealmanRemark" parameterType="yhao.micro.service.surety.business.apilist.form.guarantee.GuaranteeSaveForm" >
+        UPDATE SURETY.T_SURETY_GUARANTEE
+           SET FDEALMAN_REMARK = #{dealmanRemark}
+         WHERE FID = #{id}
+    </update>
+
+    <update id = "batchUpdateFollowerPersonInfoTrades" parameterType="java.util.List" >
+        <foreach collection = "list" item="item" index="index" open="begin" close=";end;" separator=";">
+            UPDATE SURETY.T_SURETY_G_PERSONINFO_TRADES
+            <set>
+                <if test="item.creditType != null " >FCREDIT_TYPE = #{item.creditType},</if>
+                <if test="item.creditExpectedDate != null" >FCREDIT_EXPECTED_DATE = #{item.creditExpectedDate},</if>
+                <if test="item.creditArrangeDate != null " >FCREDIT_ARRANGE_DATE = #{item.creditArrangeDate},</if>
+                FUPDATE_TIME = SYSDATE,
+                <if test="item.operatorId != null and item.operatorId != ''" >FUPDATE_OPERATOR_ID = #{item.operatorId}</if>
+            </set>
+             WHERE FID = #{item.id}
+        </foreach>
+    </update>
+
+    <update id = "batchUpdateFollowerAttachment" parameterType="java.util.List" >
+        <foreach collection = "list" item="item" index="index" open="begin" close=";end;" separator=";">
+            UPDATE SURETY.T_SURETY_G_ATTACHMENT
+            <set>
+                <if test = "item.isReceive != null" >FIS_RECEIVE = #{item.isReceive},</if>
+                <if test = "item.receiveNums !=null and item.receiveNums != ''" >FRECEIVE_NUMS = #{item.receiveNums},</if>
+                FUPDATE_TIME = SYSDATE,
+                <if test = "item.operatorId != null and item.operatorId != ''" >FUPDATE_OPERATOR_ID = #{item.operatorId}</if>
+            </set>
+             WHERE FID = #{item.id}
+        </foreach>
+    </update>
+    <update id = "updateFollowerGuarantee" parameterType="yhao.micro.service.surety.business.apilist.form.guarantee.GuaranteeSaveForm" >
+            UPDATE SURETY.T_SURETY_GUARANTEE
+            <set>
+                <if test="redeemId != null and redeemId != ''" >FREDEEM_ID = #{redeemId},</if>
+                FDEALMAN_REMARK = #{dealmanRemark},
+                <if test="dataTransferDate != null" >FDATA_TRANSFER_DATE = #{dataTransferDate},</if>
+                <if test="receiveState != null" >FRECEIVE_STATE = #{receiveState},</if>
+                <if test="transferState != null " >FTRANSFER_STATE = #{transferState}</if>
+            </set>
+             WHERE FID = #{id}
+    </update>
+    <update id = "updateIsCreditReport" parameterType="yhao.micro.service.surety.business.apilist.form.intention.CreditClerkSaveForm" >
+        UPDATE SURETY.T_SURETY_GUARANTEE
+        <set>
+            <if test="isCreditReport != null " >FIS_CREDIT_REPORT = #{isCreditReport},</if>
+            <if test="creditState != null " >FCREDIT_STATE = #{creditState},</if>
+            <if test="creditEndDate != null " >FCREDIT_END_DATE = #{creditEndDate}</if>
+        </set>
+         WHERE FID = #{id}
+    </update>
+
+    <select id = "pickGuarantee" parameterType="String" resultMap="ResultGuarantee" >
+            SELECT GUARANTEE.FID AS guaranteeId,
+                   GUARANTEE.FGUARANTEE_NUM,
+                   GUARANTEE.FORG_ID,
+                   GUARANTEE.FINTERNAL_ID,
+                   GUARANTEE.FKGUARANTEE_ID,
+                   GUARANTEE.FBIZ_ID,
+                   GUARANTEE.FGUARANTEE_STATE,
+                   GUARANTEE.FGUARANTEE_TYPE,
+                   GUARANTEE.FBANK_CONTRACT_NUM,
+                   GUARANTEE.FGUARANTEET_SOURCE,
+                   GUARANTEE.FAGENCY_NAME,
+                   PARTNER.FID AS partnerid,
+                   PARTNER.FMANAGER_ID,
+                   PERSON.FNAME AS managerName,
+                   PERSON.FPHONE,
+                   ORG.FNAME AS orgName,
+                   PARTNER.FORG_ID AS partnerOrgId,
+                   PARTNER.FMANAGER_RATE,
+                   ESTATE_SELLER.FID AS estateId,
+                   ESTATE_SELLER.FPROPERTY_NAME,
+                   ESTATE_SELLER.FPROPERTY_LOCATION,
+                   ESTATE_SELLER.FPROPERTY_ROOM_NO,
+                   ESTATE_SELLER.FIS_MODELING,
+                   ESTATE_SELLER.FESTATE_USE,
+                   ESTATE_SELLER.FESTATE_AREA,
+                   ESTATE_SELLER.FESTATE_NAME,
+                   ESTATE_SELLER.FDEED_TYPE,
+                   ESTATE_SELLER.FDEED_NUM,
+                   ESTATE_SELLER.FEVALUATE_PRICE,
+                   ESTATE_SELLER.FSOURCE_CONTACT_NAME,
+                   ESTATE_SELLER.FSOURCE_CONTACT_TELE,
+                   PERSONINFO_TRADES.FID AS personinfoTradesId,
+                   PERSONINFO_TRADES.FESTATE_ID,
+                   PERSONINFO_TRADES.FCLT_TYP,
+                   PERSONINFO_TRADES.FCLT_NAME,
+                   PERSONINFO_TRADES.FCTF_ISS_CNT_COD,
+                   PERSONINFO_TRADES.FCTF_TYP,
+                   PERSONINFO_TRADES.FCTF_IDC,
+                   PERSONINFO_TRADES.FCONTACT_TELE,
+                   PERSONINFO_TRADES.FPROPERTY_PORTION,
+                   PERSONINFO_TRADES.FADDRESS,
+
+                   BUYER_TRADES.FID AS buyerId,
+                   BUYER_TRADES.FCLT_TYP AS buyerCltTyp,
+                   BUYER_TRADES.FCLT_NAME AS buyerCltName,
+                   BUYER_TRADES.FCTF_ISS_CNT_COD AS buyerCtfIssCntCod,
+                   BUYER_TRADES.FCTF_TYP AS buyerCtfTyp,
+                   BUYER_TRADES.FCTF_IDC AS buyerCtfIdc,
+                   BUYER_TRADES.FCONTACT_TELE AS buyerContactTele,
+                   BUYER_TRADES.FPROPERTY_PORTION AS buyerPropertyPortion,
+                   BUYER_TRADES.FADDRESS AS buyerAddress,
+
+                   LOAN_SELLER.FID AS loanSellerId,
+                   LOAN_SELLER.FLOAN_TYPE,
+                   LOAN_SELLER.FLOAN_AMOUNT,
+                   LOAN_SELLER.FLOAN_BALANCE,
+                   LOAN_SELLER.FLOAN_MB_ID,
+                   LOAN_SELLER.FLOAN_MB_AMOUNT,
+                   LOAN_SELLER.FLOAN_MB_CONTACT_NAME,
+                   LOAN_SELLER.FLOAN_MB_CONTACT_TELE,
+                   LOAN_SELLER.FLOAN_PB_ID,
+                   LOAN_SELLER.FLOAN_PB_AMOUNT,
+                   LOAN_SELLER.FLOAN_PB_CONTACT_NAME,
+                   LOAN_SELLER.FLOAN_PB_CONTACT_TELE,
+                   LOAN_SELLER.FLOAN_MAJOR_PERSON,
+                   LOAN_SELLER.FLOAN_OTHER_PERSON,
+                   LOAN_SELLER.FLOAN_REMARK,
+                   TRANSACTION.FID AS transactionId,
+                   TRANSACTION.FTRANSACTION_PRICE,
+                   TRANSACTION.FPAY_TYPE,
+                   TRANSACTION.FDEPOSIT,
+                   TRANSACTION.FNOTARIZATION_DATA,
+                   LOAN_BUYER.FID AS loanBuyerId,
+                   LOAN_BUYER.FSUPERVISION_BANK_1_ID AS supervisionBankOneId,
+                   LOAN_BUYER.FSUPERVISION_AMOUNT_1 AS supervisionAmountOne,
+                   LOAN_BUYER.FSUPERVISION_CONTACT_1 AS supervisionContactOne,
+                   LOAN_BUYER.FSUPERVISION_CONTACT_TELE_1 AS supervisionContactTeleOne,
+                   LOAN_BUYER.FSUPERVISION_BANK_2_ID AS supervisionBankTwoId,
+                   LOAN_BUYER.FSUPERVISION_AMOUNT_2 AS supervisionAmountTwo,
+                   LOAN_BUYER.FSUPERVISION_CONTACT_2 AS supervisionContactTwo,
+                   LOAN_BUYER.FSUPERVISION_CONTACT_TELE_2 AS supervisionContactTeleTwo,
+                   LOAN_BUYER.FLOAN_MB_ID AS buyerFloanMbId,
+                   LOAN_BUYER.FLOAN_MB_AMOUNT AS buyerFloanMbAmount,
+                   LOAN_BUYER.FLOAN_MB_CONTACT_NAME AS buyerFloanMbContactName,
+                   LOAN_BUYER.FLOAN_MB_CONTACT_TELE AS buyerFloanMbContactTele,
+                   LOAN_BUYER.FREFUND_ACCOUNT_NAM,
+                   LOAN_BUYER.FREFUND_ACCOUNT_NUM,
+                   LOAN_BUYER.FREFUND_ACCOUNT_BANK,
+                   LOAN_BUYER.FSUPERVISION_ACCOUNT_NAM,
+                   LOAN_BUYER.FSUPERVISION_ACCOUNT_NUM,
+                   LOAN_BUYER.FSUPERVISION_ACCOUNT_BANK,
+                   LOAN_BUYER.FLOANER_NAME,
+                   LOAN_BUYER.FLOAN_PAYMENT_TYPE,
+                   LOAN_BUYER.FLOAN_REMARK,
+                   GUARANTEE_SITUATION.FID AS guaranteeSituationId,
+                   GUARANTEE_SITUATION.FGUARANTEE_APPLICANT_IDS,
+                   GUARANTEE_SITUATION.FREDEEM_BANK_ID,
+                   GUARANTEE_SITUATION.FREDEEM_BANK_RATE,
+                   GUARANTEE_SITUATION.FREDEEM_BANK_CONTACT,
+                   GUARANTEE_SITUATION.FREDEEM_BANK_CONTACT_TELE,
+                   GUARANTEE_SITUATION.FGUARANTEE_AMOUNT,
+                   GUARANTEE_SITUATION.FREDEEM_HOUSE_AMOUNT,
+                   GUARANTEE_SITUATION.FGUARANTEE_DAYS,
+                   GUARANTEE_SITUATION.FIS_ANTI_GUARANTOR,
+                   GUARANTEE_SITUATION.FSITUATION_REMARK,
+                   ANTI_GUARANTOR.FID AS antiGuarantorId,
+                   ANTI_GUARANTOR.FCONTACT_NAME AS antiFcontactName,
+                   ANTI_GUARANTOR.FCONTACT_TELE AS antiFcontactTele,
+                   ANTI_GUARANTOR.FCTF_TYP AS antiFctfTyp,
+                   ANTI_GUARANTOR.FCTF_IDC AS antiFctfIdc,
+                   ANTI_GUARANTOR.FADDRESS AS antiFaddress,
+                   ANTI_ESTATE.FID AS antiEstateId,
+                   ANTI_ESTATE.FANTI_GUARANTOR_ID AS antiFantiGuarantorId,
+                   ANTI_ESTATE.FESTATE_NAME AS antiFestateName,
+                   ANTI_ESTATE.FDEED_TYPE AS antiFdeedType,
+                   ANTI_ESTATE.FDEED_NUM AS antiFdeedNum,
+                   ANTI_ESTATE.FPROPERTY_PORTION AS antiFpropertyPortion,
+                   LOAN_GENERAL.FID AS loanGeneralId,
+                   LOAN_GENERAL.FLOAN_TOTAL_AMOUNT,
+                   LOAN_GENERAL.FTOTAL_DAYS,
+                   LOAN_GENERAL.FMARKET_FEE_RATE,
+                   LOAN_GENERAL.Fcharges,
+                   LOAN_GENERAL.FDISCOUNT_EXPLAIN,
+                   LOAN_GENERAL.FPLAN_USE_DATE,
+                   LOAN_GENERAL.FIS_BILLING,
+                   LOAN_GENERAL.FBILLING_ID,
+                   LOAN_GENERAL.FCHARGE_TOTAL,
+                   LOAN_GENERAL.FCHARGE_REAL_TOTAL,
+                   LOAN_GENERAL.FADVICE_FEE,
+                   LOAN_DETAILS.FID AS loanDetailsId,
+                   LOAN_DETAILS.FLOAN_AMOUNT AS detailsFloanAmount,
+                   LOAN_DETAILS.FLOAN_DAYS AS detailsFloanDays,
+                   LOAN_DETAILS.FLOAN_REMAIN AS detailsFloanRemain,
+                   LOAN_DETAILS.FARRANGED_REPAY AS detailsFarrangedRepay,
+                   LOAN_DETAILS.FMARKET_FEE_RATE AS detailsFmarketFeeRate,
+                   LOAN_DETAILS.FCHARGE_GUARANTEE_FEE AS detailsFchargeGuaranteeFee,
+                   LOAN_DETAILS.FREAL_FEE_RATE AS detailsFrealFeeRate,
+                   LOAN_DETAILS.FCHARGE_REAL_GUARANTEE_FEE AS detailsFchargeRealGuaranteeFee,
+                   LOAN_DETAILS.FREBATE AS detailsFrebate,
+                   LOAN_DETAILS.FREBATE_NAME AS detailsFrebateName,
+                   LOAN_DETAILS.FREBATE_BANK_NAME AS detailsFrebateBankName,
+                   TRANS_RECEPAY_PLAN.FID AS transRecepayPlanId,
+                   TRANS_RECEPAY_PLAN.FLOAN_DETAIL_ID,
+                   TRANS_RECEPAY_PLAN.FRECEIVE_PAYMENT_SOURCE,
+                   TRANS_RECEPAY_PLAN.FRECEIVE_PAYMENT_EXPECT_AMOUNT,
+                   TRANS_RECEPAY_PLAN.FRECEIVE_PAYMENT_ACCOUNT,
+                   TRANS_RECEPAY_PLAN.FRECEIVE_PAYMENT_ACCOUNT_NUM,
+                   TRANS_RECEPAY_PLAN.FRECEIVE_PAYMENT_BANK,
+                   LOAN_PAYMENT.FID AS loanPaymentId,
+                   LOAN_PAYMENT.FLOAN_PAYMENT_ACCOUNT_NAM,
+                   LOAN_PAYMENT.FLOAN_PAYMENT_ACCOUNT_BANK,
+                   LOAN_PAYMENT.FLOAN_PAYMENT_ACCOUNT_NUM,
+                   LOAN_PAYMENT.FIS_RECEIVE_PAYMENT
+            FROM SURETY.T_SURETY_GUARANTEE GUARANTEE
+         LEFT JOIN SURETY.T_SURETY_G_PARTNER PARTNER ON GUARANTEE.FID = PARTNER.FGUARANTEE_ID
+         LEFT JOIN SURETY.T_ERP_PERSON PERSON ON PERSON.FID = PARTNER.FMANAGER_ID
+         LEFT JOIN SURETY.T_ERP_ORG ORG ON ORG.FID = PERSON.FORG_ID
+         LEFT JOIN SURETY.T_SURETY_G_ESTATE_SELLER ESTATE_SELLER ON GUARANTEE.FID = ESTATE_SELLER.FGUARANTEE_ID
+         LEFT JOIN SURETY.T_SURETY_G_PERSONINFO_TRADES PERSONINFO_TRADES ON ESTATE_SELLER.FID = PERSONINFO_TRADES.FESTATE_ID
+         LEFT JOIN SURETY.T_SURETY_G_PERSONINFO_TRADES BUYER_TRADES ON GUARANTEE.FID = BUYER_TRADES.FGUARANTEE_ID AND BUYER_TRADES.FESTATE_ID IS NULL
+         LEFT JOIN SURETY.T_SURETY_G_LOAN_SELLER LOAN_SELLER ON GUARANTEE.FID = LOAN_SELLER.FGUARANTEE_ID
+         LEFT JOIN SURETY.T_SURETY_G_INFO_OF_TRANSACTION TRANSACTION ON GUARANTEE.FID = TRANSACTION.FGUARANTEE_ID
+         LEFT JOIN SURETY.T_SURETY_G_LOAN_BUYER LOAN_BUYER ON GUARANTEE.FID = LOAN_BUYER.FGUARANTEE_ID
+         LEFT JOIN SURETY.T_SURETY_G_GUARANTEE_SITUATION GUARANTEE_SITUATION ON GUARANTEE.FID = GUARANTEE_SITUATION.FGUARANTEE_ID
+         LEFT JOIN SURETY.T_SURETY_G_ANTI_GUARANTOR ANTI_GUARANTOR ON GUARANTEE.FID = ANTI_GUARANTOR.FGUARANTEE_ID
+         LEFT JOIN SURETY.T_SURETY_G_ANTI_ESTATE ANTI_ESTATE ON ANTI_GUARANTOR.FID = ANTI_ESTATE.FANTI_GUARANTOR_ID
+         LEFT JOIN SURETY.T_SURETY_G_LOAN_GENERAL LOAN_GENERAL ON GUARANTEE.FID = LOAN_GENERAL.FGUARANTEE_ID
+         LEFT JOIN SURETY.T_SURETY_G_LOAN_DETAILS LOAN_DETAILS ON GUARANTEE.FID = LOAN_DETAILS.FGUARANTEE_ID
+         LEFT JOIN SURETY.T_SURETY_G_TRANS_RECEPAY_PLAN TRANS_RECEPAY_PLAN ON GUARANTEE.FID = TRANS_RECEPAY_PLAN.FGUARANTEE_ID
+         LEFT JOIN SURETY.T_SURETY_G_LOAN_PAYMENT LOAN_PAYMENT ON GUARANTEE.FID = LOAN_PAYMENT.FGUARANTEE_ID
+             WHERE GUARANTEE.FID = #{id}
+    </select>
+    <resultMap id = "ResultGuarantee" type = "yhao.micro.service.surety.business.apilist.model.guarantee.GuaranteeModel" >
+        <id property="id" column="guaranteeId" />
+        <association property = "guaranteeBizModel" resultMap="ResultGuaranteeBizModel"/>
+        <association property = "loanSellerModel" resultMap="ResultLoanSellerModel" />
+        <association property = "transactionGuaranteeInfoModel" resultMap="ResultTransactionGuaranteeInfoModel" />
+        <association property = "loanBuyerModel" resultMap="ResultLoanBuyerModel" />
+        <association property = "guaranteeSituationModel" resultMap="ResultGuaranteeSituationModel" />
+        <association property = "loanGeneralModel" resultMap="ResultLoanGeneralModel" />
+        <collection property = "transactionTypeReceivePaymentPlanModel" resultMap="ResultTransactionTypeReceivePaymentPlanModel" />
+        <collection property = "guaranteePartnerModelList" ofType="yhao.micro.service.surety.business.apilist.model.guarantee.output.GuaranteePartnerModel" >
+            <id property="id" column="partnerid"/>
+            <result property="managerId" column="FMANAGER_ID"/>
+            <result property="managerName" column="managerName"/>
+            <result property="phone" column="FPHONE"/>
+            <result property="orgName" column="orgName"/>
+            <result property="orgId" column="partnerOrgId"/>
+            <result property="managerRate" column="FMANAGER_RATE"/>
+        </collection>
+
+        <collection property = "estateOutModelList" resultMap="ResultEstateOutModel" />
+        <collection property = "buyerModelList" resultMap="ResultBuyerModel" />
+        <collection property = "antiGuarantorModelList" resultMap="ResultAntiGuarantorModel" />
+
+        <collection property = "loanDetailsModelList" ofType="yhao.micro.service.surety.business.apilist.model.guarantee.output.LoanDetailsModel" >
+            <id property="id" column="loanDetailsId"/>
+            <result property="loanAmount" column="detailsFloanAmount"/>
+            <result property="loanDays" column="detailsFloanDays"/>
+            <result property="loanRemain" column="detailsFloanRemain"/>
+            <result property="arrangedRepay" column="detailsFarrangedRepay"/>
+            <result property="marketFeeRate" column="detailsFmarketFeeRate"/>
+            <result property="chargeGuaranteeFee" column="detailsFchargeGuaranteeFee"/>
+            <result property="realFeeRate" column="detailsFrealFeeRate"/>
+            <result property="chargeRealGuaranteeFee" column="detailsFchargeRealGuaranteeFee"/>
+            <result property="rebate" column="detailsFrebate"/>
+            <result property="rebateName" column="detailsFrebateName"/>
+            <result property="rebateBankName" column="detailsFrebateBankName"/>
+        </collection>
+        <collection property = "loanPaymentModelList" ofType="yhao.micro.service.surety.business.apilist.model.guarantee.output.LoanPaymentModel" >
+            <id property="id" column="loanPaymentId"/>
+            <result property="loanPaymentAccountNam" column="FLOAN_PAYMENT_ACCOUNT_NAM"/>
+            <result property="loanPaymentAccountBank" column="FLOAN_PAYMENT_ACCOUNT_BANK"/>
+            <result property="loanPaymentAccountNum" column="FLOAN_PAYMENT_ACCOUNT_NUM"/>
+            <result property="isReceivePayment" column="FIS_RECEIVE_PAYMENT"/>
+        </collection>
+    </resultMap>
+    <resultMap id = "ResultGuaranteeBizModel" type = "yhao.micro.service.surety.business.apilist.model.guarantee.output.GuaranteeBizModel" >
+        <id property="id" column="guaranteeId"/>
+        <result property="guaranteeNum" column="FGUARANTEE_NUM"/>
+        <result property="orgId" column="FORG_ID"/>
+        <result property="internalId" column="FINTERNAL_ID"/>
+        <result property="guaranteeId" column="FKGUARANTEE_ID"/>
+        <result property="bizId" column="FBIZ_ID"/>
+        <result property="guaranteeState" column="FGUARANTEE_STATE"/>
+        <result property="guaranteeType" column="FGUARANTEE_TYPE"/>
+        <result property="bankContractNum" column="FBANK_CONTRACT_NUM"/>
+        <result property="guaranteetSource" column="FGUARANTEET_SOURCE"/>
+        <result property="agencyName" column="FAGENCY_NAME"/>
+    </resultMap>
+    <resultMap id = "ResultLoanSellerModel" type = "yhao.micro.service.surety.business.apilist.model.guarantee.output.LoanSellerModel" >
+        <id property="id" column="loanSellerId"/>
+        <result property="loanType" column="FLOAN_TYPE"/>
+        <result property="loanAmount" column="FLOAN_AMOUNT"/>
+        <result property="loanBalance" column="FLOAN_BALANCE"/>
+        <result property="loanMbId" column="FLOAN_MB_ID"/>
+        <result property="loanMbAmount" column="FLOAN_MB_AMOUNT"/>
+        <result property="loanMbContactName" column="FLOAN_MB_CONTACT_NAME"/>
+        <result property="loanMbContactTele" column="FLOAN_MB_CONTACT_TELE"/>
+        <result property="loanPbId" column="FLOAN_PB_ID"/>
+        <result property="loanPbAmount" column="FLOAN_PB_AMOUNT"/>
+        <result property="loanPbContactName" column="FLOAN_PB_CONTACT_NAME"/>
+        <result property="loanPbContactTele" column="FLOAN_PB_CONTACT_TELE"/>
+        <result property="loanMajorPerson" column="FLOAN_MAJOR_PERSON"/>
+        <result property="loanOtherPerson" column="FLOAN_OTHER_PERSON"/>
+        <result property="loanRemark" column="FLOAN_REMARK"/>
+    </resultMap>
+    <resultMap id = "ResultTransactionGuaranteeInfoModel" type = "yhao.micro.service.surety.business.apilist.model.guarantee.output.TransactionGuaranteeInfoModel" >
+        <id property="id" column="transactionId"/>
+        <result property="transactionPrice" column="FTRANSACTION_PRICE"/>
+        <result property="payType" column="FPAY_TYPE"/>
+        <result property="deposit" column="FDEPOSIT"/>
+        <result property="notarizationData" column="FNOTARIZATION_DATA"/>
+    </resultMap>
+    <resultMap id = "ResultLoanBuyerModel" type = "yhao.micro.service.surety.business.apilist.model.guarantee.output.LoanBuyerModel" >
+        <id property="id" column="loanBuyerId"/>
+        <result property="supervisionBankOneId" column="supervisionBankOneId"/>
+        <result property="supervisionAmountOne" column="supervisionAmountOne"/>
+        <result property="supervisionContactOne" column="supervisionContactOne"/>
+        <result property="supervisionContactTeleOne" column="supervisionContactTeleOne"/>
+        <result property="supervisionBankTwoId" column="supervisionBankTwoId"/>
+        <result property="supervisionAmountTwo" column="supervisionAmountTwo"/>
+        <result property="supervisionContactTwo" column="supervisionContactTwo"/>
+        <result property="supervisionContactTeleTwo" column="supervisionContactTeleTwo"/>
+        <result property="loanMbId" column="buyerFloanMbId"/>
+        <result property="loanMbAmount" column="buyerFloanMbAmount"/>
+        <result property="loanMbContactName" column="buyerFloanMbContactName"/>
+        <result property="loanMbContactTele" column="buyerFloanMbContactTele"/>
+        <result property="refundAccountNam" column="FREFUND_ACCOUNT_NAM"/>
+        <result property="refundAccountNum" column="FREFUND_ACCOUNT_NUM"/>
+        <result property="refundAccountBank" column="FREFUND_ACCOUNT_BANK"/>
+        <result property="supervisionAccountNam" column="FSUPERVISION_ACCOUNT_NAM"/>
+        <result property="supervisionAccountNum" column="FSUPERVISION_ACCOUNT_NUM"/>
+        <result property="supervisionAccountBank" column="FSUPERVISION_ACCOUNT_BANK"/>
+        <result property="loanerName" column="FLOANER_NAME"/>
+        <result property="loanPaymentType" column="FLOAN_PAYMENT_TYPE"/>
+        <result property="buyerLoanRemark" column="FBUYER_LOAN_REMARK"/>
+    </resultMap>
+    <resultMap id = "ResultGuaranteeSituationModel" type = "yhao.micro.service.surety.business.apilist.model.guarantee.output.GuaranteeSituationModel" >
+        <id property="id" column="guaranteeSituationId"/>
+        <result property="guaranteeApplicantIds" column="FGUARANTEE_APPLICANT_IDS"/>
+        <result property="redeemBankId" column="FREDEEM_BANK_ID"/>
+        <result property="redeemBankRate" column="FREDEEM_BANK_RATE"/>
+        <result property="redeemBankContact" column="FREDEEM_BANK_CONTACT"/>
+        <result property="redeemBankContactTele" column="FREDEEM_BANK_CONTACT_TELE"/>
+        <result property="guaranteeAmount" column="FGUARANTEE_AMOUNT"/>
+        <result property="redeemHouseAmount" column="FREDEEM_HOUSE_AMOUNT"/>
+        <result property="guaranteeDays" column="FGUARANTEE_DAYS"/>
+        <result property="isAntiGuarantor" column="FIS_ANTI_GUARANTOR"/>
+        <result property="situationRemark" column="FSITUATION_REMARK" />
+    </resultMap>
+    <resultMap id = "ResultLoanGeneralModel" type = "yhao.micro.service.surety.business.apilist.model.guarantee.output.LoanGeneralModel" >
+        <id property="id" column="loanGeneralId"/>
+        <result property="loanTotalAmount" column="FLOAN_TOTAL_AMOUNT"/>
+        <result property="totalDays" column="FTOTAL_DAYS"/>
+        <result property="marketFeeRate" column="FMARKET_FEE_RATE"/>
+        <result property="charges" column="FCHARGES"/>
+        <result property="discountExplain" column="FDISCOUNT_EXPLAIN"/>
+        <result property="planUseDate" column="FPLAN_USE_DATE"/>
+        <result property="isBilling" column="FIS_BILLING"/>
+        <result property="billingId" column="FBILLING_ID"/>
+        <result property="chargeTotal" column="FCHARGE_TOTAL"/>
+        <result property="chargeRealTotal" column="FCHARGE_REAL_TOTAL"/>
+        <result property="adviceFee" column="FADVICE_FEE"/>
+    </resultMap>
+    <resultMap id = "ResultTransactionTypeReceivePaymentPlanModel" type = "yhao.micro.service.surety.business.apilist.model.guarantee.output.TransactionTypeReceivePaymentPlanModel" >
+        <id property="id" column="transRecepayPlanId"/>
+        <result property="loanDetailId" column="FLOAN_DETAIL_ID"/>
+        <result property="receivePaymentSource" column="FRECEIVE_PAYMENT_SOURCE"/>
+        <result property="receivePaymentExpectAmount" column="FRECEIVE_PAYMENT_EXPECT_AMOUNT"/>
+        <result property="receivePaymentAccount" column="FRECEIVE_PAYMENT_ACCOUNT"/>
+        <result property="receivePaymentAccountNum" column="FRECEIVE_PAYMENT_ACCOUNT_NUM"/>
+        <result property="receivePaymentBank" column="FRECEIVE_PAYMENT_BANK"/>
+    </resultMap>
+
+    <resultMap id = "ResultEstateOutModel" type = "yhao.micro.service.surety.business.apilist.model.guarantee.output.EstateOutModel" >
+        <id property="id" column="estateId"/>
+        <result property="propertyName" column="FPROPERTY_NAME"/>
+        <result property="propertyLocation" column="FPROPERTY_LOCATION"/>
+        <result property="propertyRoomNo" column="FPROPERTY_ROOM_NO"/>
+        <result property="isModeling" column="FIS_MODELING"/>
+        <result property="estateUse" column="FESTATE_USE"/>
+        <result property="estateArea" column="FESTATE_AREA"/>
+        <result property="estateName" column="FESTATE_NAME"/>
+        <result property="deedType" column="FDEED_TYPE"/>
+        <result property="deedNum" column="FDEED_NUM"/>
+        <result property="evaluatePrice" column="FEVALUATE_PRICE"/>
+        <result property="sourceContactName" column="FSOURCE_CONTACT_NAME"/>
+        <result property="sourceContactTele" column="FSOURCE_CONTACT_TELE"/>
+        <collection property = "personInfoTradesModelList" ofType="yhao.micro.service.surety.business.apilist.model.guarantee.output.PersonInfoTradesModel">
+            <id property = "id" column = "personinfoTradesId" />
+            <result property = "estateId" column = "FESTATE_ID" />
+            <result property = "cltTyp" column = "FCLT_TYP" />
+            <result property = "cltName" column = "FCLT_NAME" />
+            <result property = "ctfIssCntCod" column = "FCTF_ISS_CNT_COD" />
+            <result property = "contactTele" column = "FCONTACT_TELE" />
+            <result property = "ctfTyp" column = "FCTF_TYP" />
+            <result property = "ctfIdc" column = "FCTF_IDC" />
+            <result property = "propertyPortion" column = "FPROPERTY_PORTION" />
+            <result property = "address" column = "FADDRESS" />
+        </collection>
+    </resultMap>
+    <resultMap id = "ResultBuyerModel" type = "yhao.micro.service.surety.business.apilist.model.guarantee.output.PersonInfoTradesModel" >
+        <id property = "id" column = "buyerId" />
+        <result property = "cltTyp" column = "buyerCltTyp" />
+        <result property = "cltName" column = "buyerCltName" />
+        <result property = "ctfIssCntCod" column = "buyerCtfIssCntCod" />
+        <result property = "contactTele" column = "buyerContactTele" />
+        <result property = "ctfTyp" column = "buyerCtfTyp" />
+        <result property = "ctfIdc" column = "buyerCtfIdc" />
+        <result property = "propertyPortion" column = "buyerPropertyPortion" />
+        <result property = "address" column = "buyerAddress" />
+    </resultMap>
+    <resultMap id = "ResultAntiGuarantorModel" type = "yhao.micro.service.surety.business.apilist.model.guarantee.output.AntiGuarantorModel" >
+        <id property="id" column="antiGuarantorId"/>
+        <result property="contactName" column="antiFcontactName"/>
+        <result property="contactTele" column="antiFcontactTele"/>
+        <result property="ctfTyp" column="antiFctfTyp"/>
+        <result property="ctfIdc" column="antiFctfIdc"/>
+        <result property="address" column="antiFaddress"/>
+        <collection property = "antiEstateModelList" ofType="yhao.micro.service.surety.business.apilist.model.guarantee.output.AntiEstateModel">
+            <id property="id" column="antiEstateId"/>
+            <result property="antiGuarantorId" column="antiFantiGuarantorId"/>
+            <result property="estateName" column="antiFestateName"/>
+            <result property="deedType" column="antiFdeedType"/>
+            <result property="deedNum" column="antiFdeedNum"/>
+            <result property="propertyPortion" column="antiFpropertyPortion"/>
+        </collection>
+    </resultMap>
+
+    <update id = "saveMainContractNum" parameterType="yhao.micro.service.surety.business.apilist.form.guarantee.MainContractNumSaveForm" >
+        UPDATE SURETY.T_SURETY_GUARANTEE
+        <set>
+            <if test="bankContractNum != null and bankContractNum != ''" >FBANK_CONTRACT_NUM = #{bankContractNum},</if>
+            FUPDATE_TIME = SYSDATE,
+            <if test="operatorId != null and operatorId != ''" >FUPDATE_OPERATOR_ID = #{operatorId}</if>
+        </set>
+         WHERE FID = #{id}
+    </update>
+
+    <select id = "pickMainContractNum" parameterType="String" resultMap="ResultMainContractNumModel" >
+        SELECT GUARANTEE.FID,
+               GUARANTEE.FGUARANTEE_NUM,
+               PERSON.FNAME AS managerName,
+               ORG.FNAME AS orgName,
+               PERSONINFO_TRADES.FID AS personinfoTradesId,
+               PERSONINFO_TRADES.FCLT_TYP,
+               PERSONINFO_TRADES.FCLT_NAME
+          FROM SURETY.T_SURETY_GUARANTEE GUARANTEE
+     LEFT JOIN SURETY.T_ERP_PERSON PERSON ON PERSON.FID = GUARANTEE.FCREATE_OPERATOR_ID
+     LEFT JOIN SURETY.T_ERP_ORG ORG ON ORG.FID = PERSON.FORG_ID
+     LEFT JOIN SURETY.T_SURETY_G_PERSONINFO_TRADES PERSONINFO_TRADES ON GUARANTEE.FID = PERSONINFO_TRADES.FGUARANTEE_ID
+         WHERE GUARANTEE.FID = #{id}
+    </select>
+    <resultMap id = "ResultMainContractNumModel" type = "yhao.micro.service.surety.business.apilist.model.guarantee.MainContractNumModel" >
+        <id property="id" column="FID"/>
+        <result property="guaranteeNum" column="FGUARANTEE_NUM" />
+        <result property="managerName" column="managerName" />
+        <result property="orgName" column="orgName" />
+        <collection property = "personInfoTradesModelList" ofType="yhao.micro.service.surety.business.apilist.model.guarantee.output.PersonInfoTradesModel" >
+            <id property="id" column="personinfoTradesId"/>
+            <result property="cltTyp" column="FCLT_TYP" />
+            <result property="cltName" column="FCLT_NAME" />
+        </collection>
+    </resultMap>
+
+    <select id = "queryGuaranteePage" parameterType="yhao.micro.service.surety.business.apilist.form.guarantee.GuaranteeQueryPageForm"
+            resultMap="ResultGuaranteePage" >
+               SELECT GUARANTEE.FID,
+                      GUARANTEE.FKGUARANTEE_ID,
+                      GUARANTEE.FGUARANTEE_TYPE,
+                      GUARANTEE.FGUARANTEE_NUM,
+                      BUSINESS_TYPE.FBUSINESS_NAME,
+                      ESTATE_SELLER.FESTATE_NAME,
+                      PERSONINFO_TRADES.FCLT_TYP,
+                      PERSONINFO_TRADES.FCLT_NAME,
+                      GUARANTEE_SITUATION.FGUARANTEE_AMOUNT, --担保金额
+                      LOAN_GENERAL.FLOAN_TOTAL_AMOUNT, --借款总额
+                      LOAN_DETAILS.FCHARGE_REAL_GUARANTEE_FEE, --实收担保费
+                      CURRENT_NODE.FNAME AS currentNodeName, --当前节点名称
+                      PREVIOUS_NODE.FNAME AS previousNodeName, --上一节点名称
+                      TOLL_GENERAL.FWARRANTY_STATUS, --收费情况
+                      FUND_PROVIDER.FNAME AS redeemBankName, --赎楼款银行
+                      PERSON.FNAME AS managerName, --客户经理姓名
+                      ORG.FNAME AS orgName,
+                      ESTATE_SELLER.FDEED_NUM, --房产证号
+                      GUARANTEE.FGUARANTEET_SOURCE, --来源
+                      GUARANTEE.FAGENCY_NAME, --中介
+                      GUARANTEE.FDECLARATION_DATE, --保单日期
+                      REDEEM_MANAGER.FIS_REDEEM --是否已赎楼状态
+                 FROM SURETY.T_SURETY_GUARANTEE GUARANTEE
+            LEFT JOIN SURETY.T_ERP_PERSON PERSON ON PERSON.FID = GUARANTEE.FCREATE_OPERATOR_ID
+            LEFT JOIN SURETY.T_ERP_ORG ORG ON ORG.FID = PERSON.FORG_ID
+            LEFT JOIN SURETY.T_SURETY_BUSINESS_TYPE BUSINESS_TYPE ON BUSINESS_TYPE.FID = GUARANTEE.FBIZ_ID
+            LEFT JOIN SURETY.T_SURETY_G_ESTATE_SELLER ESTATE_SELLER ON ESTATE_SELLER.FGUARANTEE_ID = GUARANTEE.FID
+            LEFT JOIN SURETY.T_SURETY_G_PERSONINFO_TRADES PERSONINFO_TRADES ON PERSONINFO_TRADES.FGUARANTEE_ID = GUARANTEE.FID
+            LEFT JOIN SURETY.T_SURETY_G_GUARANTEE_SITUATION GUARANTEE_SITUATION ON GUARANTEE_SITUATION.FGUARANTEE_ID = GUARANTEE.FID
+            LEFT JOIN SURETY.T_BASE_FUND_PROVIDER FUND_PROVIDER ON GUARANTEE_SITUATION.FREDEEM_BANK_ID = FUND_PROVIDER.FID
+            LEFT JOIN SURETY.T_SURETY_G_LOAN_GENERAL LOAN_GENERAL ON LOAN_GENERAL.FGUARANTEE_ID = GUARANTEE.FID
+            LEFT JOIN SURETY.T_SURETY_G_LOAN_DETAILS LOAN_DETAILS ON LOAN_DETAILS.FGUARANTEE_ID = GUARANTEE.FID
+            LEFT JOIN SURETY.T_SURETY_G_ESTATE_SELLER ESTATE_SELLER ON ESTATE_SELLER.FGUARANTEE_ID = GUARANTEE.FID
+            LEFT JOIN SURETY.T_SURETY_TOLL_GENERAL TOLL_GENERAL ON TOLL_GENERAL.FGUARANTEE_ID = GUARANTEE.FID
+            LEFT JOIN SURETY.T_WK_TASK TASK ON TASK.FBIZ_ENTITY_ID = GUARANTEE.FID
+            LEFT JOIN SURETY.T_WK_PVM_NODE CURRENT_NODE ON TASK.FNODE_ID = CURRENT_NODE.FID
+            LEFT JOIN SURETY.T_WK_PVM_TRANSITION TRANSITION ON TRANSITION.FDESTINATION_NODE_ID = CURRENT_NODE.FID
+            LEFT JOIN SURETY.T_WK_PVM_NODE PREVIOUS_NODE ON TRANSITION.FSOURCE_NODE_ID = PREVIOUS_NODE.FID
+            LEFT JOIN SURETY.T_WK_TASK_NODE_ITEM TASK_NODE_ITEM ON TASK_NODE_ITEM.FTASK_ID = TASK.FID
+            LEFT JOIN SURETY.T_SURETY_REVIEW REVIEW ON REVIEW.FK_FGUARANTEE_ID = GUARANTEE.FID
+            LEFT JOIN SURETY.T_SURETY_REDEEM REDEEM ON REDEEM.FGUARANTEE_PID = GUARANTEE.FID
+            LEFT JOIN SURETY.T_SURETY_FN_BILLING_GENERAL FN_BILLING_GENERAL ON FN_BILLING_GENERAL.FGUARANTEE_ID = GUARANTEE.FID
+            LEFT JOIN SURETY.T_SURETY_RDT_AFTER_FOLLOW RDT_AFTER_FOLLOW ON RDT_AFTER_FOLLOW.FGUARANTEE_ID = GUARANTEE.FID
+            LEFT JOIN SURETY.T_SURETY_REDEMPTION_ENSURE REDEMPTION_ENSURE ON REDEMPTION_ENSURE.FGUARANTEE_PID = GUARANTEE.FID
+            LEFT JOIN SURETY.T_SURETY_G_LOAN_SELLER LOAN_SELLER ON LOAN_SELLER.FGUARANTEE_ID = GUARANTEE.FID
+            LEFT JOIN SURETY.T_SURETY_G_LOAN_BUYER LOAN_BUYER ON LOAN_BUYER.FGUARANTEE_ID = GUARANTEE.FID
+            LEFT JOIN SURETY.T_SURETY_REDEEM_MANAGER REDEEM_MANAGER ON REDEEM_MANAGER.FGUARANTEE_ID = GUARANTEE.FID
+                <where>
+                    <if test="orgId != null and orgId != ''">
+                        and GUARANTEE.FORG_ID = #{orgId}
+                    </if>
+                    <if test="managerId != null and managerId != ''">
+                        and GUARANTEE.FCREATE_OPERATOR_ID = #{managerId}
+                    </if>
+                    <if test="bizIdList != null and bizIdList.size() > 0">
+                        and GUARANTEE.FBIZ_ID in
+                        <foreach collection = "bizIdList" item="item" open="(" close=")" index="index" separator=",">
+                            #{item}
+                        </foreach>
+                    </if>
+
+                    <if test="warrantyStatus != null ">
+                        and TOLL_GENERAL.FWARRANTY_STATUS = #{warrantyStatus}
+                    </if>
+                    <if test="guaranteeType != null ">
+                        and GUARANTEE.FGUARANTEE_TYPE = #{guaranteeType}
+                    </if>
+                    <if test="isModeling != null ">
+                        and ESTATE_SELLER.FIS_MODELING = #{isModeling}
+                    </if>
+                    <if test="dateType != null and startDate != null" >
+                        and ${dateTypeTable}.${dateTypeColumn} between #{startDate} and NVL(#{endDate}, sysdate)
+                    </if>
+                    <if test="mix != null and mix != ''">
+                        and (GUARANTEE.FGUARANTEE_NUM = #{mix}
+                        or ESTATE_SELLER.FPROPERTY_NAME = #{mix}
+                        or PERSONINFO_TRADES.FCLT_NAME = #{mix}
+                        or (ESTATE_SELLER.FDEED_NUM = #{mix} and ESTATE_SELLER.FDEED_TYPE = 'FCZ'))
+                    </if>
+                    <if test="guaranteetSource != null ">
+                        and GUARANTEE.FGUARANTEET_SOURCE = #{guaranteetSource}
+                    </if>
+                    <if test="guaranteeAmountMin != null ">
+                        and GUARANTEE_SITUATION.FGUARANTEE_AMOUNT &gt;= #{guaranteeAmountMin}
+                    </if>
+                    <if test="guaranteeAmountMax != null ">
+                        and GUARANTEE_SITUATION.FGUARANTEE_AMOUNT &lt;= #{guaranteeAmountMax}
+                    </if>
+                    <if test="bankType != null and bankId != null and bankId != ''"> --银行类型
+                        and ${bankTypeTable}.${bankTypeColumn} = #{bankId}
+                    </if>
+
+                    <if test="examinerId != null and examinerId != ''">
+                        and REVIEW.FEXAMINER_ID = #{examinerId}
+                    </if>
+                    <if test="followerId != null and followerId != ''">
+                        and GUARANTEE.FFOLLOWER_ID = #{followerId}
+                    </if>
+                    <if test="declarerId != null and declarerId != ''">
+                        and GUARANTEE.FDECLARER_ID = #{declarerId}
+                    </if>
+                    <if test="redeemId != null and redeemId != ''">
+                        and GUARANTEE.FREDEEM_ID = #{redeemId}
+                    </if>
+                    <if test="checkStartDate != null ">
+                        and TASK_NODE_ITEM.FITEM_FINISH_TIME between #{checkStartDate} and NVL(#{checkEndDate}, sysdate)
+                    </if>
+                    <if test="isCreditReport != null ">
+                        and GUARANTEE.FIS_CREDIT_REPORT = #{isCreditReport}
+                    </if>
+                </where>
+    </select>
+    <resultMap id = "ResultGuaranteePage" type = "yhao.micro.service.surety.business.apilist.model.guarantee.page.GuaranteePageModel" >
+        <id property="id" column="FID" />
+        <result property="kguaranteeId" column="FKGUARANTEE_ID"/>
+        <result property="guaranteeType" column="FGUARANTEE_TYPE"/>
+        <result property="guaranteeNum" column="FGUARANTEE_NUM"/>
+        <result property="businessName" column="FBUSINESS_NAME"/>
+        <result property="guaranteeAmount" column="FGUARANTEE_AMOUNT"/>
+        <result property="loanTotalAmount" column="FLOAN_TOTAL_AMOUNT"/>
+        <result property="chargeRealGuaranteeFee" column="FCHARGE_REAL_GUARANTEE_FEE"/>
+        <result property="currentNodeName" column="currentNodeName"/>
+        <result property="previousNodeName" column="previousNodeName"/>
+        <result property="warrantyStatus" column="FWARRANTY_STATUS"/>
+        <result property="redeemBankName" column="redeemBankName"/>
+        <result property="managerName" column="managerName"/>
+        <result property="managerName" column="orgName"/>
+        <result property="deedNum" column="FDEED_NUM"/>
+        <result property="guaranteetSource" column="FGUARANTEET_SOURCE"/>
+        <result property="agencyName" column="FAGENCY_NAME"/>
+        <result property="declarationDate" column="FDECLARATION_DATE"/>
+        <result property="isRedeem" column="FIS_REDEEM"/>
+        <collection property = "estatePageModelList" ofType="yhao.micro.service.surety.business.apilist.model.guarantee.page.EstatePageModel" >
+            <id property="id" column="FID" />
+            <result property="estateName" column="FESTATE_NAME"/>
+        </collection>
+        <collection property = "applicationPersonModelList" ofType="yhao.micro.service.surety.business.apilist.model.guarantee.page.ApplicationPersonModel" >
+            <id property="id" column="FID" />
+            <result property="cltTyp" column="FCLT_TYP"/>
+            <result property="cltName" column="FCLT_NAME"/>
+        </collection>
+    </resultMap>
+
+    <delete id = "deleteSubTask" parameterType="String" >
+        DELETE FROM SURETY.T_WK_TASK WHERE FID IN (
+                SELECT B.FID
+                  FROM SURETY.T_WK_TASK A
+                  LEFT JOIN SURETY.T_WK_TASK B ON A.FID = B.FPARENT_ID
+                 WHERE A.FBIZ_ENTITY_ID = #{id}
+                )
+    </delete>
+    <delete id = "deleteMainTask" parameterType="String" >
+        DELETE FROM SURETY.T_WK_TASK WHERE FID = #{id}
+    </delete>
+    <delete id = "deleteMainTaskItem" parameterType="String" >
+        DELETE FROM SURETY.T_WK_TASK_NODE_ITEM WHERE FTASK_ID = #{id}
+    </delete>
+    <delete id = "deleteSubTaskItem" parameterType="String" >
+        DELETE FROM SURETY.T_WK_TASK_NODE_ITEM WHERE FTASK_ID IN (
+                       SELECT B.FID
+                         FROM SURETY.T_WK_TASK A
+                    LEFT JOIN SURETY.T_WK_TASK B ON A.FID = B.FPARENT_ID
+                        WHERE A.FBIZ_ENTITY_ID = #{id}
+                )
+    </delete>
+    <delete id = "deleteTaskVariable" parameterType="String" >
+        DELETE FROM SURETY.T_WK_TASK_VARIABLE WHERE FBIZ_ENTITY_ID = #{id}
+    </delete>
+    <delete id = "deleteMainTaskWarn" parameterType="String" >
+        DELETE FROM SURETY.T_WK_TASK_NODE_WARN WHERE FTASK_ID = #{id}
+    </delete>
+    <delete id = "deleteSubTaskWarn" parameterType="String" >
+        DELETE FROM SURETY.T_WK_TASK_NODE_WARN WHERE FTASK_ID IN (
+                    SELECT B.FID
+                      FROM SURETY.T_WK_TASK A
+                 LEFT JOIN SURETY.T_WK_TASK B ON A.FID = B.FPARENT_ID
+                     WHERE A.FBIZ_ENTITY_ID = #{id}
+                    )
+    </delete>
+
+    <update id="updateLoanDetail" parameterType="LoanDetailsModel">
+        UPDATE SURETY.T_SURETY_G_LOAN_DETAILS
+        <set>
+            <if test="loanAmount != null and loanAmount != ''" >FLOAN_AMOUNT = #{loanAmount},</if>
+            <if test="loanDays != null and loanDays != ''" >FLOAN_DAYS = #{loanDays},</if>
+            <if test="loanRemain != null and loanRemain != ''" >FLOAN_REMAIN = #{loanRemain},</if>
+            <if test="arrangedRepay != null" >FARRANGED_REPAY = #{arrangedRepay},</if>
+            <if test="marketFeeRate != null and marketFeeRate != ''" >FMARKET_FEE_RATE = #{marketFeeRate},</if>
+            <if test="chargeGuaranteeFee != null and chargeGuaranteeFee != ''" >FCHARGE_GUARANTEE_FEE = #{chargeGuaranteeFee},</if>
+            <if test="realFeeRate != null and realFeeRate != ''" >FREAL_FEE_RATE = #{realFeeRate},</if>
+            <if test="chargeRealGuaranteeFee != null and chargeRealGuaranteeFee != ''" >FCHARGE_REAL_GUARANTEE_FEE = #{chargeRealGuaranteeFee},</if>
+            <if test="rebate != null and rebate != ''" >FREBATE = #{rebate},</if>
+            <if test="rebateName != null and rebateName != ''" >FREBATE_NAME = #{rebateName},</if>
+            <if test="rebateBankName != null and rebateBankName != ''" >FREBATE_BANK_NAME = #{rebateBankName}</if>
+        </set>
+        WHERE FID = #{id}
+    </update>
+
+    <select id="pickLoanDetails" resultType="LoanDetailsModel" parameterType="string">
+        select
+        FID as id,
+        FLOAN_AMOUNT as loanAmount,
+        FLOAN_DAYS as loanDays,
+        FLOAN_REMAIN as loanRemain,
+        FARRANGED_REPAY as arrangedRepay,
+        FMARKET_FEE_RATE as marketFeeRate,
+        FCHARGE_GUARANTEE_FEE as chargeGuaranteeFee,
+        FREAL_FEE_RATE as realFeeRate,
+        FCHARGE_REAL_GUARANTEE_FEE as chargeRealGuaranteeFee,
+        FREBATE as rebate,
+        FREBATE_NAME as rebateName,
+        FREBATE_BANK_NAME as rebateBankName
+        from SURETY.T_SURETY_G_LOAN_DETAILS
+        WHERE FID = #{loanId}
+    </select>
+    <select id = "queryBuyer" parameterType="String" resultType="String">
+        SELECT FID AS id
+        FROM SURETY.T_SURETY_G_PERSONINFO_TRADES
+        WHERE FGUARANTEE_ID = #{id}
+    </select>
+
+    <select id = "associateGuarantee" parameterType="yhao.micro.service.surety.business.apilist.form.guarantee.AssociateGuaranteeForm"
+            resultType="yhao.micro.service.surety.business.apilist.model.guarantee.AssociateGuaranteeModel" >
+           SELECT GUARANTEE.FID AS id,
+                  GUARANTEE.FGUARANTEE_NUM AS guaranteeNum,
+                  PERSONINFO_TRADES.FCLT_TYP AS cltTyp,
+                  PERSONINFO_TRADES.FCLT_NAME AS cltName,
+                  ESTATE_SELLER.FESTATE_NAME AS estateName
+             FROM SURETY.T_SURETY_GUARANTEE GUARANTEE
+        LEFT JOIN SURETY.T_SURETY_G_PERSONINFO_TRADES PERSONINFO_TRADES ON PERSONINFO_TRADES.FGUARANTEE_ID = GUARANTEE.FID
+        LEFT JOIN SURETY.T_SURETY_G_ESTATE_SELLER ESTATE_SELLER ON ESTATE_SELLER.FGUARANTEE_ID = GUARANTEE.FID
+        <where>
+            <if test="mixQuery != null and mixQuery!= ''" >
+                GUARANTEE.FGUARANTEE_NUM = #{mixQuery}
+                or PERSONINFO_TRADES.FCLT_NAME = #{mixQuery}
+            </if>
+        </where>
+    </select>
+
+    <insert id = "saveEstateFile" parameterType="yhao.micro.service.surety.business.apilist.form.guarantee.EstateFileSaveForm" >
+        INSERT INTO SURETY.T_SURETY_G_ESTATE_FILE
+                (
+                        FID,
+                        FGUARANTEE_ID,
+                        FESTATE_ID,
+                        FPROPERTY_STATE,
+                        FREGION,
+                        FMORTGAGEE,
+                        FMORTGAGE_DATE,
+                        FFILE_CLERK,
+                        FFILE_DATE,
+                        FFILE_RESULT,
+                        FAREA,
+                        FREGISTRATION_PRICE,
+                        FCOMPLETED_DATE,
+                        FCATEGORY
+                        )
+        VALUES (
+                       #{id},
+                       #{guaranteeId},
+                       #{estateId},
+                       #{propertyState},
+                       #{region},
+                       #{mortgagee},
+                       #{mortgageDate},
+                       #{fileClerk},
+                       #{fileDate},
+                       #{fileResult},
+                       #{area},
+                       #{registrationPrice},
+                       #{completedDate},
+                       #{category}
+                       )
+    </insert>
+
+    <select id = "queryEstateFile" parameterType="String"
+            resultType="yhao.micro.service.surety.business.apilist.model.guarantee.EstateFileModel" >
+        SELECT FID AS id,
+               FGUARANTEE_ID AS guaranteeId,
+               FESTATE_ID AS estateId,
+               FPROPERTY_STATE AS propertyState,
+               FREGION AS region,
+               FMORTGAGEE AS mortgagee,
+               FMORTGAGE_DATE AS mortgageDate,
+               FFILE_CLERK AS fileClerk,
+               FFILE_DATE AS fileDate,
+               FFILE_RESULT AS fileResult,
+               FAREA AS area,
+               FREGISTRATION_PRICE AS registrationPrice,
+               FCOMPLETED_DATE AS completedDate,
+               FCATEGORY AS category
+          FROM SURETY.T_SURETY_G_ESTATE_FILE
+         WHERE FESTATE_ID = #{id}
+    </select>
+    <update id = "updateRecallState" parameterType="String" >
+        UPDATE SURETY.T_SURETY_GUARANTEE
+           SET FGUARANTEE_STATE = 'RECALL'
+         WHERE FID = #{id}
+    </update>
+    <select id = "selectIsFirstTask" parameterType="String"
+            resultType="yhao.micro.service.workflow.apilist.model.task.TaskNodeItemModel" >
+        SELECT TASK.FID AS taskId,
+               TASK_NODE_ITEM.FTASK_NODE_ID AS taskNodeId,
+               TASK_NODE_ITEM.FITEM_ID AS itemId,
+               TASK_NODE_ITEM.FITEM_RESULT_CODE AS itemResultCode,
+               TASK_NODE_ITEM.FITEM_RESULT AS itemResult,
+               TASK_NODE_ITEM.FITEM_CODE AS itemCode
+          FROM SURETY.T_WK_TASK TASK
+        LEFT JOIN SURETY.T_WK_TASK_NODE_ITEM TASK_NODE_ITEM ON TASK_NODE_ITEM.FTASK_NODE_ID = TASK.FNODE_ID
+         WHERE TASK.FBIZ_ENTITY_ID = #{id}
+           AND TASK.FSTATUS != 'CANCEL'
+    </select>
+
+
+    <select id="queryRepayAccount" parameterType="string" resultType="TransactionTypeReceivePaymentPlanModel">
+        select FID AS id,FGUARANTEE_ID AS guaranteeId,FLOAN_DETAIL_ID AS loanDetailId,
+        FRECEIVE_PAYMENT_SOURCE AS receivePaymentSource,FRECEIVE_PAYMENT_EXPECT_AMOUNT AS receivePaymentExpectAmount,
+        FRECEIVE_PAYMENT_ACCOUNT AS receivePaymentAccount,FRECEIVE_PAYMENT_ACCOUNT_NUM AS receivePaymentAccountNum,
+        FRECEIVE_PAYMENT_BANK AS receivePaymentBank
+        FROM T_SURETY_G_TRANS_RECEPAY_PLAN
+        WHERE FGUARANTEE_ID =#{guaranteeId}
+
+    </select>
+
+</mapper>

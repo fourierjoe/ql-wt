@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="yhao.micro.service.surety.baseconfig.dao.automapper.RepositoryDao">
+    <resultMap id="PartnerResult" type="yhao.micro.service.surety.baseconfig.apilist.model.RepositoryModel">
+        <id property="id" column="FID"/>
+        <result property="name" column="FNAME"/>
+        <result property="address" column="FADDRESS"/>
+        <result property="order" column="FORDER"/>
+        <result property="remark" column="FREMARK"/>
+        <result property="createTime" column="FCREATE_TIME"/>
+        <result property="updateTime" column="FUPDATE_TIME"/>
+        <result property="createOperatorId" column="FCREATE_OPERATOR_ID"/>
+        <result property="updateOperatorId" column="FUPDATE_OPERATOR_ID"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="yhao.micro.service.surety.baseconfig.apilist.form.RepositorySaveForm">
+      insert into T_BASE_REPOSITORY(FID, FNAME, FADDRESS, FORDER, FREMARK, FCREATE_TIME, FUPDATE_TIME, FCREATE_OPERATOR_ID, FUPDATE_OPERATOR_ID)
+              values (sys_guid(),#{name},#{address},#{order},#{remark},sysdate,sysdate,#{operatorId},#{operatorId})
+    </insert>
+
+    <update id="update" parameterType="yhao.micro.service.surety.baseconfig.apilist.form.RepositorySaveForm">
+        update T_BASE_REPOSITORY
+        <set>
+            FUPDATE_TIME = sysdate,
+            FREMARK=#{remark},
+            <if test="name!=null and name!=''">FNAME=#{name},</if>
+            <if test="address!=null and address!=''">FADDRESS=#{address},</if>
+            <if test="order!=null and order!=''">FORDER=#{order},</if>
+            <if test="operatorId!=null and operatorId!=''">FUPDATE_OPERATOR_ID=#{operatorId},</if>
+        </set>
+        where fid = #{id}
+    </update>
+
+    <delete id="deleteById" parameterType="yhao.infra.apilist.validate.IdForm">
+        delete from T_BASE_REPOSITORY WHERE FID = #{id}
+    </delete>
+
+    <select id="query" parameterType="yhao.micro.service.surety.baseconfig.apilist.form.PartnerQueryForm" resultMap="PartnerResult">
+        select * from T_BASE_REPOSITORY R
+        <where>
+            <if test="id!=null and id!=''">AND R.FID=#{id}</if>
+            <if test="name!=null and name!=''">AND R.FNAME LIKE '%' || #{name} || '%'</if>
+            <if test="address!=null and address!=''">AND R.FADDRESS LIKE '%' || #{address} || '%'</if>
+        </where>
+        ORDER BY R.FORDER,R.FCREATE_TIME DESC,R.FID
+    </select>
+</mapper>

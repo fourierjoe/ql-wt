@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="yhao.micro.service.surety.erp.auth.dao.automapper.BizSystemDao">
+	<resultMap id="BizSystemModelResult" type="BizSystemModel">
+		<id property="id" column="fid"/>
+		<result property="systemKey" column="fsystem_key"/>
+		<result property="systemName" column="fsystem_name"/>
+		<result property="dataType" column="fdata_type"/>
+		<result property="createTime" column="fcreate_time"/>
+		<result property="updateTime" column="fupdate_time"/>
+		<result property="createOperatorId" column="fcreate_operator_id"/>
+		<result property="updateOperatorId" column="fupdate_operator_id"/>
+	</resultMap>
+
+	<insert id="insertBizSystem" parameterType="BizSystemModel">
+		insert into t_erp_biz_system(fid,fsystem_key,fsystem_name,fdata_type,fcreate_time,
+			fupdate_time,fcreate_operator_id,fupdate_operator_id)
+			 values(#{id},#{systemKey},#{systemName},#{dataType},#{createTime},
+			 	#{updateTime},#{createOperatorId},#{updateOperatorId})
+	</insert>
+
+	<update id="updateBizSystem" parameterType="BizSystemModel">
+		update t_erp_biz_system
+		<set>
+			<if test="systemName!=null and systemName!=''">fsystem_name=#{systemName},</if>
+			<if test="1==1">fdata_type=#{dataType},</if>
+			<if test="updateTime!=null">fupdate_time=#{updateTime},</if>
+			<if test="updateOperatorId!=null">fupdate_operator_id=#{updateOperatorId},</if>
+		</set>
+		where fid=#{id}
+	</update>
+
+	<select id="queryBizSystem" parameterType="yhao.micro.service.surety.erp.auth.apilist.form.system.BizSystemQueryForm"
+			resultMap="BizSystemModelResult">
+		select t.*
+		from t_erp_biz_system t
+		where 1=1
+		<include refid="normalQuery"/>
+	</select>
+
+	<sql id="normalQuery">
+		<if test="queryKey!=null and queryKey!=''">
+			and (t.fsystem_name like '%' || #{queryKey} || '%'
+			or t.fsystem_key like concat(#{queryKey},'%'))
+		</if>
+	</sql>
+
+	<select id="selectById" parameterType="string" resultMap="BizSystemModelResult">
+		select
+		t.*
+		from t_erp_biz_system t
+		where t.fid=#{id}
+	</select>
+
+	<select id="selectByKey" parameterType="string" resultMap="BizSystemModelResult">
+		select
+		t.*
+		from t_erp_biz_system t
+		where t.fsystem_key=#{key}
+	</select>
+
+	<delete id="deleteBizSystem" parameterType="string">
+		delete from t_erp_biz_system where fid=#{id}
+	</delete>
+
+	<delete id="deletePersonData" parameterType="yhao.micro.service.surety.erp.auth.apilist.form.system.BizSystemRelaDeleteForm">
+		delete from t_erp_auth_person_data
+		where fsystem_key=#{systemKey}
+		and fdata_type not in <foreach collection="dataKey" open="(" close=")" separator="," item="key">#{key}</foreach>
+	</delete>
+
+	<delete id="deletePositionData" parameterType="yhao.micro.service.surety.erp.auth.apilist.form.system.BizSystemRelaDeleteForm">
+		delete from t_erp_auth_position_data
+		where fsystem_key=#{systemKey}
+		and fdata_type not in <foreach collection="dataKey" open="(" close=")" separator="," item="key">#{key}</foreach>
+	</delete>
+</mapper>
