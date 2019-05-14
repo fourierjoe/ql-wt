@@ -55,3 +55,7 @@
  8. sql实现Mybatis之XML
     - mapper定义与Dao所在关联
  9. Postman完成自测
+ 
+ Spring Cloud Gateway整合Swagger聚合微服务系统API文档(非Zuul)
+ https://blog.csdn.net/ttzommed/article/details/81103609
+ https://www.zhihu.com/question/58954233
