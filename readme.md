@@ -59,3 +59,4 @@
  Spring Cloud Gateway整合Swagger聚合微服务系统API文档(非Zuul)
  https://blog.csdn.net/ttzommed/article/details/81103609
  https://www.zhihu.com/question/58954233
+ https://www.liangzl.com/get-article-detail-125580.html
